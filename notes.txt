@@ -1,0 +1,2 @@
+- Rate a recipe after trying it out. You can give it a rating from 1 to 5 stars, with 1 being the lowest and 5 being the highest. 
+  Consider factors such as taste, ease of preparation, and overall satisfaction when rating the recipe.
