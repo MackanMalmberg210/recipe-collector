@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { capitalize } from "../../lib/format";
@@ -13,6 +14,10 @@ function getSourceLabel(recipe: AppRecipe) {
   if (recipe.origin === "user") return "Created by you";
   if (recipe.origin === "imported") return "Imported recipe";
   return "Recipe library";
+}
+
+function getRatingKey(recipeId: number) {
+  return `recipeRating:${recipeId}`;
 }
 
 function getRecipeTags(recipe: AppRecipe) {
@@ -30,6 +35,26 @@ function getRecipeTags(recipe: AppRecipe) {
 export default function RecipeHero({ recipe, saved }: RecipeHeroProps) {
   const tags = getRecipeTags(recipe);
   const displayCalories = recipe.calories ?? recipe.nutrition?.calories;
+  const [rating, setRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadRating = () => {
+      const storedRating = localStorage.getItem(getRatingKey(recipe.id));
+      if (storedRating) {
+        const parsedRating = parseInt(storedRating, 10);
+        if (!isNaN(parsedRating) && parsedRating >= 1 && parsedRating <= 5) {
+          setRating(parsedRating);
+        }
+      }
+    };
+
+    loadRating();
+
+    window.addEventListener("recipeRatingUpdated", loadRating);
+    return () => {
+      window.removeEventListener("recipeRatingUpdated", loadRating);
+    };
+  }, [recipe.id]);
 
   return (
     <section className="overflow-hidden rounded-[2.5rem] border border-white/8 bg-[#15110e]/90 shadow-[0_30px_120px_rgba(0,0,0,0.4)] ring-1 ring-white/3">
@@ -98,6 +123,10 @@ export default function RecipeHero({ recipe, saved }: RecipeHeroProps) {
                 )}
 
                 <span>🥕 {recipe.ingredients.length} ingredients</span>
+
+                {rating !== null && (
+                  <span>★ {rating}/5 rating</span>
+                )}
               </div>
             </div>
           </div>

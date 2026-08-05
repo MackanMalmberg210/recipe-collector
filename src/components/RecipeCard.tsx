@@ -24,6 +24,10 @@ function capitalizeWords(value: string) {
     .join(" ");
 }
 
+function getRatingKey(recipeId: number) {
+  return `recipeRating:${recipeId}`;
+}
+
 export default function RecipeCard({
   id,
   title,
@@ -40,6 +44,26 @@ export default function RecipeCard({
   const router = useRouter();
   const [showPreview, setShowPreview] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [rating, setRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadRating = () => {
+      const storedRating = localStorage.getItem(getRatingKey(id));
+      if (storedRating) {
+        const parsedRating = parseInt(storedRating, 10);
+        if (!isNaN(parsedRating) && parsedRating >= 1 && parsedRating <= 5) {
+          setRating(parsedRating);
+        }
+      }
+    };
+
+    loadRating();
+
+    window.addEventListener("recipeRatingUpdated", loadRating);
+    return () => {
+      window.removeEventListener("recipeRatingUpdated", loadRating);
+    };
+  }, [id]);
 
   const handleClick = () => {
     const query = selectedIngredients.length
@@ -118,6 +142,12 @@ export default function RecipeCard({
           <span>{cookTime !== undefined ? `⏱ ${cookTime} min` : "⏱ —"}</span>
           <span>{calories !== undefined ? `🔥 ${calories} kcal` : "🔥 —"}</span>
         </div>
+
+        {rating !== null && (
+          <div className="text-sm text-amber-400">
+            ★ {rating}/5
+          </div>
+        )}
 
         <div className="text-sm font-medium text-emerald-300">
           Matches {matchedIngredients} of your ingredients
