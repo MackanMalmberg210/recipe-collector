@@ -654,6 +654,81 @@ function extractRecipeFromHtml(html: string, url: string): ImportedRecipe {
   };
 }
 
+async function extractSocialMediaRecipeWithAi(
+  url: string,
+  rawText: string,
+  imageUrl: string,
+  authorName: string,
+  geminiKey: string
+): Promise<ImportedRecipe | null> {
+  const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"];
+  const prompt = `You are an expert culinary AI. Analyze this cooking video post / caption / transcript from TikTok or Instagram.
+Post content:
+"${rawText}"
+
+Extract and reconstruct the full recipe:
+1. title: appetizing name of the dish
+2. description: brief 1-2 sentence culinary summary
+3. cookTime: estimated total time in minutes (number)
+4. servings: number of servings (number)
+5. category: recipe category (e.g. pasta, dinner, dessert, breakfast, salad, soup, snack)
+6. ingredients: complete list of ingredients with amounts and units
+7. instructions: clear step-by-step cooking steps in order
+
+Return ONLY valid JSON matching this schema:
+{
+  "title": "string",
+  "description": "string",
+  "cookTime": 25,
+  "servings": 4,
+  "category": "main-course",
+  "ingredients": ["1 tbsp olive oil", "2 cloves garlic"],
+  "instructions": ["Step 1...", "Step 2..."]
+}`;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.1 },
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (jsonText) {
+          let cleaned = jsonText.trim();
+          if (cleaned.startsWith("```")) {
+            cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+          }
+          const parsed = JSON.parse(cleaned);
+          const ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+          return {
+            title: parsed.title || "TikTok Recipe",
+            description: parsed.description || "",
+            image: imageUrl || "",
+            cookTime: Number(parsed.cookTime) || 25,
+            servings: Number(parsed.servings) || 4,
+            ingredients,
+            structuredIngredients: parseIngredientList(ingredients),
+            instructions: Array.isArray(parsed.instructions) ? parsed.instructions : [],
+            sourceUrl: url,
+            sourceName: authorName ? `@${authorName} (TikTok)` : "TikTok",
+          };
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -666,6 +741,38 @@ export async function POST(request: Request) {
       );
     }
 
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+    // 1. TIKTOK SPECIALIZED HANDLER (oEmbed + AI Recipe Reconstruction)
+    if (targetUrl.includes("tiktok.com")) {
+      try {
+        const oembedRes = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(targetUrl)}`);
+        if (oembedRes.ok) {
+          const oembedData = await oembedRes.json();
+          const caption = oembedData.title || "";
+          const author = oembedData.author_name || "";
+          const thumbnail = oembedData.thumbnail_url || "";
+
+          if (geminiKey && caption) {
+            const aiRecipe = await extractSocialMediaRecipeWithAi(targetUrl, caption, thumbnail, author, geminiKey);
+            if (aiRecipe && aiRecipe.ingredients.length > 0) {
+              const normalized = normalizeRecipe({
+                ...aiRecipe,
+                origin: "imported",
+              } as any);
+              return NextResponse.json({
+                success: true,
+                recipe: normalized,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("TikTok oembed extraction error:", err);
+      }
+    }
+
+    // 2. STANDARD WEB & RECIPE BLOG SCRAPING
     const response = await fetch(targetUrl, {
       headers: {
         "User-Agent":
@@ -688,6 +795,27 @@ export async function POST(request: Request) {
 
     if (!imported) {
       imported = extractRecipeFromHtml(html, targetUrl);
+    }
+
+    // If standard extraction yielded few or no ingredients and we have Gemini, perform AI rescue
+    if ((!imported.ingredients || imported.ingredients.length === 0) && geminiKey) {
+      const $ = cheerio.load(html);
+      const pageTitle = $("title").text().trim();
+      const pageMeta = $("meta[name='description']").attr("content") || $("meta[property='og:description']").attr("content") || "";
+      const bodySnippet = $("body").text().replace(/\s+/g, " ").slice(0, 4000);
+      const mainImage = extractBestHtmlImage(html, targetUrl);
+
+      const aiFallback = await extractSocialMediaRecipeWithAi(
+        targetUrl,
+        `${pageTitle}\n${pageMeta}\n${bodySnippet}`,
+        mainImage,
+        "",
+        geminiKey
+      );
+
+      if (aiFallback && aiFallback.ingredients.length > 0) {
+        imported = aiFallback;
+      }
     }
 
     const normalized = normalizeRecipe({

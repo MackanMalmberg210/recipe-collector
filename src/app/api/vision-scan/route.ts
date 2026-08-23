@@ -119,7 +119,14 @@ Return ONLY a valid JSON object matching the requested schema.`;
 }`;
     }
 
-    const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-flash-latest"];
+    const modelsToTry = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-flash-latest",
+      "gemini-1.5-pro",
+    ];
     let result: any = null;
     let lastError: string | null = null;
 
@@ -162,6 +169,10 @@ Return ONLY a valid JSON object matching the requested schema.`;
         } else {
           const errData = await response.json().catch(() => ({}));
           lastError = errData?.error?.message || `HTTP ${response.status}`;
+          // If rate limited or service overloaded, briefly pause and switch to next model
+          if (response.status === 429 || response.status === 503) {
+            await new Promise((r) => setTimeout(r, 600));
+          }
         }
       } catch (err: any) {
         lastError = err?.message;
