@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Google Gemini API Key is missing. To perform live handwriting OCR and recipe vision scanning, please add GEMINI_API_KEY to your .env.local file.",
+            "Google Gemini API Key is missing. To perform live handwriting OCR and recipe vision scanning, please add GEMINI_API_KEY to your environment variables.",
         },
         { status: 400 }
       );
@@ -54,8 +54,16 @@ export async function POST(req: Request) {
     let jsonSchemaPrompt = "";
 
     if (mode === "recipe") {
-      systemPrompt = `You are an expert culinary OCR and vision assistant. Analyze this photo of a cookbook page, recipe card, or handwritten recipe with utmost precision.
-Extract the recipe title, a brief appetizing description, estimated total cook time in minutes, number of servings, category (e.g. pasta, main-course, salad, soup, bowl, breakfast, dessert), list of ingredients with amounts, and clear step-by-step instructions.
+      systemPrompt = `You are an expert culinary OCR and vision assistant. Analyze this photo of a cookbook page, recipe card, printout, or handwritten recipe with utmost precision.
+The text can be in Swedish, English, or any language, and may be oriented horizontally or vertically.
+Extract:
+1. Recipe title (keep in the original language of the recipe)
+2. A brief appetizing description
+3. Estimated total cook time in minutes (number)
+4. Number of servings (number)
+5. Category (e.g. pasta, main-course, salad, soup, bowl, breakfast, dessert, baking)
+6. Complete list of ingredients with amounts and units (e.g. "500g köttfärs", "2 msk olivolja")
+7. Step-by-step instructions in logical order.
 ${userNotes ? `User instructions/notes: "${userNotes}"` : ""}
 Return ONLY a valid JSON object matching the requested schema.`;
 
@@ -70,7 +78,8 @@ Return ONLY a valid JSON object matching the requested schema.`;
 }`;
     } else if (mode === "grocery") {
       systemPrompt = `You are a high-precision handwriting and OCR scanner for grocery lists. Analyze this photo of a handwritten paper note, receipt, or whiteboard list.
-Extract all grocery items written on the note (including any items written at the top or margins) and categorize each item into Produce, Dairy, Meat, Bakery, Beverages, Pantry, or Other.
+The list may be in Swedish or English.
+Extract all grocery items written on the note (including any items written at the top, margins, or crossed out) and categorize each item into Produce, Dairy, Meat, Bakery, Beverages, Pantry, or Other.
 ${userNotes ? `User instructions/notes: "${userNotes}"` : ""}
 Return ONLY a valid JSON object matching the requested schema.`;
 
@@ -110,7 +119,7 @@ Return ONLY a valid JSON object matching the requested schema.`;
 }`;
     }
 
-    const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-flash-latest"];
     let result: any = null;
     let lastError: string | null = null;
 
@@ -168,8 +177,27 @@ Return ONLY a valid JSON object matching the requested schema.`;
       );
     }
 
-    const rawText = result.candidates[0].content.parts[0].text;
-    const parsedData = JSON.parse(rawText);
+    const rawText = result.candidates[0].content.parts[0].text.trim();
+    let cleanedJson = rawText;
+    if (cleanedJson.startsWith("```")) {
+      cleanedJson = cleanedJson.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+    }
+    const jsonMatch = cleanedJson.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedJson = jsonMatch[0];
+    }
+
+    let parsedData: any;
+    try {
+      parsedData = JSON.parse(cleanedJson);
+    } catch (parseErr: any) {
+      return NextResponse.json(
+        {
+          error: `Invalid response format from AI Vision model: ${parseErr.message}`,
+        },
+        { status: 500 }
+      );
+    }
 
     if (mode === "recipe") {
       const ingredients = Array.isArray(parsedData.ingredients)
@@ -224,9 +252,9 @@ Return ONLY a valid JSON object matching the requested schema.`;
       detectedIngredients: Array.isArray(parsedData.detectedIngredients)
         ? parsedData.detectedIngredients
         : [],
-      recipe: {
+      reverseRecipe: {
         id: Date.now(),
-        title: reverseRecipe.title || parsedData.dishName || "Recreated Recipe",
+        title: reverseRecipe.title || parsedData.dishName || "Home-Cooked Dish",
         description: parsedData.description || "",
         cookTime: Number(reverseRecipe.cookTime) || 25,
         servings: Number(reverseRecipe.servings) || 2,
@@ -240,10 +268,9 @@ Return ONLY a valid JSON object matching the requested schema.`;
       },
       source: "Gemini Vision AI",
     });
-  } catch (err: unknown) {
-    const e = err as { message?: string };
+  } catch (error: any) {
     return NextResponse.json(
-      { error: e.message || "Failed to process image scan." },
+      { error: error?.message || "Failed to process image." },
       { status: 500 }
     );
   }

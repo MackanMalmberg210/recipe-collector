@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { saveRecipeToCloudOrLocal } from "../../lib/recipes";
 import { addItemsToGroceryList } from "../../lib/home";
+import { compressImageForOcr } from "../../lib/imageCompressor";
 import { useToast } from "../ui/ToastProvider";
 
 export type VisionMode = "recipe" | "grocery" | "meal_analyzer";
@@ -55,7 +56,7 @@ export default function ChefVisionStudio({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageFile = (file: File) => {
+  const handleImageFile = async (file: File) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -63,18 +64,29 @@ export default function ChefVisionStudio({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setSelectedImage(result);
+    try {
+      // Auto-compress and orient mobile camera images for fast OCR & low payload
+      const compressed = await compressImageForOcr(file, 1600, 1600, 0.85);
+      setSelectedImage(compressed);
       // Reset extracted state for new scan
       setExtractedRecipe(null);
       setExtractedGroceryItems([]);
       setExtractedNutrition(null);
       setSavedRecipeId(null);
       setSavedGrocerySuccess(false);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setSelectedImage(result);
+        setExtractedRecipe(null);
+        setExtractedGroceryItems([]);
+        setExtractedNutrition(null);
+        setSavedRecipeId(null);
+        setSavedGrocerySuccess(false);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -122,10 +134,20 @@ export default function ChefVisionStudio({
         }),
       });
 
-      const data = await res.json();
+      const responseText = await res.text();
+      let data: any;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        if (res.status === 413 || responseText.includes("Entity Too Large")) {
+          throw new Error("The image file is too large. Please take a closer photo or upload a smaller image.");
+        }
+        throw new Error(`Server returned error (${res.status}): ${responseText.slice(0, 120)}`);
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to analyze image.");
+        throw new Error(data?.error || "Failed to analyze image.");
       }
 
       if (activeMode === "recipe") {
