@@ -13,9 +13,9 @@ export async function POST(req: Request) {
   try {
     const { action, email, password, displayName } = await req.json();
 
-    if (!email || !password) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Email and password are required." },
+        { error: "Email address is required." },
         { status: 400 }
       );
     }
@@ -24,6 +24,33 @@ export async function POST(req: Request) {
       auth: { persistSession: false },
     });
 
+    // 1. FORGOT PASSWORD / RECOVERY EMAIL
+    if (action === "forgot_password" || action === "reset_password_request") {
+      const origin = req.headers.get("origin") || req.headers.get("referer") || "http://localhost:3000";
+      const cleanOrigin = origin.replace(/\/$/, "");
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${cleanOrigin}/reset-password`,
+      });
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Password recovery email sent! Please check your inbox.",
+      });
+    }
+
+    if (!password) {
+      return NextResponse.json(
+        { error: "Password is required." },
+        { status: 400 }
+      );
+    }
+
+    // 2. SIGN UP
     if (action === "signup") {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -47,7 +74,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Default to login
+    // 3. SIGN IN
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
