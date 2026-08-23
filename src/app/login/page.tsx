@@ -133,51 +133,116 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0c0907] px-4 py-12 text-stone-100 sm:px-6 lg:px-8">
-      {/* Subtle Culinary Ambient Lighting */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[550px] w-[550px] rounded-full bg-amber-500/10 blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-32 right-1/4 h-[450px] w-[450px] rounded-full bg-orange-600/8 blur-[150px]" />
+    <main className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0a0908] px-4 py-8 lg:px-8">
+      {/* Background ambient lighting */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-emerald-600/15 blur-[120px]" />
+        <div className="absolute -right-40 bottom-0 h-[600px] w-[600px] rounded-full bg-amber-500/10 blur-[140px]" />
+        <div className="absolute left-1/3 top-1/2 h-[300px] w-[300px] -translate-y-1/2 rounded-full bg-orange-600/8 blur-[100px]" />
+      </div>
 
-      <div className="relative w-full max-w-md">
+      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-12">
         
-        {/* Main Card */}
-        <div className="relative overflow-hidden rounded-4xl border border-white/10 bg-[#15110e]/95 p-7 sm:p-9 shadow-2xl backdrop-blur-2xl ring-1 ring-white/5">
-          
-          <div className="relative z-10">
-            {/* Header / Brand (NO background container boxes behind icons!) */}
-            <div className="text-center space-y-1.5 pb-2">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500">
-                Recipe Collector
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#fff8ef]">
-                {mode === "login"
-                  ? "Welcome Back"
-                  : mode === "signup"
-                  ? "Create Account"
-                  : "Reset Password"}
-              </h1>
-              <p className="text-xs text-stone-400">
-                {mode === "login"
-                  ? "Sign in to access your cloud cookbook and meal plans"
-                  : mode === "signup"
-                  ? "Join free to organize your recipes, groceries & meal plans"
-                  : "Enter your account email to receive a password reset link"}
-              </p>
+        {/* LEFT COLUMN: Visual Brand Showcase */}
+        <div className="hidden lg:col-span-6 lg:flex lg:flex-col lg:justify-center">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-300 backdrop-blur-md self-start">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Recipe Collector Cloud
+          </div>
+
+          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-white xl:text-5xl xl:leading-[1.15]">
+            Your kitchen. Your recipes. <br />
+            <span className="bg-gradient-to-r from-amber-400 via-orange-300 to-emerald-400 bg-clip-text text-transparent">
+              Completely clutter-free.
+            </span>
+          </h1>
+
+          <p className="mt-4 text-base leading-relaxed text-stone-300 xl:text-lg">
+            Connect to your personal culinary workspace, collect your favorites from across the web, and plan meals based on what is in your pantry.
+          </p>
+
+          {/* Key Value Props */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-start gap-4 rounded-2xl border border-white/5 bg-stone-900/40 p-3.5 backdrop-blur-md transition hover:border-white/10 hover:bg-stone-900/60">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-100">Instant Recipe Web Import</h3>
+                <p className="text-xs text-stone-400 mt-0.5">Paste any link — we strip ads and life stories to keep only ingredients and cooking steps.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 rounded-2xl border border-white/5 bg-stone-900/40 p-3.5 backdrop-blur-md transition hover:border-white/10 hover:bg-stone-900/60">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-100">Pantry Matcher &amp; Smart Groceries</h3>
+                <p className="text-xs text-stone-400 mt-0.5">Find recipes tailored to leftovers on hand and generate weekly grocery checklists automatically.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 rounded-2xl border border-white/5 bg-stone-900/40 p-3.5 backdrop-blur-md transition hover:border-white/10 hover:bg-stone-900/60">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-100">Secure Cloud Synchronization</h3>
+                <p className="text-xs text-stone-400 mt-0.5">Your private recipes, meal plans, and ratings are securely backed up and synced across all devices.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Clean Auth Card */}
+        <div className="lg:col-span-6 w-full max-w-lg mx-auto">
+          <div className="relative overflow-hidden rounded-3xl border border-white/12 bg-stone-900/90 p-6 sm:p-9 shadow-[0_20px_70px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
+            {/* Top decorative gradient line */}
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-amber-400 to-orange-500" />
+
+            {/* Card Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+                  {mode === "login"
+                    ? "Sign In"
+                    : mode === "signup"
+                    ? "Create Account"
+                    : "Reset Password"}
+                </h2>
+                <p className="text-xs text-stone-400 mt-1">
+                  {mode === "login"
+                    ? "Enter your account credentials below"
+                    : mode === "signup"
+                    ? "Fill out the details below to create your free account"
+                    : "Enter your account email to receive a password recovery link"}
+                </p>
+              </div>
             </div>
 
             {/* Segmented Mode Switcher */}
             {mode !== "forgot_password" ? (
-              <div className="mt-5 grid grid-cols-2 rounded-2xl border border-white/8 bg-black/40 p-1">
+              <div className="mt-6 grid grid-cols-2 rounded-2xl border border-white/8 bg-stone-950/80 p-1.5 z-10 relative">
                 <button
                   type="button"
                   onClick={() => {
                     setMode("login");
                     setMessage(null);
                   }}
-                  className={`rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                  className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "login"
-                      ? "bg-amber-500 text-stone-950 shadow-sm font-extrabold"
-                      : "text-stone-400 hover:text-white"
+                      ? "bg-amber-500 text-stone-950 shadow-md font-black"
+                      : "text-stone-400 hover:text-stone-200"
                   }`}
                 >
                   Sign In
@@ -189,10 +254,10 @@ export default function LoginPage() {
                     setMode("signup");
                     setMessage(null);
                   }}
-                  className={`rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                  className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "signup"
-                      ? "bg-amber-500 text-stone-950 shadow-sm font-extrabold"
-                      : "text-stone-400 hover:text-white"
+                      ? "bg-amber-500 text-stone-950 shadow-md font-black"
+                      : "text-stone-400 hover:text-stone-200"
                   }`}
                 >
                   Create Account
@@ -217,7 +282,7 @@ export default function LoginPage() {
             {/* Feedback message banner */}
             {message && (
               <div
-                className={`mt-5 flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm font-medium transition-all animate-in fade-in ${
+                className={`mt-6 flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm font-medium transition-all ${
                   message.type === "error"
                     ? "border-red-500/30 bg-red-500/10 text-red-300"
                     : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
@@ -239,12 +304,12 @@ export default function LoginPage() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               
               {/* DISPLAY NAME (SIGN UP ONLY) */}
               {mode === "signup" && (
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
                     Your Name / Chef Name
                   </label>
                   <div className="relative mt-1.5">
@@ -257,8 +322,8 @@ export default function LoginPage() {
                       type="text"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="e.g. Marcus"
-                      className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
+                      placeholder="e.g. Gordon"
+                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                     />
                   </div>
                 </div>
@@ -266,7 +331,7 @@ export default function LoginPage() {
 
               {/* EMAIL */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
                   Email Address
                 </label>
                 <div className="relative mt-1.5">
@@ -280,7 +345,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
+                    className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -290,7 +355,7 @@ export default function LoginPage() {
               {mode !== "forgot_password" && (
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
                       Password
                     </label>
 
@@ -301,7 +366,7 @@ export default function LoginPage() {
                           setMode("forgot_password");
                           setMessage(null);
                         }}
-                        className="text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                        className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition cursor-pointer"
                       >
                         Forgot Password?
                       </button>
@@ -320,7 +385,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-11 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
+                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-11 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                       placeholder="••••••••"
                     />
                     <button
@@ -349,7 +414,7 @@ export default function LoginPage() {
               {/* CONFIRM PASSWORD (SIGN UP ONLY) */}
               {mode === "signup" && (
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
                     Confirm Password
                   </label>
                   <div className="relative mt-1.5">
@@ -364,46 +429,71 @@ export default function LoginPage() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
+                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                       placeholder="••••••••"
                     />
                   </div>
                 </div>
               )}
 
-              {/* SUBMIT BUTTON */}
+              {/* Submit CTA */}
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="group relative mt-4 flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-400/25 transition duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-stone-950 border-t-transparent" />
+                  <span className="flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin text-stone-950" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
                     <span>Processing...</span>
-                  </>
+                  </span>
                 ) : mode === "login" ? (
-                  <span>Sign In ➔</span>
+                  <span>Sign In to Kitchen</span>
                 ) : mode === "signup" ? (
-                  <span>Create Account ➔</span>
+                  <span>Create Free Account ✨</span>
                 ) : (
                   <span>Send Recovery Email ✉️</span>
                 )}
               </button>
             </form>
 
-            {/* Back to Home Link */}
-            <div className="mt-6 text-center border-t border-white/5 pt-4">
+            {/* Alternativ länk längst ner för att växla läge */}
+            {mode !== "forgot_password" ? (
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode(mode === "login" ? "signup" : "login");
+                    setMessage(null);
+                  }}
+                  className="text-xs text-stone-400 hover:text-amber-300 transition cursor-pointer underline underline-offset-4"
+                >
+                  {mode === "login"
+                    ? "Don't have an account? Create one for free →"
+                    : "Already have an account? Sign in here →"}
+                </button>
+              </div>
+            ) : null}
+
+            {/* Back to Home */}
+            <div className="mt-6 border-t border-white/5 pt-4 text-center">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-400 hover:text-amber-400 transition"
               >
-                <span>←</span>
-                <span>Back to Kitchen Hub</span>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Back to overview</span>
               </Link>
             </div>
+
           </div>
         </div>
+
       </div>
     </main>
   );
