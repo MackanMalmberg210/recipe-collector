@@ -59,7 +59,7 @@ export default function LoginPage() {
         }
 
         setMessage({
-          text: `Password recovery email sent to ${cleanEmail}! ✉️ Click the link in your email to choose a new password.`,
+          text: `Password recovery email sent to ${cleanEmail}! ✉️ Check your inbox to set a new password.`,
           type: "success",
         });
         setLoading(false);
@@ -115,7 +115,7 @@ export default function LoginPage() {
       }
 
       setMessage({
-        text: data.message || "Success! Redirecting...",
+        text: data.message || "Success! Redirecting to Kitchen...",
         type: "success",
       });
 
@@ -133,53 +133,51 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0a0908] px-4 py-8 lg:px-8">
-      {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[500px] rounded-full bg-amber-500/10 blur-[120px]" />
-      <div className="pointer-events-none absolute -bottom-40 right-10 h-[400px] w-[400px] rounded-full bg-orange-600/10 blur-[140px]" />
+    <main className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0c0907] px-4 py-12 text-stone-100 sm:px-6 lg:px-8">
+      {/* Subtle Culinary Ambient Lighting */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[550px] w-[550px] rounded-full bg-amber-500/10 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-32 right-1/4 h-[450px] w-[450px] rounded-full bg-orange-600/8 blur-[150px]" />
 
       <div className="relative w-full max-w-md">
         
         {/* Main Card */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#14100c]/90 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-4xl border border-white/10 bg-[#15110e]/95 p-7 sm:p-9 shadow-2xl backdrop-blur-2xl ring-1 ring-white/5">
           
           <div className="relative z-10">
-            {/* Header / Brand */}
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/15 text-2xl border border-amber-500/20 shadow-xs">
-                🍳
-              </span>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#fff8ef]">
-                  {mode === "login"
-                    ? "Welcome Back"
-                    : mode === "signup"
-                    ? "Create Account"
-                    : "Reset Password"}
-                </h2>
-                <p className="text-xs text-stone-400 mt-1">
-                  {mode === "login"
-                    ? "Enter your account credentials below"
-                    : mode === "signup"
-                    ? "Fill out the details below to create your free account"
-                    : "Enter your email address and we'll send you a recovery link"}
-                </p>
-              </div>
+            {/* Header / Brand (NO background container boxes behind icons!) */}
+            <div className="text-center space-y-1.5 pb-2">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500">
+                Recipe Collector
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#fff8ef]">
+                {mode === "login"
+                  ? "Welcome Back"
+                  : mode === "signup"
+                  ? "Create Account"
+                  : "Reset Password"}
+              </h1>
+              <p className="text-xs text-stone-400">
+                {mode === "login"
+                  ? "Sign in to access your cloud cookbook and meal plans"
+                  : mode === "signup"
+                  ? "Join free to organize your recipes, groceries & meal plans"
+                  : "Enter your account email to receive a password reset link"}
+              </p>
             </div>
 
             {/* Segmented Mode Switcher */}
             {mode !== "forgot_password" ? (
-              <div className="mt-6 grid grid-cols-2 rounded-2xl border border-white/8 bg-stone-950/80 p-1.5 z-10 relative">
+              <div className="mt-5 grid grid-cols-2 rounded-2xl border border-white/8 bg-black/40 p-1">
                 <button
                   type="button"
                   onClick={() => {
                     setMode("login");
                     setMessage(null);
                   }}
-                  className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                  className={`rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "login"
-                      ? "bg-amber-500 text-stone-950 shadow-md font-black"
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "bg-amber-500 text-stone-950 shadow-sm font-extrabold"
+                      : "text-stone-400 hover:text-white"
                   }`}
                 >
                   Sign In
@@ -191,24 +189,24 @@ export default function LoginPage() {
                     setMode("signup");
                     setMessage(null);
                   }}
-                  className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                  className={`rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "signup"
-                      ? "bg-amber-500 text-stone-950 shadow-md font-black"
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "bg-amber-500 text-stone-950 shadow-sm font-extrabold"
+                      : "text-stone-400 hover:text-white"
                   }`}
                 >
                   Create Account
                 </button>
               </div>
             ) : (
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-4 flex items-center justify-between border-b border-white/8 pb-3">
                 <button
                   type="button"
                   onClick={() => {
                     setMode("login");
                     setMessage(null);
                   }}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
                 >
                   <span>←</span>
                   <span>Back to Sign In</span>
@@ -219,7 +217,7 @@ export default function LoginPage() {
             {/* Feedback message banner */}
             {message && (
               <div
-                className={`mt-6 flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm font-medium transition-all ${
+                className={`mt-5 flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm font-medium transition-all animate-in fade-in ${
                   message.type === "error"
                     ? "border-red-500/30 bg-red-500/10 text-red-300"
                     : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
@@ -241,12 +239,12 @@ export default function LoginPage() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
               
               {/* DISPLAY NAME (SIGN UP ONLY) */}
               {mode === "signup" && (
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
                     Your Name / Chef Name
                   </label>
                   <div className="relative mt-1.5">
@@ -259,8 +257,8 @@ export default function LoginPage() {
                       type="text"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="e.g. Gordon"
-                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                      placeholder="e.g. Marcus"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
                     />
                   </div>
                 </div>
@@ -268,7 +266,7 @@ export default function LoginPage() {
 
               {/* EMAIL */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
                   Email Address
                 </label>
                 <div className="relative mt-1.5">
@@ -282,7 +280,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -292,7 +290,7 @@ export default function LoginPage() {
               {mode !== "forgot_password" && (
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
                       Password
                     </label>
 
@@ -303,7 +301,7 @@ export default function LoginPage() {
                           setMode("forgot_password");
                           setMessage(null);
                         }}
-                        className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                        className="text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
                       >
                         Forgot Password?
                       </button>
@@ -322,7 +320,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-11 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-11 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
                       placeholder="••••••••"
                     />
                     <button
@@ -330,6 +328,7 @@ export default function LoginPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-stone-400 hover:text-white transition cursor-pointer"
                       title={showPassword ? "Hide password" : "Show password"}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? (
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -350,7 +349,7 @@ export default function LoginPage() {
               {/* CONFIRM PASSWORD (SIGN UP ONLY) */}
               {mode === "signup" && (
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-300">
                     Confirm Password
                   </label>
                   <div className="relative mt-1.5">
@@ -365,7 +364,7 @@ export default function LoginPage() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:bg-black/60 focus:ring-2 focus:ring-amber-400/20"
                       placeholder="••••••••"
                     />
                   </div>
@@ -376,7 +375,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 py-3 text-sm font-bold text-stone-950 shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -394,10 +393,10 @@ export default function LoginPage() {
             </form>
 
             {/* Back to Home Link */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center border-t border-white/5 pt-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 transition"
+                className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition"
               >
                 <span>←</span>
                 <span>Back to Kitchen Hub</span>
