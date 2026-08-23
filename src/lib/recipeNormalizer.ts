@@ -1,21 +1,27 @@
 import { generateRecipeMetadata } from "./recipeMetadata";
-import type { AppRecipe, NutritionInfo } from "./types";
+import { parseIngredientList } from "./ingredientParser";
+import type { AppRecipe, IngredientGroup, NutritionInfo } from "./types";
 
 type NormalizerOrigin = AppRecipe["origin"];
 
 export type RawRecipeInput = {
    id?: number;
    title?: string | null;
+   description?: string | null;
    image?: string | null;
    cookTime?: number | null;
    readyInMinutes?: number | null;
    calories?: number | null;
    servings?: number | null;
+   servingsText?: string | null;
    sourceUrl?: string | null;
    sourceName?: string | null;
    ingredients?: string[] | null;
+   ingredientGroups?: IngredientGroup[] | null;
    instructions?: string[] | null;
    nutrition?: NutritionInfo | null;
+   videoUrl?: string | null;
+   videoEmbedUrl?: string | null;
    origin?: NormalizerOrigin;
 };
 
@@ -56,8 +62,24 @@ function createRecipeId() {
    return Date.now();
 }
 
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#038;/g, "&")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
 function cleanText(value: string) {
-   return value.replace(/\s+/g, " ").trim();
+   return decodeHtmlEntities(value).replace(/\s+/g, " ").trim();
 }
 
 function normalizeString(value: string | null | undefined) {
@@ -79,6 +101,43 @@ function normalizeStringArray(values: string[] | null | undefined) {
       .filter((value, index, array) => value && array.indexOf(value) === index);
 }
 
+export function upgradeToHighResImageUrl(imageUrl: string): string {
+  if (!imageUrl) return "";
+
+  let upgraded = imageUrl.trim();
+
+  // 1. Remove WordPress thumbnail downscale dimension suffixes (e.g. -300x300.jpg, -500x375.webp, -150x150.jpg, -720x405.jpg, -768x...jpg)
+  upgraded = upgraded.replace(/-\d+x\d+(\.[a-zA-Z0-9]+(?:\?.*)?)$/i, "$1");
+
+  // 2. Remove WordPress / Tachyon / Mediavine / CDN resize query params (e.g. ?fit=225%2C225, ?resize=400%2C400, ?w=300)
+  if (
+    upgraded.includes("/tachyon/") ||
+    upgraded.includes("/wp-content/uploads/") ||
+    upgraded.includes("pinchofyum.com") ||
+    upgraded.includes("mediavine")
+  ) {
+    upgraded = upgraded.split("?")[0];
+  } else {
+    try {
+      const urlObj = new URL(upgraded);
+      const paramsToDelete = ["resize", "fit", "w", "h", "width", "height", "crop", "zoom", "quality", "strip"];
+      for (const p of paramsToDelete) {
+        urlObj.searchParams.delete(p);
+      }
+      upgraded = urlObj.toString();
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 3. Upgrade Cloudinary / imgix / WordPress photon dimensions
+  if (upgraded.includes("cloudinary.com") || upgraded.includes("imgix.net") || upgraded.includes("wp.com")) {
+    upgraded = upgraded.replace(/\/c_fill,w_\d+,h_\d+\//, "/c_limit,w_1600/");
+  }
+
+  return upgraded;
+}
+
 function formatNutrientValue(amount?: number | null, unit?: string | null) {
    if (typeof amount !== "number" || !Number.isFinite(amount)) return undefined;
 
@@ -96,24 +155,23 @@ type SpoonacularNutrient = {
 };
 
 function getNutrient(
-   nutrients: SpoonacularNutrient[] | undefined,
+   nutrients: SpoonacularNutrient[] | null | undefined,
    name: string,
 ) {
    if (!Array.isArray(nutrients)) return undefined;
 
    return nutrients.find(
       (nutrient) =>
-         nutrient.name?.trim().toLowerCase() === name.trim().toLowerCase(),
+         nutrient.name?.toLowerCase().trim() === name.toLowerCase().trim(),
    );
 }
 
 function mapSpoonacularNutrition(
    nutrition: SpoonacularRecipeInput["nutrition"],
 ): NutritionInfo | undefined {
-   const nutrients = nutrition?.nutrients;
+   if (!nutrition?.nutrients) return undefined;
 
-   if (!Array.isArray(nutrients)) return undefined;
-
+   const nutrients = nutrition.nutrients;
    const calories = getNutrient(nutrients, "Calories");
    const fat = getNutrient(nutrients, "Fat");
    const saturatedFat = getNutrient(nutrients, "Saturated Fat");
@@ -187,7 +245,9 @@ function normalizeSpoonacularInstructions(
 export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
    const title = normalizeString(input.title) || "Untitled recipe";
    const ingredients = normalizeStringArray(input.ingredients);
+   const structuredIngredients = parseIngredientList(ingredients);
    const instructions = normalizeStringArray(input.instructions);
+   const image = upgradeToHighResImageUrl(normalizeString(input.image) || FALLBACK_IMAGE);
    const cookTime =
       normalizeNumber(input.cookTime) ?? normalizeNumber(input.readyInMinutes);
    const calories =
@@ -202,15 +262,21 @@ export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
    return {
       id: input.id ?? createRecipeId(),
       title,
-      image: normalizeString(input.image) || FALLBACK_IMAGE,
+      description: normalizeString(input.description) || undefined,
+      image,
       cookTime,
       calories,
       ingredients,
+      structuredIngredients,
+      ingredientGroups: input.ingredientGroups ?? undefined,
       instructions,
       servings: normalizeNumber(input.servings),
+      servingsText: normalizeString(input.servingsText) || undefined,
       nutrition: input.nutrition ?? undefined,
       sourceUrl: normalizeString(input.sourceUrl) || undefined,
       sourceName: normalizeString(input.sourceName) || undefined,
+      videoUrl: normalizeString(input.videoUrl) || undefined,
+      videoEmbedUrl: normalizeString(input.videoEmbedUrl) || undefined,
       category: metadata.category,
       mealType: metadata.mealType,
       tags: metadata.tags,

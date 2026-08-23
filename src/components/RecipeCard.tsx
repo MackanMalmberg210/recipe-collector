@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getRecipeRating, RecipeRating } from "../lib/ratings";
+import StarRating from "./StarRating";
 
 type RecipeCardProps = {
   id: number;
@@ -17,13 +19,6 @@ type RecipeCardProps = {
   ingredients?: string[];
 };
 
-function capitalizeWords(value: string) {
-  return value
-    .split(" ")
-    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
-    .join(" ");
-}
-
 export default function RecipeCard({
   id,
   title,
@@ -38,8 +33,11 @@ export default function RecipeCard({
   ingredients = [],
 }: RecipeCardProps) {
   const router = useRouter();
-  const [showPreview, setShowPreview] = useState(false);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [rating, setRating] = useState<RecipeRating | null>(null);
+
+  useEffect(() => {
+    setRating(getRecipeRating(id));
+  }, [id]);
 
   const handleClick = () => {
     const query = selectedIngredients.length
@@ -49,142 +47,90 @@ export default function RecipeCard({
     router.push(`/recipes/${id}${query}`);
   };
 
-  const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-
-    hoverTimeoutRef.current = setTimeout(() => {
-      setShowPreview(true);
-    }, 300);
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-
-    setShowPreview(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const previewIngredients = ingredients.slice(0, 6);
-
   return (
     <div
+      suppressHydrationWarning
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="group relative cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/8 bg-stone-900/80 text-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-white/14 hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+      className="group relative flex flex-col justify-between cursor-pointer overflow-hidden rounded-4xl border border-stone-200/90 bg-white text-stone-900 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-amber-500/50 hover:shadow-xl dark:border-white/10 dark:bg-stone-900/90 dark:text-white dark:hover:border-amber-400/40 dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
     >
-      <div className="relative">
-        <img src={image} alt={title} className="h-44 w-full object-cover" />
-        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+      {/* STATIC ROCK-SOLID IMAGE CONTAINER - NO SCALING JITTER */}
+      <div className="relative h-48 w-full overflow-hidden bg-stone-100 dark:bg-stone-950">
+        <img
+          src={image}
+          alt={title}
+          className="h-full w-full object-cover block transition-opacity duration-200 group-hover:opacity-95"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent pointer-events-none" />
 
         {isBestMatch && (
-          <div className="absolute left-3 top-3 z-10 inline-flex rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-stone-950 shadow-md">
-            Best match
+          <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-stone-950 shadow-md">
+            <span>✨</span> Best match
           </div>
         )}
 
         {origin === "imported" && (
-          <div className="absolute right-3 top-3 z-10 inline-flex rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-200 shadow-md">
+          <div className="absolute right-3 top-3 z-10 inline-flex rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-stone-950 shadow-md">
             Imported
           </div>
         )}
 
         {origin === "user" && (
-          <div className="absolute right-3 top-3 z-10 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-stone-100 shadow-md">
+          <div className="absolute right-3 top-3 z-10 inline-flex rounded-full bg-stone-900/80 px-3 py-1 text-xs font-bold text-stone-100 shadow-md backdrop-blur-sm">
             Your recipe
           </div>
         )}
-      </div>
 
-      <div className="space-y-3 p-5">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold leading-tight text-stone-50">
-            {title}
-          </h3>
-        </div>
-
-        <div className="flex justify-between text-sm text-stone-400">
-          <span>{cookTime !== undefined ? `⏱ ${cookTime} min` : "⏱ —"}</span>
-          <span>{calories !== undefined ? `🔥 ${calories} kcal` : "🔥 —"}</span>
-        </div>
-
-        <div className="text-sm font-medium text-emerald-300">
-          Matches {matchedIngredients} of your ingredients
-        </div>
-
-        <div className="text-xs text-stone-500">
-          {totalIngredients} total ingredients
-        </div>
-      </div>
-
-      <div
-        className={`pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-[linear-gradient(180deg,rgba(10,10,10,0.08)_0%,rgba(12,10,8,0.82)_35%,rgba(12,10,8,0.96)_100%)] p-5 transition-all duration-300 ${
-          showPreview ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-        }`}
-      >
-        <div className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4 backdrop-blur-md">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h4 className="truncate text-sm font-semibold text-stone-50">
-              Quick preview
-            </h4>
-
-            <span className="text-xs text-stone-400">
-              {matchedIngredients}/{totalIngredients} matched
-            </span>
-          </div>
-
-          <div className="mb-3 flex flex-wrap gap-2 text-xs text-stone-300">
+        {/* BOTTOM IMAGE STATS BAR */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-semibold text-white">
+          <div className="flex items-center gap-2">
             {cookTime !== undefined && (
-              <span className="rounded-full bg-white/6 px-2.5 py-1">
+              <span className="rounded-full bg-black/40 px-2.5 py-0.5 backdrop-blur-md">
                 ⏱ {cookTime} min
               </span>
             )}
             {calories !== undefined && (
-              <span className="rounded-full bg-white/6 px-2.5 py-1">
+              <span className="rounded-full bg-black/40 px-2.5 py-0.5 backdrop-blur-md">
                 🔥 {calories} kcal
               </span>
             )}
           </div>
 
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-stone-400">
-              Ingredients
+          {rating !== null && (
+            <div className="rounded-full bg-black/40 px-2 py-0.5 backdrop-blur-md">
+              <StarRating value={rating} readOnly size="sm" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CONTENT DETAILS */}
+      <div className="flex flex-col justify-between flex-1 p-5 space-y-3">
+        <div>
+          <h3 className="line-clamp-2 text-lg font-bold leading-snug text-stone-900 transition-colors duration-200 group-hover:text-amber-600 dark:text-stone-50 dark:group-hover:text-amber-300">
+            {title}
+          </h3>
+
+          {ingredients.length > 0 && (
+            <p className="mt-1 line-clamp-1 text-xs text-stone-500 dark:text-stone-400">
+              {ingredients.slice(0, 4).join(" • ")}
             </p>
+          )}
+        </div>
 
-            {previewIngredients.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {previewIngredients.map((ingredient) => (
-                  <span
-                    key={`${id}-${ingredient}`}
-                    className="rounded-full border border-white/8 bg-white/6 px-2.5 py-1 text-xs text-stone-200"
-                  >
-                    {capitalizeWords(ingredient)}
-                  </span>
-                ))}
+        <div className="pt-3 border-t border-stone-100 dark:border-white/6 flex items-center justify-between">
+          {selectedIngredients.length > 0 ? (
+            <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              Matches {matchedIngredients} of {totalIngredients} ingredients
+            </div>
+          ) : (
+            <div className="text-xs font-semibold text-stone-400 dark:text-stone-500">
+              {totalIngredients} ingredients
+            </div>
+          )}
 
-                {ingredients.length > 6 && (
-                  <span className="rounded-full border border-white/8 bg-white/6 px-2.5 py-1 text-xs text-stone-400">
-                    +{ingredients.length - 6} more
-                  </span>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-stone-500">
-                No ingredients preview available.
-              </p>
-            )}
-          </div>
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 transition-transform duration-200 group-hover:translate-x-1">
+            View recipe →
+          </span>
         </div>
       </div>
     </div>

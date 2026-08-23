@@ -1,247 +1,180 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getAllRecipes } from "../lib/recipes";
+import { getAllRecipes, getAllRecipesWithCloud, getMockRecipes } from "../lib/recipes";
 import type { AppRecipe, RecipeSortMode } from "../lib/types";
-import HomeHero from "../components/home/HomeHero";
-import HomeSectionNav from "../components/home/HomeSectionNav";
-import PantrySearchSection from "../components/home/PantrySearchSection";
+import HomeHero, { type TasteVibe } from "../components/home/HomeHero";
 import RecipeMatchesSection from "../components/home/RecipeMatchesSection";
-import PlannerPreviewSection from "../components/home/PlannerPreviewSection";
-import KitchenHubSection from "../components/home/KitchenHubSection";
-import {
-  GROCERY_LIST_KEY,
-  SELECTED_INGREDIENTS_KEY,
-  getFilteredRecipes,
-  getRecipeSuggestions,
-  getRecentImportedRecipes,
-  getSavedPreviewRecipes,
-  getStoredGroceryList,
-  getStoredIngredients,
-  getStoredRecentlyViewedIds,
-  getStoredSavedRecipeIds,
-  getRecentlyViewedRecipes,
-  normalizeIngredient,
-} from "../lib/home";
-import {
-  countPlannedMeals,
-  createEmptyMealPlan,
-  getPlannedRecipeSummaries,
-  getStoredMealPlan,
-  type MealPlan,
-} from "../lib/planner";
-
-type GroceryItem = {
-  name: string;
-  bought: boolean;
-};
+import ImportRecipeModal from "../components/import/ImportRecipeModal";
+import TodaysMenuBanner from "../components/home/TodaysMenuBanner";
+import CulinaryAiShowcaseBanner from "../components/home/CulinaryAiShowcaseBanner";
+import VisionScanModal from "../components/vision/VisionScanModal";
+import { getFilteredRecipes } from "../lib/home";
+import { getStoredUserSettings, DEFAULT_USER_SETTINGS, isRecipeDietaryCompatible, type UserSettings } from "../lib/settings";
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
-  const [hasHydrated, setHasHydrated] = useState(false);
-  const [hideZeroMatches, setHideZeroMatches] = useState(false);
-  const [allRecipes, setAllRecipes] = useState<AppRecipe[]>([]);
-  const [savedRecipeIds, setSavedRecipeIds] = useState<number[]>([]);
-  const [recentlyViewedIds, setRecentlyViewedIds] = useState<number[]>([]);
-  const [mealPlan, setMealPlan] = useState<MealPlan>(createEmptyMealPlan());
-  const [sortMode, setSortMode] = useState<RecipeSortMode>("best-match");
+  const [allRecipes, setAllRecipes] = useState<AppRecipe[]>(getMockRecipes);
+  const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
+  const [activeVibe, setActiveVibe] = useState<TasteVibe>("all");
+  const [sortMode, setSortMode] = useState<RecipeSortMode>("cook-time");
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isVisionScanOpen, setIsVisionScanOpen] = useState(false);
+  const [visionMode, setVisionMode] = useState<"recipe" | "meal_analyzer">("meal_analyzer");
+
+  const loadRecipes = async () => {
+    setAllRecipes(getAllRecipes());
+    try {
+      const combined = await getAllRecipesWithCloud();
+      setAllRecipes(combined);
+    } catch {}
+  };
 
   useEffect(() => {
-    setSelectedIngredients(getStoredIngredients());
-    setGroceryList(getStoredGroceryList());
-    setSavedRecipeIds(getStoredSavedRecipeIds());
-    setRecentlyViewedIds(getStoredRecentlyViewedIds());
-    setMealPlan(getStoredMealPlan());
-    setHasHydrated(true);
-  }, []);
+    loadRecipes();
+    setUserSettings(getStoredUserSettings());
 
-  useEffect(() => {
-    if (!hasHydrated) return;
+    const handleSettingsUpdate = () => {
+      setUserSettings(getStoredUserSettings());
+    };
 
-    localStorage.setItem(
-      SELECTED_INGREDIENTS_KEY,
-      JSON.stringify(selectedIngredients),
-    );
-  }, [selectedIngredients, hasHydrated]);
-
-  useEffect(() => {
-    if (!hasHydrated) return;
-
-    localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(groceryList));
-  }, [groceryList, hasHydrated]);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      setGroceryList(getStoredGroceryList());
-      setSavedRecipeIds(getStoredSavedRecipeIds());
-      setRecentlyViewedIds(getStoredRecentlyViewedIds());
-      setMealPlan(getStoredMealPlan());
-      setAllRecipes(getAllRecipes());
+    const handleFocus = async () => {
+      const recipes = await getAllRecipesWithCloud();
+      setAllRecipes(recipes);
+      setUserSettings(getStoredUserSettings());
     };
 
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleSettingsUpdate);
+    window.addEventListener("user_settings_updated", handleSettingsUpdate);
 
     return () => {
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleSettingsUpdate);
+      window.removeEventListener("user_settings_updated", handleSettingsUpdate);
     };
   }, []);
 
-  useEffect(() => {
-    setAllRecipes(getAllRecipes());
-  }, []);
-
-  const handleAddIngredient = (ingredient: string) => {
-    const normalizedIngredient = normalizeIngredient(ingredient);
-
-    if (!normalizedIngredient) return;
-
-    setSelectedIngredients((prev) =>
-      prev.includes(normalizedIngredient)
-        ? prev
-        : [...prev, normalizedIngredient],
+  // Strict Dietary Preferences filtering
+  const dietaryFilteredRecipes = useMemo(() => {
+    if (!userSettings.strictDietaryFilter || userSettings.dietaryPreferences.length === 0) {
+      return allRecipes;
+    }
+    return allRecipes.filter((recipe) =>
+      isRecipeDietaryCompatible(recipe, userSettings.dietaryPreferences),
     );
-  };
+  }, [allRecipes, userSettings]);
 
-  const handleRemoveIngredient = (ingredient: string) => {
-    const normalizedIngredient = normalizeIngredient(ingredient);
+  // Primary filtering by vibe / mood
+  const vibeFilteredRecipes = useMemo(() => {
+    if (activeVibe === "all") return dietaryFilteredRecipes;
 
-    setSelectedIngredients((prev) =>
-      prev.filter((item) => item !== normalizedIngredient),
-    );
-  };
+    return dietaryFilteredRecipes.filter((recipe) => {
+      if (activeVibe === "quick") {
+        return recipe.cookTime !== undefined && recipe.cookTime <= 25;
+      }
 
-  const handleRemoveGroceryItem = (name: string) => {
-    const normalizedName = normalizeIngredient(name);
+      if (activeVibe === "protein") {
+        const keywords = ["chicken", "beef", "salmon", "egg", "tuna", "pork", "steak", "turkey", "shrimp"];
+        return recipe.ingredients.some((ing) =>
+          keywords.some((kw) => ing.toLowerCase().includes(kw)),
+        );
+      }
 
-    setGroceryList((prev) =>
-      prev.filter((item) => item.name !== normalizedName),
-    );
-  };
+      if (activeVibe === "vegetarian") {
+        const meatWords = ["chicken", "beef", "pork", "bacon", "salmon", "shrimp", "steak", "tuna", "meat"];
+        return !recipe.ingredients.some((ing) =>
+          meatWords.some((mw) => ing.toLowerCase().includes(mw)),
+        );
+      }
 
-  const handleToggleBought = (name: string) => {
-    const normalizedName = normalizeIngredient(name);
+      if (activeVibe === "family") {
+        return (recipe.servings ?? 0) >= 4 || recipe.category === "main-course" || recipe.category === "pasta";
+      }
 
-    setGroceryList((prev) =>
-      prev.map((item) =>
-        item.name === normalizedName ? { ...item, bought: !item.bought } : item,
-      ),
-    );
-  };
+      if (activeVibe === "budget") {
+        const staples = ["pasta", "rice", "beans", "potato", "onion", "egg", "canned"];
+        return recipe.ingredients.some((ing) =>
+          staples.some((s) => ing.toLowerCase().includes(s)),
+        );
+      }
 
-  const handleClearGroceryList = () => {
-    setGroceryList([]);
-  };
+      return true;
+    });
+  }, [dietaryFilteredRecipes, activeVibe]);
 
-  const suggestions = useMemo(
-    () => getRecipeSuggestions(allRecipes, searchTerm),
-    [allRecipes, searchTerm],
-  );
-
+  // Secondary search and sorting
   const filteredRecipes = useMemo(
     () =>
       getFilteredRecipes(
-        allRecipes,
-        selectedIngredients,
+        vibeFilteredRecipes,
+        [],
         searchTerm,
-        hideZeroMatches,
+        false,
         sortMode,
       ),
-    [allRecipes, selectedIngredients, searchTerm, hideZeroMatches, sortMode],
+    [vibeFilteredRecipes, searchTerm, sortMode],
   );
-
-  const importedRecipes = useMemo(
-    () => allRecipes.filter((recipe) => recipe.origin === "imported"),
-    [allRecipes],
-  );
-
-  const recentImportedRecipes = useMemo(
-    () => getRecentImportedRecipes(allRecipes, 6),
-    [allRecipes],
-  );
-
-  const savedPreviewRecipes = useMemo(
-    () => getSavedPreviewRecipes(allRecipes, savedRecipeIds, 6),
-    [allRecipes, savedRecipeIds],
-  );
-
-  const recentlyViewedRecipes = useMemo(
-    () => getRecentlyViewedRecipes(allRecipes, recentlyViewedIds, 6),
-    [allRecipes, recentlyViewedIds],
-  );
-
-  const plannedMealsCount = useMemo(
-    () => countPlannedMeals(mealPlan),
-    [mealPlan],
-  );
-
-  const plannedRecipeSummaries = useMemo(
-    () => getPlannedRecipeSummaries(allRecipes, mealPlan),
-    [allRecipes, mealPlan],
-  );
-
-  const daysRemaining = 7 - plannedMealsCount;
 
   return (
-    <main className="min-h-screen bg-[#0f0d0b] text-white">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[-5%] h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute right-[-8%] top-[10%] h-96 w-96 rounded-full bg-amber-400/8 blur-3xl" />
-        <div className="absolute bottom-[-8%] left-[15%] h-80 w-80 rounded-full bg-orange-500/6 blur-3xl" />
-      </div>
+    <main className="min-h-screen bg-[#f8f6f2] text-stone-900 transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
+      <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1820px] space-y-6">
+        
+        {/* 1. PROMINENT FULL-WIDTH SEARCH & TASTE VIBES HERO */}
+        <HomeHero
+          activeVibe={activeVibe}
+          onVibeChange={setActiveVibe}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          totalRecipes={allRecipes.length}
+          filteredCount={filteredRecipes.length}
+        />
 
-      <div className="relative px-6 py-8 xl:px-10">
-        <div className="mx-auto w-full max-w-425">
-          <HomeHero
-            totalRecipes={allRecipes.length}
-            selectedIngredientsCount={selectedIngredients.length}
-            groceryItemsCount={groceryList.length}
-            importedRecipesCount={importedRecipes.length}
-          />
-
-          <HomeSectionNav />
-
-          <PlannerPreviewSection
-            plannedMealsCount={plannedMealsCount}
-            daysRemaining={daysRemaining}
-            plannedRecipes={plannedRecipeSummaries}
-          />
-
-          <KitchenHubSection
-            savedRecipes={savedPreviewRecipes}
-            importedRecipes={recentImportedRecipes}
-            recentlyViewedRecipes={recentlyViewedRecipes}
-            savedRecipeIds={savedRecipeIds}
-          />
-
-          <PantrySearchSection
-            selectedIngredients={selectedIngredients}
-            onAddIngredient={handleAddIngredient}
-            onRemoveIngredient={handleRemoveIngredient}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            suggestions={suggestions}
-            matchedRecipesCount={
-              filteredRecipes.filter((recipe) => recipe.matchedIngredients > 0)
-                .length
-            }
-          />
-
-          <RecipeMatchesSection
-            filteredRecipes={filteredRecipes}
-            selectedIngredients={selectedIngredients}
-            hideZeroMatches={hideZeroMatches}
-            onHideZeroMatchesChange={setHideZeroMatches}
-            sortMode={sortMode}
-            onSortModeChange={setSortMode}
-            groceryList={groceryList}
-            onToggleBought={handleToggleBought}
-            onRemoveGroceryItem={handleRemoveGroceryItem}
-            onClearGroceryList={handleClearGroceryList}
+        {/* 2. DYNAMIC 2-COLUMN HUB: TODAY'S MENU & CHEF AI VISION */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <TodaysMenuBanner allRecipes={allRecipes} />
+          
+          <CulinaryAiShowcaseBanner
+            onOpenSnapPlate={() => {
+              setVisionMode("meal_analyzer");
+              setIsVisionScanOpen(true);
+            }}
+            onOpenScanCookbook={() => {
+              setVisionMode("recipe");
+              setIsVisionScanOpen(true);
+            }}
           />
         </div>
+
+        {/* 4. INSTANT RECIPE MATCHES & DISCOVERY GRID */}
+        <RecipeMatchesSection
+          filteredRecipes={filteredRecipes}
+          sortMode={sortMode}
+          onSortModeChange={setSortMode}
+          activeVibe={activeVibe}
+          searchTerm={searchTerm}
+        />
+
       </div>
+
+      {/* IMPORT RECIPE MODAL OVERLAY */}
+      <ImportRecipeModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onRecipeSaved={() => {
+          loadRecipes();
+        }}
+      />
+
+      {/* VISION SCAN MODAL OVERLAY */}
+      <VisionScanModal
+        isOpen={isVisionScanOpen}
+        onClose={() => setIsVisionScanOpen(false)}
+        defaultMode={visionMode}
+        onRecipeExtracted={() => {
+          loadRecipes();
+        }}
+      />
     </main>
   );
 }

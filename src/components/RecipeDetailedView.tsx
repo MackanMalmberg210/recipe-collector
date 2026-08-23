@@ -1,17 +1,29 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import type { AppRecipe } from "../lib/types";
-import RecipeActionBar from "./recipe-detail/RecipeActionBar";
 import RecipeHero from "./recipe-detail/RecipeHero";
-import RecipeIngredientsPanel from "./recipe-detail/RecipeIngredientsPanel";
+import RecipeVideoPlayer from "./recipe-detail/RecipeVideoPlayer";
 import RecipeInstructions from "./recipe-detail/RecipeInstructions";
+import RecipeJournalPanel from "./recipe-detail/RecipeJournalPanel";
+import RecipeIngredientsPanel from "./recipe-detail/RecipeIngredientsPanel";
 import RecipeNutritionPanel from "./recipe-detail/RecipeNutritionPanel";
-import RecipeNotices from "./recipe-detail/RecipeNotices";
-import { getAllRecipes } from "../lib/recipes";
-import RecipeNotesPanel from "./recipe-detail/RecipeNotesPanel";
 import SimilarRecipesPanel from "./recipe-detail/SimilarRecipesPanel";
+import CookModeModal from "./recipe-detail/CookModeModal";
+import ShareRecipeModal from "./recipe-detail/ShareRecipeModal";
+import ConfirmModal from "./ui/ConfirmModal";
+import { useToast } from "./ui/ToastProvider";
+import {
+  getAllRecipesWithCloud,
+  getSavedRecipeIds,
+  moveRecipeToTrash,
+  restoreRecipeFromTrash,
+  saveRecipeId,
+  removeSavedRecipe,
+} from "../lib/recipes";
+import { getRecipeRating } from "../lib/ratings";
 
 type RecipeDetailedViewProps = {
   recipe: AppRecipe;
@@ -29,17 +41,42 @@ function normalizeIngredient(value: string) {
 export default function RecipeDetailedView({
   recipe,
 }: RecipeDetailedViewProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { success, info } = useToast();
 
-  const [saved, setSaved] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [savedRecipeIds, setSavedRecipeIds] = useState<number[]>([]);
   const [storedIngredients, setStoredIngredients] = useState<string[]>([]);
   const [checkedIngredients, setCheckedIngredients] = useState<string[]>([]);
-  const [groceryFeedback, setGroceryFeedback] = useState("");
   const [allRecipes, setAllRecipes] = useState<AppRecipe[]>([]);
+  const [isCookModeOpen, setIsCookModeOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAddedToGrocery, setIsAddedToGrocery] = useState(false);
+  const [lastAddedItems, setLastAddedItems] = useState<string[]>([]);
+  const [recipeRating, setRecipeRating] = useState<number | null>(null);
 
+  // Load rating and listen for updates
+  useEffect(() => {
+    setRecipeRating(getRecipeRating(recipe.id));
+
+    const handleRatingUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<{ recipeId: number; rating: number }>;
+      if (customEvent.detail && customEvent.detail.recipeId === recipe.id) {
+        setRecipeRating(customEvent.detail.rating);
+      }
+    };
+
+    window.addEventListener("recipe_rating_updated", handleRatingUpdated);
+    return () => {
+      window.removeEventListener("recipe_rating_updated", handleRatingUpdated);
+    };
+  }, [recipe.id]);
+
+  // Load pantry ingredients
   useEffect(() => {
     const localIngredients = localStorage.getItem(SELECTED_INGREDIENTS_KEY);
-
     if (!localIngredients) return;
 
     try {
@@ -50,28 +87,23 @@ export default function RecipeDetailedView({
     }
   }, []);
 
+  // Check if recipe is favorited
   useEffect(() => {
-    const storedSavedRecipes = localStorage.getItem(SAVED_RECIPES_KEY);
-
-    if (!storedSavedRecipes) return;
-
-    try {
-      const parsed = JSON.parse(storedSavedRecipes) as number[];
-      setSaved(parsed.includes(recipe.id));
-    } catch {
-      localStorage.removeItem(SAVED_RECIPES_KEY);
-    }
+    const savedIds = getSavedRecipeIds();
+    setSavedRecipeIds(savedIds);
+    setIsFavorite(savedIds.includes(recipe.id));
   }, [recipe.id]);
 
+  // Load all recipes for recommendation shelf
   useEffect(() => {
-    setAllRecipes(getAllRecipes());
+    getAllRecipesWithCloud().then((recipes) => {
+      setAllRecipes(recipes);
+    });
   }, []);
 
+  // Save to recently viewed
   useEffect(() => {
-    const storedRecentRecipes = localStorage.getItem(
-      RECENTLY_VIEWED_RECIPES_KEY,
-    );
-
+    const storedRecentRecipes = localStorage.getItem(RECENTLY_VIEWED_RECIPES_KEY);
     let parsed: number[] = [];
 
     if (storedRecentRecipes) {
@@ -85,7 +117,7 @@ export default function RecipeDetailedView({
     const updated = [
       recipe.id,
       ...parsed.filter((id) => id !== recipe.id),
-    ].slice(0, 5);
+    ].slice(0, 8);
 
     localStorage.setItem(RECENTLY_VIEWED_RECIPES_KEY, JSON.stringify(updated));
   }, [recipe.id]);
@@ -93,103 +125,96 @@ export default function RecipeDetailedView({
   const queryIngredients = useMemo(() => {
     const param = searchParams.get("ingredients");
     if (!param) return [];
-
     return param.split(",").map(normalizeIngredient).filter(Boolean);
   }, [searchParams]);
 
-  const activeSelectedIngredients =
-    queryIngredients.length > 0 ? queryIngredients : storedIngredients;
-
-  const normalizedRecipeIngredients = useMemo(
-    () => recipe.ingredients.map(normalizeIngredient),
-    [recipe.ingredients],
-  );
+  const activePantryIngredients = useMemo(() => {
+    return queryIngredients.length > 0 ? queryIngredients : storedIngredients;
+  }, [queryIngredients, storedIngredients]);
 
   const matchedSelectedIngredients = useMemo(() => {
-    const selectedSet = new Set(activeSelectedIngredients);
+    return recipe.ingredients.filter((ingredient) => {
+      const normalizedRecipeIngredient = normalizeIngredient(ingredient);
+      return activePantryIngredients.some(
+        (selected) =>
+          normalizedRecipeIngredient.includes(selected) ||
+          selected.includes(normalizedRecipeIngredient),
+      );
+    });
+  }, [recipe.ingredients, activePantryIngredients]);
 
-    return normalizedRecipeIngredients.filter((ingredient) =>
-      selectedSet.has(ingredient),
-    );
-  }, [normalizedRecipeIngredients, activeSelectedIngredients]);
-
+  // Automatically check off ingredients matched from pantry on load
   useEffect(() => {
-    setCheckedIngredients(matchedSelectedIngredients);
-  }, [matchedSelectedIngredients, recipe.id]);
+    if (matchedSelectedIngredients.length > 0) {
+      setCheckedIngredients(
+        matchedSelectedIngredients.map((item) => normalizeIngredient(item)),
+      );
+    }
+  }, [matchedSelectedIngredients]);
 
   const toggleIngredient = (ingredient: string) => {
-    const normalizedIngredient = normalizeIngredient(ingredient);
-
+    const normalized = normalizeIngredient(ingredient);
     setCheckedIngredients((prev) =>
-      prev.includes(normalizedIngredient)
-        ? prev.filter((item) => item !== normalizedIngredient)
-        : [...prev, normalizedIngredient],
+      prev.includes(normalized)
+        ? prev.filter((item) => item !== normalized)
+        : [...prev, normalized],
     );
   };
 
-  const handleToggleSaved = () => {
-    const storedSavedRecipes = localStorage.getItem(SAVED_RECIPES_KEY);
-
-    let parsed: number[] = [];
-
-    if (storedSavedRecipes) {
-      try {
-        parsed = JSON.parse(storedSavedRecipes) as number[];
-      } catch {
-        localStorage.removeItem(SAVED_RECIPES_KEY);
-      }
+  const handleToggleFavorite = () => {
+    if (isFavorite) {
+      removeSavedRecipe(recipe.id);
+      setIsFavorite(false);
+      setSavedRecipeIds((prev) => prev.filter((id) => id !== recipe.id));
+      info("Removed from your Favorites.");
+    } else {
+      saveRecipeId(recipe.id);
+      setIsFavorite(true);
+      setSavedRecipeIds((prev) => [...prev, recipe.id]);
+      success("Added to your Favorites! ★");
     }
+  };
 
-    const alreadySaved = parsed.includes(recipe.id);
-
-    const updated = alreadySaved
-      ? parsed.filter((id) => id !== recipe.id)
-      : [...parsed, recipe.id];
-
-    localStorage.setItem(SAVED_RECIPES_KEY, JSON.stringify(updated));
-    setSaved(!alreadySaved);
+  const handleToggleSimilarFavorite = (id: number) => {
+    if (savedRecipeIds.includes(id)) {
+      removeSavedRecipe(id);
+      setSavedRecipeIds((prev) => prev.filter((savedId) => savedId !== id));
+      if (id === recipe.id) setIsFavorite(false);
+      info("Removed from your Favorites.");
+    } else {
+      saveRecipeId(id);
+      setSavedRecipeIds((prev) => [...prev, id]);
+      if (id === recipe.id) setIsFavorite(true);
+      success("Added to your Favorites! ★");
+    }
   };
 
   const checkedCount = checkedIngredients.length;
   const totalCount = recipe.ingredients.length;
-  const missingCount = totalCount - checkedCount;
-
+  const missingCount = Math.max(0, totalCount - checkedCount);
   const progressPercentage = totalCount
     ? Math.round((checkedCount / totalCount) * 100)
     : 0;
 
-  const sortedIngredients = useMemo(() => {
-    return [...recipe.ingredients].sort((a, b) => {
-      const aChecked = checkedIngredients.includes(normalizeIngredient(a));
-      const bChecked = checkedIngredients.includes(normalizeIngredient(b));
-
-      if (aChecked === bChecked) return a.localeCompare(b);
-
-      return aChecked ? -1 : 1;
-    });
+  // Check if missing ingredients are already in the grocery list
+  const missingIngredients = useMemo(() => {
+    return recipe.ingredients.filter(
+      (ingredient) => !checkedIngredients.includes(normalizeIngredient(ingredient)),
+    );
   }, [recipe.ingredients, checkedIngredients]);
-
-  const missingIngredients = sortedIngredients.filter(
-    (ingredient) =>
-      !checkedIngredients.includes(normalizeIngredient(ingredient)),
-  );
 
   const handleAddMissingToGroceryList = () => {
     if (missingIngredients.length === 0) {
-      setGroceryFeedback("You already have everything for this recipe.");
+      info("You already have all ingredients checked off!");
       return;
     }
 
     const existingList = localStorage.getItem(GROCERY_LIST_KEY);
-
     let parsedList: { name: string; bought: boolean }[] = [];
 
     if (existingList) {
       try {
-        parsedList = JSON.parse(existingList) as {
-          name: string;
-          bought: boolean;
-        }[];
+        parsedList = JSON.parse(existingList) as { name: string; bought: boolean }[];
       } catch {
         localStorage.removeItem(GROCERY_LIST_KEY);
       }
@@ -200,92 +225,175 @@ export default function RecipeDetailedView({
     );
 
     const newItems = missingIngredients
-      .map((ingredient) => normalizeIngredient(ingredient))
-      .filter((ingredient) => !existingNames.has(ingredient))
+      .filter((ingredient) => !existingNames.has(normalizeIngredient(ingredient)))
       .map((ingredient) => ({
         name: ingredient,
         bought: false,
       }));
 
-    localStorage.setItem(
-      GROCERY_LIST_KEY,
-      JSON.stringify([...parsedList, ...newItems]),
-    );
-
     if (newItems.length === 0) {
-      setGroceryFeedback("Those ingredients are already in your grocery list.");
+      info("All missing ingredients are already in your grocery list! 🛒");
       return;
     }
 
-    setGroceryFeedback(
-      `Added ${newItems.length} ingredient${newItems.length === 1 ? "" : "s"} to your grocery list.`,
+    const updated = [...parsedList, ...newItems];
+    localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(updated));
+    setLastAddedItems(newItems.map((i) => normalizeIngredient(i.name)));
+    setIsAddedToGrocery(true);
+
+    window.dispatchEvent(
+      new CustomEvent("grocery_items_updated", {
+        detail: { count: newItems.length },
+      }),
     );
+
+    success(`Added ${newItems.length} missing ingredient${newItems.length === 1 ? "" : "s"} to grocery list! 🛒`);
   };
 
-  const instructionSteps =
-    recipe.instructions && recipe.instructions.length > 0
-      ? recipe.instructions
-      : [
-          "Prepare all ingredients and place them within reach.",
-          "Cook according to the recipe method and timing.",
-          "Serve immediately and adjust seasoning to taste.",
-        ];
+  const handleUndoAddMissing = () => {
+    if (lastAddedItems.length === 0) return;
+    const existingList = localStorage.getItem(GROCERY_LIST_KEY);
+    if (!existingList) return;
+
+    try {
+      const parsedList = JSON.parse(existingList) as { name: string; bought: boolean }[];
+      const filtered = parsedList.filter(
+        (item) => !lastAddedItems.includes(normalizeIngredient(item.name)),
+      );
+      localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(filtered));
+      setIsAddedToGrocery(false);
+      setLastAddedItems([]);
+      window.dispatchEvent(new CustomEvent("grocery_items_updated"));
+      info("Removed added ingredients from grocery list.");
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleDeleteRecipe = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    setIsDeleteModalOpen(false);
+    moveRecipeToTrash(recipe);
+
+    success(`"${recipe.title}" moved to Trash`, {
+      label: "Undo",
+      onClick: () => {
+        restoreRecipeFromTrash(recipe.id);
+        success(`"${recipe.title}" restored!`);
+      },
+    });
+
+    router.push("/saved");
+  };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0f0d0b] px-6 py-8 text-white xl:px-10">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-10%] top-[-5%] h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="absolute right-[-8%] top-[10%] h-96 w-96 rounded-full bg-orange-400/8 blur-3xl" />
-        <div className="absolute bottom-[-8%] left-[15%] h-80 w-80 rounded-full bg-emerald-500/6 blur-3xl" />
-      </div>
+    <main className="min-h-screen bg-[#fbf9f5] px-4 py-8 text-stone-900 transition dark:bg-[#0e0c0a] dark:text-[#fff8ef] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* TOP BACK BREADCRUMB */}
+        <div>
+          <Link
+            href="/saved"
+            className="inline-flex items-center gap-2 rounded-2xl border border-stone-300/90 bg-white px-4 py-2 text-xs sm:text-sm font-bold text-stone-700 shadow-2xs hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer"
+          >
+            <span>←</span>
+            <span>Back to Cookbook</span>
+          </Link>
+        </div>
 
-      <div className="relative mx-auto flex w-full max-w-425 flex-col gap-8">
-        <RecipeHero recipe={recipe} saved={saved} />
-
-        <RecipeActionBar
-          saved={saved}
-          groceryFeedback={groceryFeedback}
+        {/* HERO SECTION (INTEGRATED ACTION CONTROLS & FAVORITE STAR) */}
+        <RecipeHero
+          recipe={recipe}
+          saved={isFavorite}
+          rating={recipeRating}
           missingCount={missingCount}
-          onToggleSaved={handleToggleSaved}
+          isAddedToGrocery={isAddedToGrocery}
+          onToggleFavorite={handleToggleFavorite}
           onAddMissingToGroceryList={handleAddMissingToGroceryList}
+          onUndoAddMissing={handleUndoAddMissing}
+          onOpenCookMode={() => setIsCookModeOpen(true)}
+          onOpenShareModal={() => setIsShareModalOpen(true)}
+          onDeleteRecipe={recipe.origin !== "mock" ? handleDeleteRecipe : undefined}
         />
 
-        <RecipeNotices
-          groceryFeedback={groceryFeedback}
-          matchedSelectedIngredientsCount={matchedSelectedIngredients.length}
-        />
+        {/* HOLISTIC 2-COLUMN CULINARY LAYOUT */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_400px] xl:grid-cols-[1.1fr_450px] 2xl:grid-cols-[1.25fr_480px]">
+          
+          {/* LEFT COLUMN: ACTIVE COOKING FLOW */}
+          <div className="space-y-8 min-w-0">
+            {/* 1. Video Player (renders only if video exists, 0 space if absent) */}
+            <RecipeVideoPlayer recipe={recipe} />
 
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="space-y-8">
-            <RecipeInstructions steps={instructionSteps} />
+            {/* 2. Step-by-Step Instructions with Cooking Highlights */}
+            <RecipeInstructions
+              steps={recipe.instructions || []}
+              onOpenCookMode={() => setIsCookModeOpen(true)}
+            />
 
-            <div className="grid gap-8 lg:grid-cols-2">
-              <RecipeNotesPanel recipeId={recipe.id} />
-              <SimilarRecipesPanel
-                currentRecipe={recipe}
-                recipes={allRecipes}
-              />
-            </div>
+            {/* 3. Combined Cooking Journal (Ratings & Chef's Note Card) */}
+            <RecipeJournalPanel recipeId={recipe.id} />
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-8 xl:self-start">
+          {/* RIGHT COLUMN: KITCHEN SIDEBAR (STICKY) */}
+          <aside className="space-y-6 lg:sticky lg:top-8 lg:self-start">
+            {/* 1. Ingredients with Clean Straight-Line Alignment & Scaler */}
             <RecipeIngredientsPanel
-              ingredients={sortedIngredients}
+              ingredients={recipe.ingredients}
+              ingredientGroups={recipe.ingredientGroups}
+              baseServings={recipe.servings || 4}
               checkedIngredients={checkedIngredients}
               checkedCount={checkedCount}
               totalCount={totalCount}
               missingCount={missingCount}
               progressPercentage={progressPercentage}
-              matchedSelectedIngredientsCount={
-                matchedSelectedIngredients.length
-              }
+              matchedSelectedIngredientsCount={matchedSelectedIngredients.length}
               onToggleIngredient={toggleIngredient}
+              onAddMissingToGroceryList={handleAddMissingToGroceryList}
+              onUndoAddMissing={handleUndoAddMissing}
+              isAddedToGrocery={isAddedToGrocery}
             />
 
+            {/* 2. Full Nutrition Profile */}
             <RecipeNutritionPanel recipe={recipe} />
           </aside>
         </div>
+
+        {/* HORIZONTAL DISCOVERY SHELF: SIMILAR RECIPES */}
+        <SimilarRecipesPanel
+          currentRecipe={recipe}
+          recipes={allRecipes}
+          savedRecipeIds={savedRecipeIds}
+          onToggleSave={handleToggleSimilarFavorite}
+        />
       </div>
+
+      {/* FULLSCREEN COOK MODE MODAL */}
+      <CookModeModal
+        recipe={recipe}
+        isOpen={isCookModeOpen}
+        onClose={() => setIsCookModeOpen(false)}
+      />
+
+      {/* RICH MULTI-CHANNEL SHARE MODAL */}
+      <ShareRecipeModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        recipe={recipe}
+      />
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Move Recipe to Trash?"
+        description={`"${recipe.title}" will be moved to your Trash. You can restore it anytime within 30 days.`}
+        confirmLabel="Move to Trash"
+        cancelLabel="Keep Recipe"
+        isDestructive
+        onConfirm={confirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import type { AppRecipe, RecipeMatchResult, RecipeSortMode } from "./types";
+import { getRecipeRatings } from "./ratings";
 
 
 export const SELECTED_INGREDIENTS_KEY = "selectedIngredients";
@@ -157,6 +158,14 @@ export function getFilteredRecipes(
             case "alphabetical":
                return a.title.localeCompare(b.title);
 
+            case "highest-rated": {
+               const ratings = getRecipeRatings();
+               const aRating = ratings[a.id] ?? 0;
+               const bRating = ratings[b.id] ?? 0;
+               if (bRating !== aRating) return bRating - aRating;
+               return a.title.localeCompare(b.title);
+            }
+
             case "best-match":
             default:
                if (selectedIngredients.length > 0) {
@@ -238,5 +247,15 @@ export function addRecipeIngredientsToGrocery(ingredients: string[]) {
       JSON.stringify([...groceryList, ...newItems]),
    );
 
+   window.dispatchEvent(
+      new CustomEvent("grocery_items_updated", {
+         detail: { count: newItems.length },
+      }),
+   );
+
    return newItems.length;
+}
+
+export function addItemsToGroceryList(itemNames: string[]): number {
+   return addRecipeIngredientsToGrocery(itemNames);
 }

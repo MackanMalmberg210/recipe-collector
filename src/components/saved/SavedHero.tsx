@@ -4,48 +4,46 @@ import Link from "next/link";
 
 export default function SavedHero() {
   return (
-    <header className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[#17120f]/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.35)] ring-1 ring-white/3 md:p-8">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute right-[-8%] top-[-20%] h-72 w-72 rounded-full bg-amber-400/12 blur-3xl" />
-        <div className="absolute bottom-[-30%] left-[15%] h-72 w-72 rounded-full bg-orange-500/8 blur-3xl" />
-      </div>
+    <header className="relative overflow-hidden rounded-4xl border border-stone-200/90 bg-white p-6 shadow-sm transition duration-300 dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] md:p-8">
+      {/* Top subtle hairline highlight */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent dark:via-amber-400/20" />
 
-      <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+      <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="max-w-3xl">
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.24em] text-amber-100/55">
-            Personal cookbook
-          </p>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-500/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest text-amber-700 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-300 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+            Personal Cookbook
+          </div>
 
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-[#fff8ef] md:text-6xl">
+          <h1 className="max-w-3xl text-3xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50 sm:text-4xl md:text-5xl">
             Your recipe collection, beautifully organized.
           </h1>
 
-          <p className="mt-5 max-w-2xl text-base leading-7 text-stone-300 md:text-lg">
-            Save, browse, import and revisit your favorite meals in one polished
-            cookbook built around how you actually cook.
+          <p className="mt-3 max-w-2xl text-xs sm:text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+            Save, browse, import, and plan your favorite meals in one personal cookbook.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2.5">
           <Link
             href="/create"
-            className="rounded-2xl bg-[#fff4e2] px-5 py-3 text-sm font-bold text-[#19120e] shadow-sm transition hover:bg-white"
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-stone-950 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-md transition hover:bg-stone-800 dark:bg-amber-500 dark:text-stone-950 dark:hover:bg-amber-400"
           >
-            Create recipe
+            + Create recipe
           </Link>
 
           <Link
             href="/import"
-            className="rounded-2xl border border-amber-100/15 bg-amber-100/6 px-5 py-3 text-sm font-semibold text-amber-50 transition hover:bg-amber-100/10"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-stone-300/90 bg-white px-4 py-3 text-xs sm:text-sm font-semibold text-stone-800 shadow-2xs transition hover:bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] dark:text-stone-200 dark:hover:bg-white/5"
           >
-            Import recipe
+            🌐 Import URL
           </Link>
 
           <Link
             href="/"
-            className="rounded-2xl border border-white/10 bg-white/4 px-5 py-3 text-sm font-medium text-stone-200 transition hover:bg-white/8"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-stone-300/90 bg-white px-4 py-3 text-xs sm:text-sm font-semibold text-stone-800 shadow-2xs transition hover:bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] dark:text-stone-200 dark:hover:bg-white/5"
           >
-            Back home
+            Overview
           </Link>
         </div>
       </div>

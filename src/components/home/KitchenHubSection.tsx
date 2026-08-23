@@ -85,7 +85,7 @@ export default function KitchenHubSection({
               onClick={() => setActiveTab("imported")}
               className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeTab === "imported"
-                  ? "bg-amber-400 text-stone-950"
+                  ? "bg-amber-500 text-stone-950"
                   : "text-stone-300 hover:bg-white/6"
               }`}
             >
@@ -180,7 +180,7 @@ export default function KitchenHubSection({
               {activeTab === "imported" && (
                 <Link
                   href="/import"
-                  className="inline-flex rounded-2xl bg-amber-400 px-4 py-2 text-sm font-semibold text-stone-950 transition hover:bg-amber-300"
+                  className="inline-flex rounded-2xl bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 transition hover:bg-amber-600"
                 >
                   Import recipe
                 </Link>

@@ -1,505 +1,715 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
-import type { ImportedRecipe } from "../../../lib/types";
-import { importRecipeFromUrl } from "../../../lib/recipeApi";
+import type { ImportedRecipe, IngredientGroup, NutritionInfo } from "../../../lib/types";
 import { normalizeRecipe } from "../../../lib/recipeNormalizer";
-
+import { parseIngredientList } from "../../../lib/ingredientParser";
 
 type JsonLdNode = {
-   "@type"?: string | string[];
-   "@graph"?: JsonLdNode[];
-   name?: string;
-   image?:
-   | string
-   | string[]
-   | { url?: string; contentUrl?: string; thumbnailUrl?: string }
-   | Array<{ url?: string; contentUrl?: string; thumbnailUrl?: string }>;
-   recipeIngredient?: string[];
-   recipeInstructions?:
-   | string[]
-   | string
-   | Array<{ text?: string; name?: string; itemListElement?: Array<{ text?: string; name?: string }> }>;
-   totalTime?: string;
-   prepTime?: string;
-   recipeYield?: string | number;
-   author?: { name?: string } | Array<{ name?: string }>;
-   publisher?: { name?: string };
-   nutrition?: {
-      calories?: string;
-      fatContent?: string;
-      saturatedFatContent?: string;
-      transFatContent?: string;
-      cholesterolContent?: string;
-      sodiumContent?: string;
-      carbohydrateContent?: string;
-      fiberContent?: string;
-      sugarContent?: string;
-      proteinContent?: string;
-   };
+  "@type"?: string | string[];
+  "@graph"?: JsonLdNode[];
+  name?: string;
+  description?: string;
+  image?:
+    | string
+    | string[]
+    | { url?: string; contentUrl?: string; thumbnailUrl?: string; caption?: string }
+    | Array<{ url?: string; contentUrl?: string; thumbnailUrl?: string; caption?: string }>;
+  recipeIngredient?: string[];
+  recipeInstructions?:
+    | string[]
+    | string
+    | Array<{ text?: string; name?: string; itemListElement?: Array<{ text?: string; name?: string }> }>;
+  totalTime?: string;
+  prepTime?: string;
+  recipeYield?: string | number | Array<string | number>;
+  author?: { name?: string } | Array<{ name?: string }> | string;
+  publisher?: { name?: string };
+  video?: any;
+  nutrition?: {
+    calories?: string;
+    fatContent?: string;
+    saturatedFatContent?: string;
+    transFatContent?: string;
+    cholesterolContent?: string;
+    sodiumContent?: string;
+    carbohydrateContent?: string;
+    fiberContent?: string;
+    sugarContent?: string;
+    proteinContent?: string;
+    vitaminAContent?: string;
+    vitaminCContent?: string;
+    potassiumContent?: string;
+    ironContent?: string;
+    phosphorusContent?: string;
+  };
 };
 
 function isRecipeType(type: string | string[] | undefined) {
-   if (!type) return false;
+  if (!type) return false;
 
-   if (Array.isArray(type)) {
-      return type.some((value) => value.toLowerCase() === "recipe");
-   }
+  if (Array.isArray(type)) {
+    return type.some((value) => value.toLowerCase() === "recipe");
+  }
 
-   return type.toLowerCase() === "recipe";
+  return type.toLowerCase() === "recipe";
 }
 
 function flattenJsonLd(node: JsonLdNode): JsonLdNode[] {
-   const nodes: JsonLdNode[] = [node];
+  const nodes: JsonLdNode[] = [node];
 
-   if (Array.isArray(node["@graph"])) {
-      for (const child of node["@graph"]) {
-         nodes.push(...flattenJsonLd(child));
+  if (Array.isArray(node["@graph"])) {
+    for (const child of node["@graph"]) {
+      nodes.push(...flattenJsonLd(child));
+    }
+  }
+
+  return nodes;
+}
+
+// ----------------------------------------------------
+// HIGH-RESOLUTION IMAGE ENHANCEMENT
+// ----------------------------------------------------
+function upgradeToHighResImageUrl(imageUrl: string): string {
+  if (!imageUrl) return "";
+
+  let upgraded = imageUrl.trim();
+
+  // 1. Remove WordPress thumbnail downscale dimension suffixes (e.g. -300x300.jpg, -500x375.webp, -150x150.jpg, -720x405.jpg, -768x...jpg)
+  upgraded = upgraded.replace(/-\d+x\d+(\.[a-zA-Z0-9]+(?:\?.*)?)$/i, "$1");
+
+  // 2. Remove WordPress / Tachyon / Mediavine / CDN resize query params (e.g. ?fit=225%2C225, ?resize=400%2C400, ?w=300)
+  if (
+    upgraded.includes("/tachyon/") ||
+    upgraded.includes("/wp-content/uploads/") ||
+    upgraded.includes("pinchofyum.com") ||
+    upgraded.includes("mediavine")
+  ) {
+    upgraded = upgraded.split("?")[0];
+  } else {
+    // Strip common resize/crop query parameters
+    try {
+      const urlObj = new URL(upgraded);
+      const paramsToDelete = ["resize", "fit", "w", "h", "width", "height", "crop", "zoom", "quality", "strip"];
+      for (const p of paramsToDelete) {
+        urlObj.searchParams.delete(p);
       }
-   }
+      upgraded = urlObj.toString();
+    } catch {
+      // Fallback
+    }
+  }
 
-   return nodes;
+  // 3. Upgrade Cloudinary / imgix / WordPress photon dimensions
+  if (upgraded.includes("cloudinary.com") || upgraded.includes("imgix.net") || upgraded.includes("wp.com")) {
+    upgraded = upgraded.replace(/\/c_fill,w_\d+,h_\d+\//, "/c_limit,w_1600/");
+  }
+
+  return upgraded;
 }
 
 function extractImage(image: JsonLdNode["image"]): string {
-   if (!image) return "";
+  if (!image) return "";
 
-   if (typeof image === "string") return image;
+  if (typeof image === "string") {
+    return upgradeToHighResImageUrl(image);
+  }
 
-   if (Array.isArray(image)) {
-      const first = image[0];
-      if (!first) return "";
+  if (Array.isArray(image)) {
+    // In Schema.org, 16x9 (or highest aspect ratio/dimension) is usually at the end of the array or largest
+    const candidates = image.map((item) => {
+      if (typeof item === "string") return item;
+      return item.url ?? item.contentUrl ?? item.thumbnailUrl ?? "";
+    }).filter(Boolean);
 
-      if (typeof first === "string") return first;
+    // Prefer images that don't have downscale parameters, or mention 16x9, 1200, large
+    const highRes = candidates.find((url) => !/[?&](?:fit|resize|w)=\d+/i.test(url) && !/-\d+x\d+\./.test(url)) || candidates[candidates.length - 1] || candidates[0];
+    return upgradeToHighResImageUrl(highRes || "");
+  }
 
-      return first.url ?? first.contentUrl ?? first.thumbnailUrl ?? "";
-   }
-
-   return image.url ?? image.contentUrl ?? image.thumbnailUrl ?? "";
+  const url = image.url ?? image.contentUrl ?? image.thumbnailUrl ?? "";
+  return upgradeToHighResImageUrl(url);
 }
 
 function extractInstructions(
-   instructions: JsonLdNode["recipeInstructions"],
+  instructions: JsonLdNode["recipeInstructions"],
 ): string[] {
-   if (!instructions) return [];
+  if (!instructions) return [];
 
-   if (typeof instructions === "string") {
-      return instructions
-         .split(/\n+/)
-         .map((step) => step.trim())
-         .filter(Boolean);
-   }
+  if (typeof instructions === "string") {
+    return instructions
+      .split(/\n+/)
+      .map((step) => step.trim())
+      .filter(Boolean);
+  }
 
-   if (Array.isArray(instructions)) {
-      const result: string[] = [];
+  if (Array.isArray(instructions)) {
+    const result: string[] = [];
 
-      for (const item of instructions) {
-         if (typeof item === "string") {
-            const trimmed = item.trim();
-            if (trimmed) result.push(trimmed);
-            continue;
-         }
-
-         if (item.text?.trim()) {
-            result.push(item.text.trim());
-            continue;
-         }
-
-         if (item.name?.trim()) {
-            result.push(item.name.trim());
-            continue;
-         }
-
-         if (Array.isArray(item.itemListElement)) {
-            for (const subItem of item.itemListElement) {
-               const text = subItem.text?.trim() || subItem.name?.trim();
-               if (text) result.push(text);
-            }
-         }
+    for (const item of instructions) {
+      if (typeof item === "string") {
+        const trimmed = item.trim();
+        if (trimmed) result.push(trimmed);
+        continue;
       }
 
-      return result;
-   }
+      if (item.text?.trim()) {
+        result.push(item.text.trim());
+        continue;
+      }
 
-   return [];
+      if (item.name?.trim()) {
+        result.push(item.name.trim());
+        continue;
+      }
+
+      if (Array.isArray(item.itemListElement)) {
+        for (const subItem of item.itemListElement) {
+          const text = subItem.text?.trim() || subItem.name?.trim();
+          if (text) result.push(text);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  return [];
 }
 
-function extractNutrition(nutrition?: JsonLdNode["nutrition"]) {
-   if (!nutrition) return undefined;
+function extractNutrition(nutrition?: JsonLdNode["nutrition"]): NutritionInfo | undefined {
+  if (!nutrition) return undefined;
 
-   const caloriesValue = nutrition.calories
-      ? Number(nutrition.calories.replace(/[^\d.]/g, ""))
-      : undefined;
+  const caloriesValue = nutrition.calories
+    ? Number(nutrition.calories.replace(/[^\d.]/g, ""))
+    : undefined;
 
-   return {
-      calories: Number.isFinite(caloriesValue) ? caloriesValue : undefined,
-      fat: nutrition.fatContent,
-      saturatedFat: nutrition.saturatedFatContent,
-      transFat: nutrition.transFatContent,
-      cholesterol: nutrition.cholesterolContent,
-      sodium: nutrition.sodiumContent,
-      carbohydrates: nutrition.carbohydrateContent,
-      fiber: nutrition.fiberContent,
-      sugar: nutrition.sugarContent,
-      protein: nutrition.proteinContent,
-   };
+  return {
+    calories: Number.isFinite(caloriesValue) ? caloriesValue : undefined,
+    fat: nutrition.fatContent,
+    saturatedFat: nutrition.saturatedFatContent,
+    transFat: nutrition.transFatContent,
+    cholesterol: nutrition.cholesterolContent,
+    sodium: nutrition.sodiumContent,
+    carbohydrates: nutrition.carbohydrateContent,
+    fiber: nutrition.fiberContent,
+    sugar: nutrition.sugarContent,
+    protein: nutrition.proteinContent,
+    vitaminA: nutrition.vitaminAContent,
+    vitaminC: nutrition.vitaminCContent,
+    potassium: nutrition.potassiumContent,
+    iron: nutrition.ironContent,
+    phosphorus: nutrition.phosphorusContent,
+  };
+}
+
+function parseServings(recipeYield?: string | number | Array<string | number>): {
+  servings?: number;
+  servingsText?: string;
+} {
+  if (!recipeYield) return {};
+
+  let yieldString = "";
+  if (Array.isArray(recipeYield)) {
+    yieldString = String(recipeYield[0] ?? "");
+    const rangeEntry = recipeYield.find((y) => /[-–—to]/i.test(String(y)));
+    if (rangeEntry) yieldString = String(rangeEntry);
+  } else {
+    yieldString = String(recipeYield);
+  }
+
+  yieldString = yieldString.trim();
+  if (!yieldString) return {};
+
+  // Range like "4-5", "4 to 6 servings"
+  const rangeMatch = yieldString.match(/(\d+)\s*(?:-|–|—|to)\s*(\d+)/i);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    return {
+      servings: min,
+      servingsText: `${min}–${max} servings`,
+    };
+  }
+
+  // Single number
+  const singleMatch = yieldString.match(/(\d+)/);
+  if (singleMatch) {
+    const num = Number(singleMatch[1]);
+    return {
+      servings: num,
+      servingsText: `${num} servings`,
+    };
+  }
+
+  return {
+    servingsText: yieldString,
+  };
 }
 
 function parseIsoDurationToMinutes(value?: string): number | undefined {
-   if (!value) return undefined;
+  if (!value) return undefined;
 
-   const match = value.match(
-      /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/i,
-   );
+  const match = value.match(
+    /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/i,
+  );
 
-   if (!match) return undefined;
+  if (!match) return undefined;
 
-   const days = Number(match[1] ?? 0);
-   const hours = Number(match[2] ?? 0);
-   const minutes = Number(match[3] ?? 0);
+  const days = Number(match[1] ?? 0);
+  const hours = Number(match[2] ?? 0);
+  const minutes = Number(match[3] ?? 0);
 
-   return days * 24 * 60 + hours * 60 + minutes;
+  return days * 24 * 60 + hours * 60 + minutes;
+}
+
+// ----------------------------------------------------
+// INGREDIENT GROUP / SECTION PARSER
+// ----------------------------------------------------
+function parseIngredientGroups(
+  ingredients: string[],
+  $: cheerio.CheerioAPI,
+): IngredientGroup[] {
+  // 1. WP Recipe Maker pattern
+  const wprmGroups = $(".wprm-recipe-ingredient-group");
+  if (wprmGroups.length > 1) {
+    const groups: IngredientGroup[] = [];
+    wprmGroups.each((_, el) => {
+      const heading = $(el).find(".wprm-recipe-group-name").text().trim();
+      const items: string[] = [];
+      $(el).find(".wprm-recipe-ingredient, li").each((_, li) => {
+        const t = $(li).text().replace(/\s+/g, " ").trim();
+        if (t) items.push(t);
+      });
+      if (items.length > 0) {
+        groups.push({
+          heading: heading || undefined,
+          ingredients: items,
+          structuredIngredients: parseIngredientList(items),
+        });
+      }
+    });
+    if (groups.length > 1) return groups;
+  }
+
+  // 2. Tasty Recipes & WordPress block pattern
+  const tastyContainer = $(
+    ".tasty-recipes-ingredients, [class*='tasty-recipes-ingredients'], .recipe-ingredients",
+  );
+  if (tastyContainer.length > 0) {
+    const groups: IngredientGroup[] = [];
+    let currentHeading: string | undefined = undefined;
+
+    tastyContainer.find("p, h3, h4, h5, ul, ol").each((_, el) => {
+      const tagName = el.tagName.toLowerCase();
+      const element = $(el);
+
+      if (tagName === "p" || tagName === "h3" || tagName === "h4" || tagName === "h5") {
+        const strongText = element.find("strong, b").text().trim() || element.text().trim();
+        if (
+          strongText &&
+          !/^ingredients$/i.test(strongText) &&
+          !/^units/i.test(strongText) &&
+          !/^scale/i.test(strongText) &&
+          (element.find("strong, b").length > 0 || tagName !== "p")
+        ) {
+          currentHeading = strongText.replace(/^[\*\#\-\s]+|[\*\:\s]+$/g, "").trim();
+        }
+      } else if (tagName === "ul" || tagName === "ol") {
+        const items: string[] = [];
+        element.find("li").each((_, li) => {
+          const t = $(li).text().replace(/\s+/g, " ").trim();
+          if (t) items.push(t);
+        });
+        if (items.length > 0) {
+          groups.push({
+            heading: currentHeading,
+            ingredients: items,
+            structuredIngredients: parseIngredientList(items),
+          });
+          currentHeading = undefined;
+        }
+      }
+    });
+
+    if (groups.length > 1) return groups;
+  }
+
+  // 3. Mediavine Create pattern
+  const mvGroups = $(".mv-create-ingredients-section");
+  if (mvGroups.length > 1) {
+    const groups: IngredientGroup[] = [];
+    mvGroups.each((_, el) => {
+      const heading = $(el).find(".mv-create-ingredients-heading").text().trim();
+      const items: string[] = [];
+      $(el).find("li").each((_, li) => {
+        const t = $(li).text().replace(/\s+/g, " ").trim();
+        if (t) items.push(t);
+      });
+      if (items.length > 0) {
+        groups.push({
+          heading: heading || undefined,
+          ingredients: items,
+          structuredIngredients: parseIngredientList(items),
+        });
+      }
+    });
+    if (groups.length > 1) return groups;
+  }
+
+  // 4. Fallback: Parse section headings directly from recipeIngredient array strings (e.g. "For the Kimchi Bacon Jam:", "**Sauce**")
+  const parsedGroups: IngredientGroup[] = [];
+  let currentHeading: string | undefined = undefined;
+  let currentItems: string[] = [];
+
+  for (const raw of ingredients) {
+    const item = raw.trim();
+    if (!item) continue;
+
+    const isHeading =
+      (item.endsWith(":") && !/\d+\s*(?:cup|tbsp|tsp|g|kg|oz|ml|lb)/i.test(item)) ||
+      (/^for the\s+/i.test(item) && item.length < 50) ||
+      (/^\*\*.*\*\*$/.test(item));
+
+    if (isHeading) {
+      if (currentItems.length > 0) {
+        parsedGroups.push({
+          heading: currentHeading,
+          ingredients: currentItems,
+          structuredIngredients: parseIngredientList(currentItems),
+        });
+        currentItems = [];
+      }
+      currentHeading = item.replace(/^[\*\#\-\s]+|[\*\:\s]+$/g, "").trim();
+    } else {
+      currentItems.push(item);
+    }
+  }
+
+  if (currentItems.length > 0) {
+    parsedGroups.push({
+      heading: currentHeading,
+      ingredients: currentItems,
+      structuredIngredients: parseIngredientList(currentItems),
+    });
+  }
+
+  return parsedGroups;
 }
 
 function extractRecipeFromJsonLd(
-   html: string,
-   url: string,
+  html: string,
+  url: string,
 ): ImportedRecipe | null {
-   const $ = cheerio.load(html);
-   const scripts = $('script[type="application/ld+json"]');
+  const $ = cheerio.load(html);
+  const scripts = $('script[type="application/ld+json"]');
 
-   for (const element of scripts.toArray()) {
-      const raw = $(element).contents().text().trim();
-      if (!raw) continue;
+  for (const element of scripts.toArray()) {
+    const raw = $(element).contents().text().trim();
+    if (!raw) continue;
 
-      try {
-         const parsed = JSON.parse(raw);
-         const nodes: JsonLdNode[] = Array.isArray(parsed)
-            ? parsed.flatMap((item) => flattenJsonLd(item))
-            : flattenJsonLd(parsed);
+    try {
+      const parsed = JSON.parse(raw);
+      const nodes: JsonLdNode[] = Array.isArray(parsed)
+        ? parsed.flatMap((item) => flattenJsonLd(item))
+        : flattenJsonLd(parsed);
 
-         const recipeNode = nodes.find((node) => isRecipeType(node["@type"]));
-         if (!recipeNode) continue;
+      const recipeNode = nodes.find((node) => isRecipeType(node["@type"]));
+      if (!recipeNode) continue;
 
-         const ingredients = Array.isArray(recipeNode.recipeIngredient)
-            ? recipeNode.recipeIngredient.map((item) => item.trim()).filter(Boolean)
-            : [];
+      const ingredients = Array.isArray(recipeNode.recipeIngredient)
+        ? recipeNode.recipeIngredient.map((item) => item.trim()).filter(Boolean)
+        : [];
 
-         const instructions = extractInstructions(recipeNode.recipeInstructions);
-         const image = toAbsoluteUrl(extractImage(recipeNode.image), url);
-         const cookTime =
-            parseIsoDurationToMinutes(recipeNode.totalTime) ??
-            parseIsoDurationToMinutes(recipeNode.prepTime);
-
-         return {
-            title: recipeNode.name?.trim() || "Imported recipe",
-            image: image || extractBestHtmlImage(html, url),
-            cookTime,
-            servings:
-               typeof recipeNode.recipeYield === "number"
-                  ? recipeNode.recipeYield
-                  : undefined,
-            ingredients,
-            instructions,
-            sourceUrl: url,
-            sourceName: recipeNode.publisher?.name || undefined,
-            nutrition: extractNutrition(recipeNode.nutrition),
-         };
-      } catch {
-         continue;
+      const instructions = extractInstructions(recipeNode.recipeInstructions);
+      
+      // High resolution image extraction
+      let image = toAbsoluteUrl(extractImage(recipeNode.image), url);
+      const ogImage = $("meta[property='og:image']").attr("content") || $("meta[name='twitter:image']").attr("content");
+      if (ogImage) {
+        const upgradedOg = upgradeToHighResImageUrl(toAbsoluteUrl(ogImage, url));
+        if (!image || isUsefulImageUrl(upgradedOg)) {
+          image = upgradedOg;
+        }
       }
-   }
+      if (!image) {
+        image = extractBestHtmlImage(html, url);
+      }
 
-   return null;
+      const cookTime =
+        parseIsoDurationToMinutes(recipeNode.totalTime) ??
+        parseIsoDurationToMinutes(recipeNode.prepTime);
+
+      const { servings, servingsText } = parseServings(recipeNode.recipeYield);
+
+      // Real description / story
+      const description =
+        recipeNode.description?.trim() ||
+        $("meta[property='og:description']").attr("content")?.trim() ||
+        $("meta[name='description']").attr("content")?.trim() ||
+        undefined;
+
+      // Grouped ingredients
+      const ingredientGroups = parseIngredientGroups(ingredients, $);
+
+      // Author name
+      let authorName: string | undefined = undefined;
+      if (typeof recipeNode.author === "string") {
+        authorName = recipeNode.author;
+      } else if (Array.isArray(recipeNode.author)) {
+        authorName = recipeNode.author[0]?.name;
+      } else if (recipeNode.author?.name) {
+        authorName = recipeNode.author.name;
+      }
+
+      // Video extraction
+      let videoUrl: string | undefined = undefined;
+      let videoEmbedUrl: string | undefined = undefined;
+
+      if (recipeNode.video) {
+        const v = recipeNode.video as any;
+        if (typeof v === "string") {
+          videoUrl = v;
+        } else {
+          videoEmbedUrl = v.embedUrl || undefined;
+          videoUrl = v.contentUrl || v.url || v.embedUrl || undefined;
+        }
+
+        if (videoUrl && !videoEmbedUrl) {
+          const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+          if (ytMatch) {
+            videoEmbedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+          }
+        }
+      }
+
+      return {
+        title: recipeNode.name?.trim() || "Imported recipe",
+        description,
+        image,
+        cookTime,
+        servings,
+        servingsText,
+        ingredients,
+        structuredIngredients: parseIngredientList(ingredients),
+        ingredientGroups: ingredientGroups.length > 1 ? ingredientGroups : undefined,
+        instructions,
+        sourceUrl: url,
+        sourceName: recipeNode.publisher?.name || authorName || undefined,
+        videoUrl,
+        videoEmbedUrl,
+        nutrition: extractNutrition(recipeNode.nutrition),
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }
 
 function toAbsoluteUrl(value: string | undefined, pageUrl: string) {
-   if (!value) return "";
+  if (!value) return "";
 
-   const cleanedValue = value.trim();
+  const cleanedValue = value.trim();
 
-   if (
-      !cleanedValue ||
-      cleanedValue.startsWith("data:") ||
-      cleanedValue.startsWith("blob:") ||
-      cleanedValue === "#" ||
-      cleanedValue.toLowerCase() === "undefined"
-   ) {
-      return "";
-   }
+  if (
+    !cleanedValue ||
+    cleanedValue.startsWith("data:") ||
+    cleanedValue.startsWith("blob:") ||
+    cleanedValue === "#" ||
+    cleanedValue.toLowerCase() === "undefined"
+  ) {
+    return "";
+  }
 
-   try {
-      return new URL(cleanedValue, pageUrl).toString();
-   } catch {
-      return "";
-   }
+  try {
+    return new URL(cleanedValue, pageUrl).toString();
+  } catch {
+    return "";
+  }
 }
 
 function isUsefulImageUrl(value: string) {
-   if (!value) return false;
+  if (!value) return false;
 
-   const lowerValue = value.toLowerCase();
+  const lowerValue = value.toLowerCase();
 
-   if (
-      lowerValue.includes("data:image") ||
-      lowerValue.includes("placeholder") ||
-      lowerValue.includes("avatar") ||
-      lowerValue.includes("author") ||
-      lowerValue.includes("logo") ||
-      lowerValue.includes("sprite") ||
-      lowerValue.includes("icon")
-   ) {
-      return false;
-   }
+  if (
+    lowerValue.includes("data:image") ||
+    lowerValue.includes("placeholder") ||
+    lowerValue.includes("avatar") ||
+    lowerValue.includes("author") ||
+    lowerValue.includes("logo") ||
+    lowerValue.includes("sprite") ||
+    lowerValue.includes("icon")
+  ) {
+    return false;
+  }
 
-   return (
-      lowerValue.includes(".jpg") ||
-      lowerValue.includes(".jpeg") ||
-      lowerValue.includes(".png") ||
-      lowerValue.includes(".webp") ||
-      lowerValue.includes("allrecipes.com/thmb") ||
-      lowerValue.includes("imagesvc.meredithcorp.io")
-   );
+  return (
+    lowerValue.includes(".jpg") ||
+    lowerValue.includes(".jpeg") ||
+    lowerValue.includes(".png") ||
+    lowerValue.includes(".webp") ||
+    lowerValue.includes("allrecipes.com/thmb") ||
+    lowerValue.includes("imagesvc.meredithcorp.io")
+  );
 }
 
 function extractBestHtmlImage(html: string, pageUrl: string) {
-   const $ = cheerio.load(html);
+  const $ = cheerio.load(html);
 
-   const metaCandidates = [
-      $("meta[property='og:image']").attr("content"),
-      $("meta[property='og:image:url']").attr("content"),
-      $("meta[property='og:image:secure_url']").attr("content"),
-      $("meta[name='twitter:image']").attr("content"),
-      $("meta[name='twitter:image:src']").attr("content"),
-   ];
+  const metaCandidates = [
+    $("meta[property='og:image']").attr("content"),
+    $("meta[property='og:image:url']").attr("content"),
+    $("meta[property='og:image:secure_url']").attr("content"),
+    $("meta[name='twitter:image']").attr("content"),
+    $("meta[name='twitter:image:src']").attr("content"),
+  ];
 
-   for (const candidate of metaCandidates) {
-      const absoluteUrl = toAbsoluteUrl(candidate, pageUrl);
-      if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
-   }
+  for (const candidate of metaCandidates) {
+    const absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
+    if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
+  }
 
-   const normalizedHtml = html
-      .replace(/\\u002F/g, "/")
-      .replace(/\\\//g, "/")
-      .replace(/&amp;/g, "&")
-      .replace(/%3A/g, ":")
-      .replace(/%2F/g, "/")
-      .replace(/%28/g, "(")
-      .replace(/%29/g, ")");
+  const imageCandidates: string[] = [];
 
-   const imageMatches =
-      normalizedHtml.match(
-         /https?:\/\/[^"'<>\\\s]+(?:jpg|jpeg|png|webp)[^"'<>\\\s]*/gi,
-      ) ?? [];
+  $("img").each((_, img) => {
+    const element = $(img);
 
-   const preferredMatch = imageMatches.find((candidate) => {
-      const absoluteUrl = toAbsoluteUrl(candidate, pageUrl);
-      return (
-         isUsefulImageUrl(absoluteUrl) &&
-         absoluteUrl.toLowerCase().includes("allrecipes.com/thmb")
-      );
-   });
+    imageCandidates.push(
+      element.attr("src") ?? "",
+      element.attr("data-src") ?? "",
+      element.attr("data-original") ?? "",
+      element.attr("data-lazy-src") ?? "",
+      element.attr("data-pin-media") ?? "",
+      element.attr("content") ?? "",
+    );
 
-   if (preferredMatch) {
-      return toAbsoluteUrl(preferredMatch, pageUrl);
-   }
+    const srcset = element.attr("srcset") || element.attr("data-srcset");
+    if (srcset) {
+      srcset.split(",").forEach((item) => {
+        imageCandidates.push(item.trim().split(" ")[0] ?? "");
+      });
+    }
+  });
 
-   for (const candidate of imageMatches) {
-      const absoluteUrl = toAbsoluteUrl(candidate, pageUrl);
-      if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
-   }
+  for (const candidate of imageCandidates) {
+    const absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
+    if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
+  }
 
-   const imageCandidates: string[] = [];
-
-   $("img").each((_, img) => {
-      const element = $(img);
-
-      imageCandidates.push(
-         element.attr("src") ?? "",
-         element.attr("data-src") ?? "",
-         element.attr("data-original") ?? "",
-         element.attr("data-lazy-src") ?? "",
-         element.attr("data-pin-media") ?? "",
-         element.attr("content") ?? "",
-      );
-
-      const srcset = element.attr("srcset") || element.attr("data-srcset");
-
-      if (srcset) {
-         srcset.split(",").forEach((item) => {
-            imageCandidates.push(item.trim().split(" ")[0] ?? "");
-         });
-      }
-   });
-
-   for (const candidate of imageCandidates) {
-      const absoluteUrl = toAbsoluteUrl(candidate, pageUrl);
-      if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
-   }
-
-   return "";
+  return "";
 }
 
 function extractRecipeFromHtml(html: string, url: string): ImportedRecipe {
-   const $ = cheerio.load(html);
+  const $ = cheerio.load(html);
 
-   const title =
-      $("meta[property='og:title']").attr("content")?.trim() ||
-      $("title").text().trim() ||
-      $("h1").first().text().trim() ||
-      "Imported recipe";
+  const title =
+    $("meta[property='og:title']").attr("content")?.trim() ||
+    $("title").text().trim() ||
+    $("h1").first().text().trim() ||
+    "Imported recipe";
 
-   const image = extractBestHtmlImage(html, url);
+  const description =
+    $("meta[property='og:description']").attr("content")?.trim() ||
+    $("meta[name='description']").attr("content")?.trim() ||
+    undefined;
 
-   const ingredients: string[] = [];
-   const instructions: string[] = [];
+  const image = extractBestHtmlImage(html, url);
 
-   $("li").each((_, li) => {
-      const text = $(li).text().replace(/\s+/g, " ").trim();
+  const ingredients: string[] = [];
+  const instructions: string[] = [];
 
-      if (!text) return;
+  $("li").each((_, li) => {
+    const text = $(li).text().replace(/\s+/g, " ").trim();
+    if (!text) return;
 
-      if (
-         /cup|cups|tbsp|tsp|gram|grams|kg|ml|l|ounce|oz|clove|cloves|salt|pepper|butter|oil|onion|garlic/i.test(
-            text,
-         )
-      ) {
-         ingredients.push(text);
-      }
-   });
+    if (
+      /cup|cups|tbsp|tsp|gram|grams|kg|ml|l|ounce|oz|clove|cloves|salt|pepper|butter|oil|onion|garlic/i.test(
+        text,
+      )
+    ) {
+      ingredients.push(text);
+    }
+  });
 
-   $("ol li").each((_, li) => {
-      const text = $(li).text().replace(/\s+/g, " ").trim();
-      if (text) instructions.push(text);
-   });
+  $("ol li").each((_, li) => {
+    const text = $(li).text().replace(/\s+/g, " ").trim();
+    if (text) instructions.push(text);
+  });
 
-   return {
-      title,
-      image,
-      ingredients: Array.from(new Set(ingredients)).slice(0, 30),
-      instructions: Array.from(new Set(instructions)).slice(0, 30),
-      sourceUrl: url,
-   };
+  const ingredientGroups = parseIngredientGroups(ingredients, $);
+
+  return {
+    title,
+    description,
+    image,
+    ingredients: Array.from(new Set(ingredients)).slice(0, 30),
+    structuredIngredients: parseIngredientList(ingredients),
+    ingredientGroups: ingredientGroups.length > 1 ? ingredientGroups : undefined,
+    instructions: Array.from(new Set(instructions)).slice(0, 30),
+    sourceUrl: url,
+    sourceName: $("meta[property='og:site_name']").attr("content") || undefined,
+  };
 }
 
 export async function POST(request: Request) {
-   try {
-      const body = (await request.json()) as { url?: string };
-      const url = body.url?.trim();
+  try {
+    const body = await request.json();
+    const targetUrl = typeof body?.url === "string" ? body.url.trim() : "";
 
-      if (!url) {
-         return NextResponse.json(
-            { error: "URL is required." },
-            { status: 400 },
-         );
-      }
-
-      let parsedUrl: URL;
-
-      try {
-         parsedUrl = new URL(url);
-      } catch {
-         return NextResponse.json(
-            { error: "Invalid URL." },
-            { status: 400 },
-         );
-      }
-
-      try {
-         const spoonacularRecipe = await importRecipeFromUrl(parsedUrl.toString());
-
-         const response = await fetch(parsedUrl.toString(), {
-            headers: {
-               "User-Agent":
-                  "Mozilla/5.0 RecipeCollectorBot/1.0 (+https://example.local)",
-               Accept: "text/html,application/xhtml+xml",
-            },
-            redirect: "follow",
-         });
-
-         if (!response.ok) {
-            return NextResponse.json({
-               recipe: spoonacularRecipe,
-               source: "spoonacular",
-            });
-         }
-
-         const html = await response.text();
-
-         const htmlRecipe =
-            extractRecipeFromJsonLd(html, parsedUrl.toString()) ??
-            extractRecipeFromHtml(html, parsedUrl.toString());
-
-         const recipe = normalizeRecipe({
-            ...spoonacularRecipe,
-            image: htmlRecipe.image || spoonacularRecipe.image,
-            nutrition: spoonacularRecipe.nutrition ?? htmlRecipe.nutrition,
-            calories:
-               spoonacularRecipe.calories ??
-               spoonacularRecipe.nutrition?.calories ??
-               htmlRecipe.nutrition?.calories,
-            sourceUrl: spoonacularRecipe.sourceUrl ?? htmlRecipe.sourceUrl,
-            sourceName: spoonacularRecipe.sourceName ?? htmlRecipe.sourceName,
-            origin: "imported",
-         });
-
-         return NextResponse.json({
-            recipe,
-            source: "spoonacular + html-enhanced",
-         });
-      } catch (spoonacularError) {
-         console.warn(
-            "Spoonacular import failed, using HTML fallback:",
-            spoonacularError,
-         );
-      }
-
-      const response = await fetch(parsedUrl.toString(), {
-         headers: {
-            "User-Agent":
-               "Mozilla/5.0 RecipeCollectorBot/1.0 (+https://example.local)",
-            Accept: "text/html,application/xhtml+xml",
-         },
-         redirect: "follow",
-      });
-
-      if (!response.ok) {
-         return NextResponse.json(
-            { error: `Failed to fetch recipe page (${response.status}).` },
-            { status: 400 },
-         );
-      }
-
-      const html = await response.text();
-
-      const extractedRecipe =
-         extractRecipeFromJsonLd(html, parsedUrl.toString()) ??
-         extractRecipeFromHtml(html, parsedUrl.toString());
-
-      if (!extractedRecipe.ingredients.length && !extractedRecipe.instructions.length) {
-         return NextResponse.json(
-            {
-               error: "Could not extract enough recipe data from this page.",
-            },
-            { status: 422 },
-         );
-      }
-
-      const recipe = normalizeRecipe({
-         ...extractedRecipe,
-         calories: extractedRecipe.nutrition?.calories,
-         origin: "imported",
-      });
-
-      return NextResponse.json({
-         recipe,
-         source: "html-fallback",
-      });
-   } catch (error) {
-      console.error("Recipe import failed:", error);
-
+    if (!targetUrl) {
       return NextResponse.json(
-         { error: "Something went wrong while importing the recipe." },
-         { status: 500 },
+        { error: "URL is required for importing a recipe." },
+        { status: 400 },
       );
-   }
+    }
+
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: `Failed to fetch recipe from URL: ${response.statusText}` },
+        { status: 502 },
+      );
+    }
+
+    const html = await response.text();
+    let imported = extractRecipeFromJsonLd(html, targetUrl);
+
+    if (!imported) {
+      imported = extractRecipeFromHtml(html, targetUrl);
+    }
+
+    const normalized = normalizeRecipe({
+      ...imported,
+      origin: "imported",
+    } as any);
+
+    return NextResponse.json({
+      success: true,
+      recipe: {
+        ...normalized,
+        description: imported.description || normalized.description,
+        servingsText: imported.servingsText,
+        ingredientGroups: imported.ingredientGroups,
+        nutrition: imported.nutrition || normalized.nutrition,
+      },
+    });
+  } catch (err: any) {
+    console.error("Import API Error:", err);
+    return NextResponse.json(
+      { error: err.message || "Failed to process recipe import." },
+      { status: 500 },
+    );
+  }
 }

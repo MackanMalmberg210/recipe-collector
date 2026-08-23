@@ -230,149 +230,129 @@ export default function PlannerGroceryPanel({
   }
 
   return (
-    <section className="rounded-4xl bg-linear-to-br from-emerald-100/10 via-white/4 to-black/20 p-1 shadow-[0_24px_80px_rgba(0,0,0,0.32)]">
-      <div className="rounded-4xl border border-white/6 bg-[#17120f]/95 p-5 ring-1 ring-white/4">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="mb-5">
-            <p className="mb-2 text-xs font-bold uppercase tracking-4 text-emerald-100/55">
-              Grocery list
-            </p>
+    <section className="rounded-4xl border border-stone-200/80 bg-white p-5 shadow-xl dark:border-white/6 dark:bg-[#17120f]/95">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+            Grocery list
+          </p>
 
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight text-[#fff8ef]">
-                  Shopping
-                </h2>
+          <h2 className="text-xl font-bold tracking-tight text-stone-900 dark:text-[#fff8ef]">
+            Shopping list
+          </h2>
 
-                <p className="mt-2 text-sm leading-6 text-stone-400">
-                  Generated from your planned meals.
-                </p>
-              </div>
-
-              <div className="rounded-2xl bg-white/4 px-3 py-2 text-right ring-1 ring-white/7">
-                <p className="text-xs text-stone-500">Items</p>
-                <p className="mt-1 text-lg font-bold text-[#fff8ef]">
-                  {groceryItems.length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-white/4 px-4 py-3 ring-1 ring-white/7">
-              <p className="text-xs text-stone-500">Recipes</p>
-              <p className="mt-1 text-lg font-bold text-[#fff8ef]">
-                {selectedRecipesCount}
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/4 px-4 py-3 ring-1 ring-white/7">
-              <p className="text-xs text-stone-500">Items</p>
-              <p className="mt-1 text-lg font-bold text-[#fff8ef]">
-                {groceryItems.length}
-              </p>
-            </div>
-          </div>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Generated automatically from planned meals.
+          </p>
         </div>
 
-        {groceryItems.length > 0 ? (
-          <>
-            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl bg-black/20 px-4 py-3 ring-1 ring-white/7">
-              <p className="text-sm text-stone-400">
-                {boughtItems.length}/{groceryItems.length} items checked
-              </p>
-
-              <button
-                type="button"
-                onClick={copyGroceryList}
-                className="rounded-xl bg-white/5 px-4 py-2 text-xs font-semibold text-stone-200 ring-1 ring-white/8 transition hover:bg-white/8 hover:ring-emerald-100/15"
-              >
-                Copy list
-              </button>
-            </div>
-
-            <div className="space-y-5">
-              {groupedItems.map((group) => (
-                <div key={group.category}>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-bold uppercase tracking-3 text-emerald-100/65">
-                      {group.category}
-                    </h3>
-
-                    <span className="rounded-full bg-white/4 px-3 py-1 text-xs text-stone-400 ring-1 ring-white/7">
-                      {group.items.length} items
-                    </span>
-                  </div>
-
-                  <div className="grid gap-3">
-                    {group.items.map((item) => {
-                      const bought = boughtItems.includes(item.name);
-
-                      return (
-                        <button
-                          key={item.name}
-                          type="button"
-                          onClick={() => toggleBoughtItem(item.name)}
-                          className={`group rounded-2xl p-4 text-left ring-1 transition ${
-                            bought
-                              ? "bg-emerald-300/8 ring-emerald-200/15"
-                              : "bg-black/22 ring-white/7 hover:bg-black/30 hover:ring-white/10"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <span
-                              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1 transition ${
-                                bought
-                                  ? "bg-emerald-300 text-black ring-emerald-200/30"
-                                  : "bg-white/4 text-transparent ring-white/10 group-hover:text-stone-500"
-                              }`}
-                            >
-                              ✓
-                            </span>
-
-                            <div className="min-w-0">
-                              <p
-                                className={`text-sm font-semibold ${
-                                  bought
-                                    ? "text-emerald-100 line-through decoration-emerald-100/50"
-                                    : "text-[#fff8ef]"
-                                }`}
-                              >
-                                {item.name}
-                              </p>
-
-                              <p className="mt-1 line-clamp-1 text-xs text-stone-500">
-                                Used in {item.recipeTitles.join(", ")}
-                              </p>
-
-                              <p className="mt-1 text-xs text-stone-600">
-                                {item.days
-                                  .map((day) => formatWeekDay(day).slice(0, 3))
-                                  .join(", ")}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="rounded-3xl bg-black/20 p-8 text-center ring-1 ring-white/7">
-            <p className="text-base font-semibold text-[#fff8ef]">
-              No groceries yet
-            </p>
-
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-stone-500">
-              Add recipes to your weekly planner and your shopping list will be
-              generated automatically.
+        <div className="flex items-center gap-2">
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-center dark:border-white/10 dark:bg-white/4">
+            <p className="text-[10px] font-semibold text-stone-500">Recipes</p>
+            <p className="text-sm font-bold text-stone-900 dark:text-[#fff8ef]">
+              {selectedRecipesCount}
             </p>
           </div>
-        )}
+
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-center dark:border-white/10 dark:bg-white/4">
+            <p className="text-[10px] font-semibold text-stone-500">Items</p>
+            <p className="text-sm font-bold text-stone-900 dark:text-[#fff8ef]">
+              {groceryItems.length}
+            </p>
+          </div>
+        </div>
       </div>
+
+      {groceryItems.length > 0 ? (
+        <>
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 dark:border-white/7 dark:bg-black/20">
+            <p className="text-xs font-semibold text-stone-600 dark:text-stone-400">
+              {boughtItems.length}/{groceryItems.length} items checked
+            </p>
+
+            <button
+              type="button"
+              onClick={copyGroceryList}
+              className="rounded-xl border border-stone-200 bg-white px-3 py-1 text-xs font-bold text-stone-700 shadow-sm transition hover:bg-stone-100 dark:border-white/8 dark:bg-white/5 dark:text-stone-200 cursor-pointer"
+            >
+              Copy list
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {groupedItems.map((group) => (
+              <div key={group.category}>
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                    {group.category}
+                  </h3>
+
+                  <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-semibold text-stone-500 dark:border-white/10 dark:bg-white/4">
+                    {group.items.length} items
+                  </span>
+                </div>
+
+                <div className="grid gap-2">
+                  {group.items.map((item) => {
+                    const bought = boughtItems.includes(item.name);
+
+                    return (
+                      <button
+                        key={item.name}
+                        type="button"
+                        onClick={() => toggleBoughtItem(item.name)}
+                        className={`group rounded-2xl p-3 text-left border transition ${
+                          bought
+                            ? "border-emerald-500/30 bg-emerald-50 text-emerald-900 dark:border-emerald-200/15 dark:bg-emerald-300/8 dark:text-emerald-100"
+                            : "border-stone-200 bg-stone-50 hover:bg-white dark:border-white/7 dark:bg-black/22 dark:hover:bg-black/30"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <span
+                            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition ${
+                              bought
+                                ? "border-emerald-600 bg-emerald-600 text-white"
+                                : "border-stone-300 text-transparent group-hover:border-stone-400"
+                            }`}
+                          >
+                            ✓
+                          </span>
+
+                          <div className="min-w-0">
+                            <p
+                              className={`text-xs sm:text-sm font-semibold ${
+                                bought
+                                  ? "line-through text-stone-400 dark:text-stone-500"
+                                  : "text-stone-900 dark:text-[#fff8ef]"
+                              }`}
+                            >
+                              {item.name}
+                            </p>
+
+                            <p className="mt-0.5 line-clamp-1 text-[11px] text-stone-500">
+                              For {item.recipeTitles.join(", ")}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="rounded-3xl border border-stone-200 bg-stone-50 p-6 text-center dark:border-white/7 dark:bg-black/20">
+          <p className="text-sm font-bold text-stone-800 dark:text-[#fff8ef]">
+            No groceries yet
+          </p>
+
+          <p className="mt-1 text-xs text-stone-500">
+            Add recipes to your meal plan to generate the shopping list automatically.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
