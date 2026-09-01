@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [recoverySentEmail, setRecoverySentEmail] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -24,6 +26,61 @@ export default function LoginPage() {
       }
     }
   }, []);
+
+  // Cooldown timer for resending recovery email
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleSendRecoveryEmail = async (targetEmail: string) => {
+    const cleanEmail = targetEmail.trim();
+    if (!cleanEmail) {
+      setMessage({ text: "Please enter your email address.", type: "error" });
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "forgot_password",
+          email: cleanEmail,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        let errText = data.error || "Failed to send reset link.";
+        if (errText.toLowerCase().includes("rate limit")) {
+          errText = "Too many password reset requests sent recently. For security, please wait a few minutes before requesting another link.";
+        }
+        setMessage({ text: errText, type: "error" });
+        setLoading(false);
+        return;
+      }
+
+      setRecoverySentEmail(cleanEmail);
+      setResendCooldown(30); // 30s cooldown
+      setMessage(null);
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setMessage({
+        text: e.message || "Failed to request password reset.",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,37 +97,7 @@ export default function LoginPage() {
 
     // 1. FORGOT PASSWORD FLOW
     if (mode === "forgot_password") {
-      try {
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "forgot_password",
-            email: cleanEmail,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || data.error) {
-          setMessage({ text: data.error || "Failed to send reset link.", type: "error" });
-          setLoading(false);
-          return;
-        }
-
-        setMessage({
-          text: `Password recovery email sent to ${cleanEmail}! ✉️ Check your inbox to set a new password.`,
-          type: "success",
-        });
-        setLoading(false);
-      } catch (err: unknown) {
-        const e = err as { message?: string };
-        setMessage({
-          text: e.message || "Failed to request password reset.",
-          type: "error",
-        });
-        setLoading(false);
-      }
+      await handleSendRecoveryEmail(cleanEmail);
       return;
     }
 
@@ -218,6 +245,8 @@ export default function LoginPage() {
                     ? "Sign In"
                     : mode === "signup"
                     ? "Create Account"
+                    : recoverySentEmail
+                    ? "Check Your Inbox"
                     : "Reset Password"}
                 </h2>
                 <p className="text-xs text-stone-400 mt-1">
@@ -225,12 +254,14 @@ export default function LoginPage() {
                     ? "Enter your account credentials below"
                     : mode === "signup"
                     ? "Fill out the details below to create your free account"
-                    : "Enter your account email to receive a password recovery link"}
+                    : recoverySentEmail
+                    ? "We've sent a password recovery link to your email"
+                    : "Enter your account email to receive a recovery link"}
                 </p>
               </div>
             </div>
 
-            {/* Segmented Mode Switcher */}
+            {/* Segmented Mode Switcher (Hidden in forgot password mode) */}
             {mode !== "forgot_password" ? (
               <div className="mt-6 grid grid-cols-2 rounded-2xl border border-white/8 bg-stone-950/80 p-1.5 z-10 relative">
                 <button
@@ -238,6 +269,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setMode("login");
                     setMessage(null);
+                    setRecoverySentEmail(null);
                   }}
                   className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "login"
@@ -253,6 +285,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setMode("signup");
                     setMessage(null);
+                    setRecoverySentEmail(null);
                   }}
                   className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "signup"
@@ -263,220 +296,294 @@ export default function LoginPage() {
                   Create Account
                 </button>
               </div>
-            ) : (
-              <div className="mt-4 flex items-center justify-between border-b border-white/8 pb-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("login");
-                    setMessage(null);
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
-                >
-                  <span>←</span>
-                  <span>Back to Sign In</span>
-                </button>
-              </div>
-            )}
+            ) : null}
 
-            {/* Feedback message banner */}
-            {message && (
-              <div
-                className={`mt-6 flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm font-medium transition-all ${
-                  message.type === "error"
-                    ? "border-red-500/30 bg-red-500/10 text-red-300"
-                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                }`}
-              >
-                <div className="mt-0.5 shrink-0">
-                  {message.type === "error" ? (
-                    <svg className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            {/* DEDICATED RECOVERY EMAIL SENT VIEW */}
+            {mode === "forgot_password" && recoverySentEmail ? (
+              <div className="mt-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                {/* Confirmation Box */}
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-stone-200 space-y-2.5">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                  )}
-                </div>
-                <span>{message.text}</span>
-              </div>
-            )}
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              
-              {/* DISPLAY NAME (SIGN UP ONLY) */}
-              {mode === "signup" && (
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                    Your Name / Chef Name
-                  </label>
-                  <div className="relative mt-1.5">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="e.g. Gordon"
-                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                    />
+                    <span>Recovery link dispatched!</span>
                   </div>
+                  <p className="text-xs leading-relaxed text-stone-300">
+                    We sent an email to <span className="font-bold text-white underline">{recoverySentEmail}</span>. Click the link in the message to choose your new password.
+                  </p>
+                  <p className="text-[11px] text-stone-400 border-t border-emerald-500/20 pt-2">
+                    💡 If you don&apos;t see it within a minute, remember to check your spam or promotions folder.
+                  </p>
                 </div>
-              )}
 
-              {/* EMAIL */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                  Email Address
-                </label>
-                <div className="relative mt-1.5">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                    placeholder="you@example.com"
-                  />
-                </div>
-              </div>
-
-              {/* PASSWORD (NOT IN FORGOT PASSWORD MODE) */}
-              {mode !== "forgot_password" && (
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                      Password
-                    </label>
-
-                    {mode === "login" && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode("forgot_password");
-                          setMessage(null);
-                        }}
-                        className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition cursor-pointer"
-                      >
-                        Forgot Password?
-                      </button>
+                {/* Resend Cooldown Action */}
+                <div className="flex flex-col gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    disabled={resendCooldown > 0 || loading}
+                    onClick={() => handleSendRecoveryEmail(recoverySentEmail)}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-stone-950/60 py-3 text-xs font-bold text-stone-300 hover:bg-stone-950 hover:text-white transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {loading ? (
+                      <span>Sending...</span>
+                    ) : resendCooldown > 0 ? (
+                      <span>Resend link in {resendCooldown}s</span>
+                    ) : (
+                      <span>Resend recovery email ↻</span>
                     )}
-                  </div>
+                  </button>
 
-                  <div className="relative mt-1.5">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-11 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                      placeholder="••••••••"
-                    />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecoverySentEmail(null);
+                      setMessage(null);
+                    }}
+                    className="text-xs text-stone-400 hover:text-stone-200 transition cursor-pointer text-center py-1"
+                  >
+                    Use a different email address
+                  </button>
+                </div>
+
+                {/* Back to Sign In */}
+                <div className="pt-2 border-t border-white/5 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("login");
+                      setRecoverySentEmail(null);
+                      setMessage(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                  >
+                    <span>←</span>
+                    <span>Back to Sign In</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Standard Forgot Password Back Button */}
+                {mode === "forgot_password" && (
+                  <div className="mt-4 flex items-center justify-between border-b border-white/8 pb-3">
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-stone-400 hover:text-white transition cursor-pointer"
-                      title={showPassword ? "Hide password" : "Show password"}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onClick={() => {
+                        setMode("login");
+                        setMessage(null);
+                        setRecoverySentEmail(null);
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
                     >
-                      {showPassword ? (
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.025 10.025 0 013.68-.823c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-6.09-3.21a3 3 0 11-4.243-4.243" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
-                        </svg>
-                      ) : (
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
+                      <span>←</span>
+                      <span>Back to Sign In</span>
                     </button>
                   </div>
-                </div>
-              )}
-
-              {/* CONFIRM PASSWORD (SIGN UP ONLY) */}
-              {mode === "signup" && (
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                    Confirm Password
-                  </label>
-                  <div className="relative mt-1.5">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Submit CTA */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative mt-4 flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-400/25 transition duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin text-stone-950" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>Processing...</span>
-                  </span>
-                ) : mode === "login" ? (
-                  <span>Sign In to Kitchen</span>
-                ) : mode === "signup" ? (
-                  <span>Create Free Account ✨</span>
-                ) : (
-                  <span>Send Recovery Email ✉️</span>
                 )}
-              </button>
-            </form>
 
-            {/* Alternativ länk längst ner för att växla läge */}
-            {mode !== "forgot_password" ? (
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode(mode === "login" ? "signup" : "login");
-                    setMessage(null);
-                  }}
-                  className="text-xs text-stone-400 hover:text-amber-300 transition cursor-pointer underline underline-offset-4"
-                >
-                  {mode === "login"
-                    ? "Don't have an account? Create one for free →"
-                    : "Already have an account? Sign in here →"}
-                </button>
-              </div>
-            ) : null}
+                {/* Feedback message banner */}
+                {message && (
+                  <div
+                    className={`mt-6 flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm font-medium transition-all ${
+                      message.type === "error"
+                        ? "border-red-500/30 bg-red-500/10 text-red-300"
+                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {message.type === "error" ? (
+                        <svg className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span>{message.text}</span>
+                  </div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                  
+                  {/* DISPLAY NAME (SIGN UP ONLY) */}
+                  {mode === "signup" && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                        Your Name / Chef Name
+                      </label>
+                      <div className="relative mt-1.5">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="e.g. Gordon"
+                          className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* EMAIL */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                      Email Address
+                    </label>
+                    <div className="relative mt-1.5">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* PASSWORD (NOT IN FORGOT PASSWORD MODE) */}
+                  {mode !== "forgot_password" && (
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                          Password
+                        </label>
+
+                        {mode === "login" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMode("forgot_password");
+                              setMessage(null);
+                              setRecoverySentEmail(null);
+                            }}
+                            className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                          >
+                            Forgot Password?
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="relative mt-1.5">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          minLength={6}
+                          className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-11 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-stone-400 hover:text-white transition cursor-pointer"
+                          title={showPassword ? "Hide password" : "Show password"}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.025 10.025 0 013.68-.823c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-6.09-3.21a3 3 0 11-4.243-4.243" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CONFIRM PASSWORD (SIGN UP ONLY) */}
+                  {mode === "signup" && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                        Confirm Password
+                      </label>
+                      <div className="relative mt-1.5">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-500">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={6}
+                          className="w-full rounded-2xl border border-white/10 bg-stone-950/70 py-3 pl-10 pr-4 text-sm text-stone-100 placeholder-stone-500 outline-none transition duration-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit CTA */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="group relative mt-4 flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-400/25 transition duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="h-4 w-4 animate-spin text-stone-950" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span>Processing...</span>
+                      </span>
+                    ) : mode === "login" ? (
+                      <span>Sign In to Kitchen</span>
+                    ) : mode === "signup" ? (
+                      <span>Create Free Account ✨</span>
+                    ) : (
+                      <span>Send Recovery Email ✉️</span>
+                    )}
+                  </button>
+                </form>
+
+                {/* Alternativ länk längst ner för att växla läge */}
+                {mode !== "forgot_password" ? (
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode(mode === "login" ? "signup" : "login");
+                        setMessage(null);
+                        setRecoverySentEmail(null);
+                      }}
+                      className="text-xs text-stone-400 hover:text-amber-300 transition cursor-pointer underline underline-offset-4"
+                    >
+                      {mode === "login"
+                        ? "Don't have an account? Create one for free →"
+                        : "Already have an account? Sign in here →"}
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
 
             {/* Back to Home */}
             <div className="mt-6 border-t border-white/5 pt-4 text-center">

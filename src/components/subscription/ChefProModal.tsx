@@ -14,6 +14,16 @@ export default function ChefProModal({ isOpen, onClose }: ChefProModalProps) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [loading, setLoading] = useState(false);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -39,9 +49,9 @@ export default function ChefProModal({ isOpen, onClose }: ChefProModalProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Dark backdrop blur */}
+      {/* Solid High-Speed Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 cursor-pointer"
+        className="fixed inset-0 bg-black/80 transition-opacity duration-200 cursor-pointer"
         onClick={onClose}
       />
 

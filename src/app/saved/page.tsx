@@ -12,6 +12,7 @@ import DeleteConfirmModal from "../../components/saved/DeleteConfirmModal";
 import ImportRecipeModal from "../../components/import/ImportRecipeModal";
 import AddRecipeModal from "../../components/cookbook/AddRecipeModal";
 import VisionScanModal from "../../components/vision/VisionScanModal";
+import AddIngredientsToListModal from "../../components/saved/AddIngredientsToListModal";
 import { useToast } from "../../components/ui/ToastProvider";
 import type { SortMode, ViewMode } from "../../components/saved/SavedToolbar";
 import {
@@ -35,24 +36,24 @@ import { addRecipeIngredientsToGrocery } from "../../lib/home";
 import { getRecipeRatings } from "../../lib/ratings";
 import { capitalize } from "../../lib/format";
 
-const CATEGORY_META: { category: RecipeCategory; label: string; icon: string }[] = [
-  { category: "pasta", label: "Pasta", icon: "🍝" },
-  { category: "main-course", label: "Main Course", icon: "🥩" },
-  { category: "salad", label: "Salad", icon: "🥗" },
-  { category: "soup", label: "Soup", icon: "🍲" },
-  { category: "bowl", label: "Bowl", icon: "🥣" },
-  { category: "stir-fry", label: "Stir-fry", icon: "🥢" },
-  { category: "sandwich", label: "Sandwich & Wraps", icon: "🥪" },
-  { category: "rice", label: "Rice & Grains", icon: "🍚" },
-  { category: "breakfast", label: "Breakfast", icon: "🍳" },
-  { category: "dessert", label: "Dessert", icon: "🍰" },
+const CATEGORY_META: { category: RecipeCategory; label: string }[] = [
+  { category: "pasta", label: "Pasta" },
+  { category: "main-course", label: "Main Course" },
+  { category: "salad", label: "Salad" },
+  { category: "soup", label: "Soup" },
+  { category: "bowl", label: "Bowl" },
+  { category: "stir-fry", label: "Stir-fry" },
+  { category: "sandwich", label: "Sandwich & Wraps" },
+  { category: "rice", label: "Rice & Grains" },
+  { category: "breakfast", label: "Breakfast" },
+  { category: "dessert", label: "Dessert" },
 ];
 
-const MEAL_TYPE_META: { mealType: MealType; label: string; icon: string }[] = [
-  { mealType: "breakfast", label: "Breakfast", icon: "🍳" },
-  { mealType: "lunch", label: "Lunch", icon: "🥗" },
-  { mealType: "dinner", label: "Dinner", icon: "🍲" },
-  { mealType: "snack", label: "Snack", icon: "🍿" },
+const MEAL_TYPE_META: { mealType: MealType; label: string }[] = [
+  { mealType: "breakfast", label: "Breakfast" },
+  { mealType: "lunch", label: "Lunch" },
+  { mealType: "dinner", label: "Dinner" },
+  { mealType: "snack", label: "Snack" },
 ];
 
 function normalizeText(value: string) {
@@ -107,6 +108,7 @@ export default function SavedRecipesPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isVisionScanOpen, setIsVisionScanOpen] = useState(false);
   const [visionScanMode, setVisionScanMode] = useState<"recipe" | "meal_analyzer">("recipe");
+  const [recipeForGroceryModal, setRecipeForGroceryModal] = useState<AppRecipe | null>(null);
 
   const { success: toastSuccess, info: toastInfo } = useToast();
 
@@ -125,6 +127,16 @@ export default function SavedRecipesPage() {
       setAllRecipes(combined);
       setUserRecipes(combined.filter((r) => r.origin === "user"));
       setImportedRecipes(combined.filter((r) => r.origin === "imported"));
+    }
+
+    // Preload & warm image cache for instant smooth rendering
+    if (typeof window !== "undefined") {
+      initialCombined.forEach((r) => {
+        if (r.image) {
+          const img = new window.Image();
+          img.src = r.image;
+        }
+      });
     }
   };
 
@@ -203,11 +215,11 @@ export default function SavedRecipesPage() {
     if (activeFilter.type === "trash") return "Trash";
     if (activeFilter.type === "mealType") {
       const meta = MEAL_TYPE_META.find((m) => m.mealType === activeFilter.value);
-      return meta ? `${meta.icon} ${meta.label}` : capitalize(activeFilter.value);
+      return meta ? meta.label : capitalize(activeFilter.value);
     }
     if (activeFilter.type === "category") {
       const meta = CATEGORY_META.find((c) => c.category === activeFilter.value);
-      return meta ? `${meta.icon} ${meta.label}` : capitalize(activeFilter.value.replace(/-/g, " "));
+      return meta ? meta.label : capitalize(activeFilter.value.replace(/-/g, " "));
     }
     return "My Recipes";
   }, [activeFilter]);
@@ -281,13 +293,7 @@ export default function SavedRecipesPage() {
   }, [currentDataset, searchQuery, activeFilter, sortMode, savedRecipeIds]);
 
   const handleAddToGrocery = (recipe: AppRecipe) => {
-    const count = addRecipeIngredientsToGrocery(recipe.ingredients);
-    if (count === 0) {
-      toastInfo(`All ingredients for "${recipe.title}" are already in your grocery list. 🛒`);
-    } else {
-      toastSuccess(`Added ${count} ingredient${count === 1 ? "" : "s"} from "${recipe.title}" to grocery list! 🛒`);
-    }
-    return count;
+    setRecipeForGroceryModal(recipe);
   };
 
   const handleRemoveSaved = (id: number) => {
@@ -372,13 +378,13 @@ export default function SavedRecipesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f5f0] text-stone-900 transition-colors duration-300 dark:bg-[#0e0c0a] dark:text-stone-100 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f5f0] text-stone-900 transition-colors duration-300 dark:bg-[#0e0c0a] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
       {/* Background ambient lighting */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0 dark:opacity-100 transition-opacity">
         <div className="absolute left-1/3 top-0 h-120 w-120 -translate-x-1/2 rounded-full bg-amber-500/8 blur-[160px]" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-7xl 2xl:max-w-400 flex-col gap-6">
+      <div className="relative mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* 1. TOP FULL-WIDTH HEADER & SEARCH TOOLBAR */}
         <CookbookHeader
@@ -519,6 +525,13 @@ export default function SavedRecipesPage() {
           setIsVisionScanOpen(false);
           toastSuccess("Recipe extracted & added to your cookbook! 📷✨");
         }}
+      />
+
+      {/* CHOOSE DESTINATION GROCERY LIST MODAL */}
+      <AddIngredientsToListModal
+        recipe={recipeForGroceryModal}
+        isOpen={Boolean(recipeForGroceryModal)}
+        onClose={() => setRecipeForGroceryModal(null)}
       />
     </main>
   );

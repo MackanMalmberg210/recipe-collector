@@ -1,5 +1,6 @@
 import { generateRecipeMetadata } from "./recipeMetadata";
 import { parseIngredientList } from "./ingredientParser";
+import { sanitizeCulinaryText, decodeHtmlEntities } from "./culinaryTextSanitizer";
 import type { AppRecipe, IngredientGroup, NutritionInfo } from "./types";
 
 type NormalizerOrigin = AppRecipe["origin"];
@@ -62,24 +63,8 @@ function createRecipeId() {
    return Date.now();
 }
 
-function decodeHtmlEntities(str: string): string {
-  return str
-    .replace(/&#8211;/g, "–")
-    .replace(/&#8212;/g, "—")
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8216;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
-    .replace(/&#038;/g, "&")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-}
-
 function cleanText(value: string) {
-   return decodeHtmlEntities(value).replace(/\s+/g, " ").trim();
+   return sanitizeCulinaryText(value);
 }
 
 function normalizeString(value: string | null | undefined) {
@@ -97,7 +82,7 @@ function normalizeStringArray(values: string[] | null | undefined) {
    if (!Array.isArray(values)) return [];
 
    return values
-      .map(normalizeString)
+      .map((val) => (val ? sanitizeCulinaryText(val) : ""))
       .filter((value, index, array) => value && array.indexOf(value) === index);
 }
 
@@ -259,6 +244,18 @@ export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
       calories,
    });
 
+   const rawGroups = input.ingredientGroups;
+   const cleanIngredientGroups = Array.isArray(rawGroups) && rawGroups.length > 0
+     ? rawGroups.map((g) => {
+         const cleanItems = (g.ingredients || []).map(sanitizeCulinaryText).filter(Boolean);
+         return {
+           heading: g.heading ? sanitizeCulinaryText(g.heading) : undefined,
+           ingredients: cleanItems,
+           structuredIngredients: parseIngredientList(cleanItems),
+         };
+       })
+     : undefined;
+
    return {
       id: input.id ?? createRecipeId(),
       title,
@@ -268,7 +265,7 @@ export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
       calories,
       ingredients,
       structuredIngredients,
-      ingredientGroups: input.ingredientGroups ?? undefined,
+      ingredientGroups: cleanIngredientGroups,
       instructions,
       servings: normalizeNumber(input.servings),
       servingsText: normalizeString(input.servingsText) || undefined,

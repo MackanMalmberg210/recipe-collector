@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { GROCERY_LIST_KEY } from "../../lib/home";
 import { getAllRecipesWithCloud } from "../../lib/recipes";
+import { getPantryInventory, savePantryInventory, formatGroceryItemName } from "../../lib/groceries";
 
 type GroceryItem = {
   name: string;
@@ -29,21 +30,6 @@ function normalize(text: string) {
   return text.trim().toLowerCase();
 }
 
-/**
- * Unicode-safe capitalization that fully supports Swedish Å, Ä, Ö and all Latin characters.
- */
-function capitalizeWords(str: string): string {
-  if (!str) return "";
-  return str.replace(/(?:^|\s)\p{L}/gu, (match) => match.toUpperCase());
-}
-
-function formatGroceryItemName(str: string): string {
-  const trimmed = str.trim();
-  if (!trimmed) return "";
-  const chars = Array.from(trimmed);
-  return chars[0].toLocaleUpperCase("sv-SE") + chars.slice(1).join("");
-}
-
 export default function FloatingGroceryDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<GroceryItem[]>([]);
@@ -54,6 +40,16 @@ export default function FloatingGroceryDrawer() {
   const [isPulsing, setIsPulsing] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Lock body scroll while drawer is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
 
   // Load items & learned vocabulary from localStorage
   const loadItems = () => {
@@ -85,18 +81,21 @@ export default function FloatingGroceryDrawer() {
     loadLearnedVocab();
 
     // Extract ingredients from recipes to enrich suggestions
-    getAllRecipesWithCloud().then((recipes) => {
-      const allIngs = new Set<string>();
-      recipes.forEach((r) => {
-        r.ingredients.forEach((ing) => {
-          const cleaned = ing.replace(/^\d+[\d\s\/\.]*\s*(?:tbsp|tsp|cup|c\.|oz|lb|g|kg|ml|slices|cloves)?\.?\s*/i, "").trim();
-          if (cleaned.length > 2 && cleaned.length < 35) {
-            allIngs.add(capitalizeWords(cleaned));
-          }
+    getAllRecipesWithCloud()
+      .then((recipes) => {
+        if (!Array.isArray(recipes)) return;
+        const allIngs = new Set<string>();
+        recipes.forEach((r) => {
+          (r.ingredients || []).forEach((ing) => {
+            const cleaned = ing.replace(/^\d+[\d\s\/\.]*\s*(?:tbsp|tsp|cup|c\.|oz|lb|g|kg|ml|slices|cloves)?\.?\s*/i, "").trim();
+            if (cleaned.length > 2 && cleaned.length < 35) {
+              allIngs.add(formatGroceryItemName(cleaned));
+            }
+          });
         });
-      });
-      setRecipeIngredients(Array.from(allIngs));
-    });
+        setRecipeIngredients(Array.from(allIngs));
+      })
+      .catch(() => {});
 
     const handleStorage = (e: Event) => {
       const storageEvent = e as StorageEvent;
@@ -170,10 +169,27 @@ export default function FloatingGroceryDrawer() {
   };
 
   const toggleBought = (index: number) => {
+    const target = items[index];
+    const willBeBought = target ? !target.bought : false;
     const updated = items.map((item, i) =>
       i === index ? { ...item, bought: !item.bought } : item,
     );
     saveItems(updated);
+
+    if (willBeBought && target) {
+      try {
+        const pantry = getPantryInventory();
+        const match = pantry.find(
+          (p) => p.name.toLowerCase().trim() === target.name.toLowerCase().trim() && !p.inStock
+        );
+        if (match) {
+          const updatedPantry = pantry.map((p) =>
+            p.id === match.id ? { ...p, inStock: true } : p
+          );
+          savePantryInventory(updatedPantry);
+        }
+      } catch {}
+    }
   };
 
   const removeItem = (index: number) => {
@@ -268,6 +284,36 @@ export default function FloatingGroceryDrawer() {
     return combined.slice(0, 6);
   }, [newItemText, items, learnedVocab, recipeIngredients]);
 
+  // Sort: 1) Unchecked first, 2) Alphabetical A-Z
+  const sortedItems = useMemo(() => {
+    return items
+      .map((item, originalIndex) => ({ item, originalIndex }))
+      .sort((a, b) => {
+        if (a.item.bought !== b.item.bought) {
+          return a.item.bought ? 1 : -1;
+        }
+        return a.item.name.localeCompare(b.item.name, "sv", { sensitivity: "base" });
+      });
+  }, [items]);
+
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null);
+
+  // Close delete confirmation when clicking anywhere outside
+  useEffect(() => {
+    if (confirmDeleteIndex === null) return;
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-confirm-delete]")) return;
+      setConfirmDeleteIndex(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    const timer = setTimeout(() => setConfirmDeleteIndex(null), 4500);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      clearTimeout(timer);
+    };
+  }, [confirmDeleteIndex]);
+
   const remainingCount = items.filter((item) => !item.bought).length;
   const boughtCount = items.filter((item) => item.bought).length;
 
@@ -288,7 +334,9 @@ export default function FloatingGroceryDrawer() {
           }`}
           title="Open Grocery List"
         >
-          <span className="text-base">🛒</span>
+          <svg className="h-4 w-4 text-stone-100 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
           
           <span className="text-xs font-bold tracking-tight">
             Grocery List
@@ -337,7 +385,9 @@ export default function FloatingGroceryDrawer() {
           {/* DRAWER HEADER */}
           <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-6 bg-[#1a1511]">
             <div className="flex items-center gap-2.5">
-              <span className="text-lg">🛒</span>
+              <svg className="h-5 w-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
               <div>
                 <h2 className="text-base font-bold text-[#fff8ef]">
                   Grocery List
@@ -365,7 +415,9 @@ export default function FloatingGroceryDrawer() {
                   className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white transition-colors duration-100 cursor-pointer text-xs"
                   title="Copy to clipboard"
                 >
-                  📋
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
                 </button>
               )}
 
@@ -451,7 +503,10 @@ export default function FloatingGroceryDrawer() {
           </div>
 
           {/* ITEMS CHECKLIST */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2 overscroll-contain">
+          <div
+            style={{ willChange: "scroll-position", transform: "translateZ(0)" }}
+            className="flex-1 overflow-y-auto p-4 space-y-2 overscroll-contain"
+          >
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-56 text-center">
                 <span className="text-3xl mb-2 text-stone-600">🧺</span>
@@ -464,20 +519,25 @@ export default function FloatingGroceryDrawer() {
               </div>
             ) : (
               <ul className="space-y-2">
-                {items.map((item, index) => (
+                {sortedItems.map(({ item, originalIndex }) => (
                   <li
-                    key={`${item.name}-${index}`}
-                    className={`group flex items-center justify-between gap-3 rounded-2xl border p-3 transition-colors duration-100 ${
+                    key={`${item.name}-${originalIndex}`}
+                    style={{
+                      contentVisibility: "auto",
+                      containIntrinsicSize: "0 52px",
+                      contain: "paint",
+                    }}
+                    className={`group flex items-center justify-between gap-3 rounded-2xl border p-3 ${
                       item.bought
                         ? "border-emerald-500/15 bg-emerald-500/5 opacity-60"
-                        : "border-white/8 bg-[#1e1713]/90 hover:bg-[#251d18] hover:border-amber-400/25 shadow-sm"
+                        : "border-white/8 bg-[#1e1713]/90 hover:bg-[#251d18] hover:border-amber-400/25 shadow-xs"
                     }`}
                   >
                     <label className="flex flex-1 items-center gap-3 cursor-pointer min-w-0">
                       <input
                         type="checkbox"
                         checked={item.bought}
-                        onChange={() => toggleBought(index)}
+                        onChange={() => toggleBought(originalIndex)}
                         className="h-4 w-4 shrink-0 accent-emerald-400 cursor-pointer"
                       />
                       <span
@@ -491,14 +551,38 @@ export default function FloatingGroceryDrawer() {
                       </span>
                     </label>
 
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      className="opacity-0 group-hover:opacity-100 text-stone-500 hover:text-rose-400 transition-colors duration-100 cursor-pointer text-xs p-1"
-                      title="Delete item"
-                    >
-                      ✕
-                    </button>
+                    {confirmDeleteIndex === originalIndex ? (
+                      <div data-confirm-delete="true" className="flex items-center gap-1 shrink-0 animate-in fade-in duration-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeItem(originalIndex);
+                            setConfirmDeleteIndex(null);
+                          }}
+                          className="rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[10px] font-bold px-1.5 py-0.5 hover:bg-rose-500/30 transition cursor-pointer"
+                          title="Confirm removal"
+                        >
+                          Delete?
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteIndex(null)}
+                          className="text-stone-400 hover:text-stone-200 text-xs px-0.5 cursor-pointer"
+                          title="Cancel"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteIndex(originalIndex)}
+                        className="opacity-0 group-hover:opacity-100 text-stone-500 hover:text-rose-400 transition-colors duration-100 cursor-pointer text-xs p-1"
+                        title="Delete item"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

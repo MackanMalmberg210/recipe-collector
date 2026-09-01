@@ -29,6 +29,16 @@ export default function CookModeModal({
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   // Reset step on open
   useEffect(() => {
     if (isOpen) {
@@ -89,7 +99,12 @@ export default function CookModeModal({
       {/* TOP KITCHEN HEADER */}
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-6 sm:px-10 bg-[#17120f]">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">👨‍🍳</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400">
+            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
           <div>
             <h2 className="text-sm sm:text-base font-bold text-[#fff8ef] line-clamp-1">
               Cook Mode: {recipe.title}
@@ -104,13 +119,16 @@ export default function CookModeModal({
           <button
             type="button"
             onClick={() => setShowIngredients(!showIngredients)}
-            className={`rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
               showIngredients
                 ? "border-amber-500 bg-amber-500/20 text-amber-200"
                 : "border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white"
             }`}
           >
-            🥕 Ingredients ({recipe.ingredients.length})
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span>Ingredients ({recipe.ingredients.length})</span>
           </button>
 
           <button
@@ -143,15 +161,17 @@ export default function CookModeModal({
               Step {currentStepIndex + 1} of {steps.length}
             </div>
 
-            <h3 className="text-2xl sm:text-4xl md:text-5xl font-extrabold leading-snug tracking-tight text-[#fff8ef]">
+            <h3 className="text-2xl sm:text-4xl md:text-5xl font-black leading-snug tracking-tight text-[#fff8ef]">
               {currentStep}
             </h3>
 
             {/* IN-STEP TIMER HELPER */}
             {detectedSeconds && (
               <div className="mt-8 flex flex-wrap items-center gap-4 rounded-3xl border border-amber-400/20 bg-amber-400/5 p-4 sm:p-5">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/15 text-2xl">
-                  ⏱️
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/15 text-amber-400">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
                 <div className="flex-1 min-w-48">
                   <p className="text-xs font-bold uppercase tracking-wider text-amber-300">
@@ -169,7 +189,7 @@ export default function CookModeModal({
                     <button
                       type="button"
                       onClick={() => startTimerWithSeconds(detectedSeconds)}
-                      className="rounded-xl bg-amber-500 px-4 py-2 text-xs sm:text-sm font-bold text-stone-950 hover:bg-amber-600 transition cursor-pointer shadow-md"
+                      className="rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-xs px-4 py-2 text-xs sm:text-sm transition cursor-pointer"
                     >
                       Start Timer
                     </button>
@@ -227,13 +247,13 @@ export default function CookModeModal({
                   setCurrentStepIndex((prev) => Math.min(steps.length - 1, prev + 1));
                 }
               }}
-              className={`rounded-2xl px-8 py-3.5 text-sm font-bold shadow-xl transition cursor-pointer ${
+              className={`rounded-2xl px-8 py-3.5 text-sm font-bold shadow-xl transition cursor-pointer active:scale-95 ${
                 isLastStep
-                  ? "bg-emerald-400 text-stone-950 hover:bg-emerald-300 shadow-emerald-400/20"
-                  : "bg-amber-500 text-stone-950 hover:bg-amber-600 shadow-amber-400/20"
+                  ? "bg-emerald-500 text-stone-950 hover:bg-emerald-400 shadow-emerald-400/20 font-black"
+                  : "bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)]"
               }`}
             >
-              {isLastStep ? "Finish Cooking 🎉" : "Next Step →"}
+              {isLastStep ? "Finish Cooking ✓" : "Next Step →"}
             </button>
           </footer>
         </main>

@@ -77,6 +77,16 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  // Lock body scroll while mobile drawer is open
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isMobileMenuOpen]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsDropdownOpen(false);
@@ -93,13 +103,14 @@ export default function Navbar() {
       label: "Explore",
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
         </svg>
       ),
     },
     {
       href: "/saved",
-      label: "Cookbook",
+      label: "My Cookbook",
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -108,7 +119,7 @@ export default function Navbar() {
     },
     {
       href: "/planner",
-      label: "Meal Planner",
+      label: "Weekly Planner",
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -132,13 +143,14 @@ export default function Navbar() {
       label: "Explore",
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
         </svg>
       ),
     },
     {
       href: "/saved",
-      label: "Cookbook",
+      label: "My Cookbook",
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -178,11 +190,11 @@ export default function Navbar() {
   return (
     <>
       {/* TOP DESKTOP & MOBILE HEADER */}
-      <nav className="sticky top-0 z-40 w-full border-b border-stone-300/90 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-white/12 dark:bg-[#130f0c]/95">
-        <div className="mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between px-3 sm:px-6 xl:px-10">
+      <nav className="sticky top-0 z-40 w-full border-b border-stone-300/90 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-white/12 dark:bg-[#130f0c]/95 px-4 sm:px-6 xl:px-10">
+        <div className="relative mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between">
           
-          {/* LOGO & BRAND */}
-          <div className="flex items-center gap-6">
+          {/* LOGO & BRAND (LEFT) */}
+          <div className="flex items-center gap-3">
             <Link
               href="/"
               className="flex items-center gap-2.5 transition-opacity hover:opacity-90 cursor-pointer"
@@ -193,57 +205,43 @@ export default function Navbar() {
                   <line x1="6" y1="17" x2="18" y2="17" />
                 </svg>
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm sm:text-base font-bold leading-tight tracking-tight text-stone-900 dark:text-stone-100">
-                  Recipe Collector
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  Culinary Studio
-                </span>
-              </div>
+              <span className="text-sm sm:text-base font-bold tracking-tight text-stone-900 dark:text-stone-100">
+                Recipe Collector
+              </span>
             </Link>
+          </div>
 
-            {/* DESKTOP NAV LINKS (md and up) */}
-            <div className="hidden md:flex md:items-center md:gap-1">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                      isActive
-                        ? "bg-stone-900 text-white shadow-xs dark:bg-white/10 dark:text-amber-300"
-                        : "text-stone-600 hover:bg-stone-100 hover:text-stone-950 dark:text-stone-400 dark:hover:bg-white/5 dark:hover:text-stone-100"
-                    }`}
-                  >
-                    <span className={isActive ? "text-amber-400" : ""}>{link.icon}</span>
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+          {/* DESKTOP NAV LINKS (CENTERED IN MIDDLE OF NAVBAR) */}
+          <div className="hidden md:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                    isActive
+                      ? "bg-amber-500/15 text-amber-900 border border-amber-500/40 shadow-xs dark:bg-amber-400/15 dark:text-amber-300 dark:border-amber-400/30 font-bold"
+                      : "text-stone-600 hover:bg-stone-200/60 hover:text-stone-950 dark:text-stone-400 dark:hover:bg-white/8 dark:hover:text-stone-100 border border-transparent hover:border-stone-300/60 dark:hover:border-white/10"
+                  }`}
+                >
+                  <span className={isActive ? "text-amber-600 dark:text-amber-400" : "text-stone-400 group-hover:text-stone-600 dark:text-stone-500 dark:group-hover:text-stone-300"}>{link.icon}</span>
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
 
           {/* RIGHT UTILITIES & USER MENU */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
             {/* THEME TOGGLE */}
             <ThemeToggle />
 
-            {/* CHEF PRO NAV BADGE */}
-            {mounted && userSettings.subscriptionTier === "pro" ? (
+            {/* CHEF PRO NAV BADGE (Only for logged-in Pro users) */}
+            {mounted && user && userSettings.subscriptionTier === "pro" && (
               <span className="inline-flex items-center gap-1 rounded-xl bg-amber-400/20 px-2 py-1 text-[10px] sm:text-[11px] font-black uppercase text-amber-400 border border-amber-400/30">
                 👑 PRO
               </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsProModalOpen(true)}
-                className="inline-flex items-center gap-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black shadow-xs transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                <span>👑</span>
-                <span className="hidden xs:inline">Pro</span>
-              </button>
             )}
 
             {/* USER PROFILE DROPDOWN (DESKTOP) */}
@@ -315,9 +313,9 @@ export default function Navbar() {
               <div className="hidden md:flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="flex items-center gap-1.5 rounded-xl bg-stone-900 px-3.5 py-1.5 text-xs font-bold text-stone-50 shadow-md transition hover:bg-stone-800 dark:bg-gradient-to-r dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 cursor-pointer"
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-4 py-2 text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition-all duration-150 active:scale-95 cursor-pointer"
                 >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="h-4 w-4 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
                   <span>Sign In</span>
@@ -353,7 +351,7 @@ export default function Navbar() {
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/75 transition-opacity"
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
@@ -436,7 +434,7 @@ export default function Navbar() {
                 >
                   <span className="flex items-center gap-2">
                     <span>👑</span>
-                    <span>Chef Pro VIP</span>
+                    <span>Chef Pro</span>
                   </span>
                   <span className="text-xs uppercase tracking-wider bg-stone-950 text-amber-300 px-2 py-0.5 rounded-md">
                     {userSettings.subscriptionTier === "pro" ? "Active" : "Upgrade"}
@@ -462,9 +460,9 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-stone-900 py-3 text-xs font-bold text-stone-50 dark:bg-amber-400 dark:text-stone-950 shadow-md"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 py-3 text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)]"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="h-4 w-4 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
                   <span>Sign In to Account</span>

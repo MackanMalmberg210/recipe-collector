@@ -9,7 +9,6 @@ import RecipeVideoPlayer from "./recipe-detail/RecipeVideoPlayer";
 import RecipeInstructions from "./recipe-detail/RecipeInstructions";
 import RecipeJournalPanel from "./recipe-detail/RecipeJournalPanel";
 import RecipeIngredientsPanel from "./recipe-detail/RecipeIngredientsPanel";
-import RecipeNutritionPanel from "./recipe-detail/RecipeNutritionPanel";
 import SimilarRecipesPanel from "./recipe-detail/SimilarRecipesPanel";
 import CookModeModal from "./recipe-detail/CookModeModal";
 import ShareRecipeModal from "./recipe-detail/ShareRecipeModal";
@@ -290,8 +289,8 @@ export default function RecipeDetailedView({
   };
 
   return (
-    <main className="min-h-screen bg-[#fbf9f5] px-4 py-8 text-stone-900 transition dark:bg-[#0e0c0a] dark:text-[#fff8ef] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <main className="min-h-screen bg-[#fbf9f5] px-4 py-8 text-stone-900 transition dark:bg-[#0e0c0a] dark:text-[#fff8ef] sm:px-6 xl:px-10">
+      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] space-y-8">
         {/* TOP BACK BREADCRUMB */}
         <div>
           <Link
@@ -354,9 +353,6 @@ export default function RecipeDetailedView({
               onUndoAddMissing={handleUndoAddMissing}
               isAddedToGrocery={isAddedToGrocery}
             />
-
-            {/* 2. Full Nutrition Profile */}
-            <RecipeNutritionPanel recipe={recipe} />
           </aside>
         </div>
 

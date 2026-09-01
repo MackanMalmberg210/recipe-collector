@@ -27,6 +27,16 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   const [secondsLeft, setSecondsLeft] = useState(countdownSeconds);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     setSecondsLeft(countdownSeconds);
@@ -52,10 +62,10 @@ export default function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Dark Ambient Backdrop */}
+      {/* Solid High-Speed Backdrop */}
       <div
         onClick={onCancel}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-200 cursor-pointer"
+        className="fixed inset-0 bg-black/80 transition-opacity animate-in fade-in duration-200 cursor-pointer"
       />
 
       {/* Dialog Box */}
@@ -69,17 +79,18 @@ export default function ConfirmModal({
             <h3 className="text-base font-bold text-stone-950 dark:text-stone-50">
               {title}
             </h3>
-            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+            <p className="mt-1.5 text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
               {description}
             </p>
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2.5">
+        {/* Action Buttons */}
+        <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-2 text-xs sm:text-sm font-semibold text-stone-700 hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 transition cursor-pointer"
+            className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 transition cursor-pointer"
           >
             {cancelLabel}
           </button>
@@ -88,10 +99,10 @@ export default function ConfirmModal({
             type="button"
             disabled={isCountdownActive}
             onClick={onConfirm}
-            className={`rounded-xl px-5 py-2 text-xs sm:text-sm font-bold shadow-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`rounded-2xl px-5 py-2 text-xs font-bold transition cursor-pointer shadow-md ${
               isDestructive
-                ? "bg-rose-600 text-white hover:bg-rose-500 shadow-rose-600/20"
-                : "bg-amber-500 text-stone-950 hover:bg-amber-400 shadow-amber-500/20"
+                ? "bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-rose-600/20"
+                : "bg-amber-500 text-stone-950 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-amber-500/20"
             }`}
           >
             {isCountdownActive ? `${confirmLabel} (${secondsLeft}s)` : confirmLabel}

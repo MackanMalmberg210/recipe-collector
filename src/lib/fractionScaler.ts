@@ -1,3 +1,5 @@
+import { sanitizeCulinaryText } from "./culinaryTextSanitizer";
+
 /**
  * Comprehensive culinary unit definitions and normalizations.
  * Full names and standard abbreviations with strict word-boundary matching.
@@ -218,7 +220,8 @@ export function splitAmountAndIngredient(
   unit: string;
   name: string;
 } {
-  const cleanedRaw = cleanAuthorNotes(rawText.trim());
+  const sanitized = sanitizeCulinaryText(rawText);
+  const cleanedRaw = cleanAuthorNotes(sanitized);
   if (!cleanedRaw) return { amount: "", unit: "", name: "" };
 
   let numValue: number | null = null;

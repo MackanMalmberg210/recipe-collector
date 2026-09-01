@@ -233,11 +233,13 @@ export default function ChefVisionStudio({
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-xl">📖</span>
-              <span className="text-sm font-extrabold">Cookbook / Recipe</span>
+              <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span className="text-sm font-extrabold">Cookbook &amp; Card</span>
             </div>
             <span className="text-xs text-stone-500 dark:text-stone-400 mt-1 font-medium leading-relaxed">
-              Scan cookbook pages, magazines, or handwritten recipe cards.
+              Extract title, ingredients &amp; cooking steps from cookbook photos.
             </span>
           </button>
 
@@ -256,7 +258,9 @@ export default function ChefVisionStudio({
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-xl">🛒</span>
+              <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
               <span className="text-sm font-extrabold">Paper Grocery List</span>
             </div>
             <span className="text-xs text-stone-500 dark:text-stone-400 mt-1 font-medium leading-relaxed">
@@ -279,7 +283,10 @@ export default function ChefVisionStudio({
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-xl">🍽️</span>
+              <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="9" />
+                <circle cx="12" cy="12" r="5" />
+              </svg>
               <span className="text-sm font-extrabold">Snap My Plate</span>
             </div>
             <span className="text-xs text-stone-500 dark:text-stone-400 mt-1 font-medium leading-relaxed">
@@ -319,10 +326,22 @@ export default function ChefVisionStudio({
             onDrop={handleDrop}
             className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-stone-300/80 bg-stone-50/50 p-10 text-center transition hover:border-amber-500 hover:bg-amber-500/5 dark:border-white/15 dark:bg-[#181310]/60 dark:hover:border-amber-400/40"
           >
-            {/* Pure Standalone Glyph (NO background box container!) */}
-            <span className="text-5xl block mb-3 transition-transform duration-200 hover:scale-110">
-              {activeMode === "recipe" ? "📖" : activeMode === "grocery" ? "📝" : "🍽️"}
-            </span>
+            <div className="mb-3.5 flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              {activeMode === "grocery" ? (
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9 2 2 4-4" />
+                </svg>
+              ) : activeMode === "meal_analyzer" ? (
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="5" />
+                </svg>
+              ) : (
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              )}
+            </div>
 
             <h3 className="text-lg sm:text-xl font-extrabold text-stone-950 dark:text-[#fff8ef]">
               {activeMode === "recipe"
@@ -340,9 +359,12 @@ export default function ChefVisionStudio({
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex items-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 px-5 py-3 text-xs font-bold text-stone-950 shadow-sm transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 px-5 py-3 text-xs shadow-sm transition active:scale-95 cursor-pointer"
               >
-                <span>📷</span>
+                <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
                 <span>Open Camera</span>
               </button>
 
@@ -351,7 +373,9 @@ export default function ChefVisionStudio({
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-2 rounded-2xl border border-stone-300 bg-white hover:bg-stone-100 px-5 py-3 text-xs font-bold text-stone-800 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition cursor-pointer shadow-xs active:scale-95"
               >
-                <span>🖼️</span>
+                <svg className="h-4 w-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
                 <span>Upload Image</span>
               </button>
             </div>
@@ -415,9 +439,12 @@ export default function ChefVisionStudio({
                 type="button"
                 onClick={startVisionAnalysis}
                 disabled={loading}
-                className="w-full sm:w-auto shrink-0 rounded-2xl bg-amber-500 hover:bg-amber-600 px-6 py-3 text-xs sm:text-sm font-black text-stone-950 shadow-md shadow-amber-400/25 transition cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-6 py-3 text-xs sm:text-sm font-bold text-stone-950 border border-amber-600/60 shadow-md shadow-amber-400/25 transition cursor-pointer disabled:opacity-50"
               >
-                {loading ? "Analyzing..." : "⚡ Run AI Vision Scan"}
+                <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+                </svg>
+                <span>{loading ? "Analyzing..." : "Run AI Vision Scan"}</span>
               </button>
             </div>
           </div>
@@ -598,17 +625,23 @@ export default function ChefVisionStudio({
             {savedGrocerySuccess ? (
               <Link
                 href="/groceries"
-                className="rounded-2xl bg-emerald-600 text-white px-5 py-2.5 text-xs font-black shadow-md transition"
+                className="flex items-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 text-xs font-bold shadow-md transition"
               >
-                Open Grocery List 🛒 →
+                <span>Open Grocery List</span>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
               </Link>
             ) : (
               <button
                 type="button"
                 onClick={handleAddScannedItemsToGrocery}
-                className="rounded-2xl bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-black text-stone-950 shadow-md shadow-amber-400/20 transition cursor-pointer"
+                className="flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-5 py-2.5 text-xs font-bold text-stone-950 border border-amber-600/60 shadow-md shadow-amber-400/20 transition cursor-pointer"
               >
-                Add All to Grocery List 🛒
+                <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Add All to Grocery List</span>
               </button>
             )}
           </div>

@@ -21,6 +21,7 @@ export type UserSettings = {
   dietaryPreferences: DietaryPreference[];
   strictDietaryFilter: boolean;
   autoScaleRecipes: boolean;
+  autoAddLowPantryToList: boolean;
   subscriptionTier: "free" | "pro";
 };
 
@@ -30,6 +31,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   dietaryPreferences: [],
   strictDietaryFilter: false, // Default is OFF as requested
   autoScaleRecipes: true,
+  autoAddLowPantryToList: true, // Auto-add low pantry staples to shopping list
   subscriptionTier: "free",
 };
 

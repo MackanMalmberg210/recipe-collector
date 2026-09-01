@@ -1,21 +1,11 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Playfair_Display } from "next/font/google";
+import Script from "next/script";
 import Navbar from "../components/Navbar";
 import "./globals.css";
 import { ToastProvider } from "../components/ui/ToastProvider";
 import FloatingGroceryDrawer from "../components/grocery/FloatingGroceryDrawer";
-
-const jakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-
-const playfairDisplay = Playfair_Display({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800", "900"],
-});
+import AuthCallbackListener from "../components/auth/AuthCallbackListener";
+import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
   title: {
@@ -24,8 +14,6 @@ export const metadata: Metadata = {
   },
   description: "A distraction-free studio for recipes, smart meal planning, and everyday cooking.",
 };
-
-import Footer from "../components/Footer";
 
 export default function RootLayout({
   children,
@@ -36,11 +24,20 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      data-scroll-behavior="smooth"
-      className={`dark ${jakartaSans.variable} ${playfairDisplay.variable}`}
+      className="dark"
     >
       <head>
-        <script
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('recipe_theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light');}else{document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');}}catch(e){}})();`,
           }}
@@ -55,6 +52,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
           <FloatingGroceryDrawer />
+          <AuthCallbackListener />
         </ToastProvider>
       </body>
     </html>

@@ -121,13 +121,15 @@ export default function RecipeJournalPanel({
             )}
           </div>
 
-          {!isEditing && savedNote && (
+          {savedNote && !isEditing && (
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-stone-700 hover:bg-stone-50 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 transition cursor-pointer"
             >
-              <span>✎</span>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
               <span>Edit Note</span>
             </button>
           )}
@@ -171,7 +173,7 @@ export default function RecipeJournalPanel({
                 <button
                   type="button"
                   onClick={handleSaveNote}
-                  className="rounded-xl bg-amber-500 hover:bg-amber-600 px-4 py-1.5 text-xs font-bold text-stone-950 transition active:scale-95 cursor-pointer shadow-xs"
+                  className="rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-xs px-4.5 py-1.5 text-xs transition active:scale-95 cursor-pointer"
                 >
                   Save Note
                 </button>

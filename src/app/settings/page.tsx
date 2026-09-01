@@ -220,8 +220,8 @@ function SettingsContent() {
   const shownName = displayName || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Guest Chef";
 
   return (
-    <main className="min-h-screen bg-[#f7f4ed] text-[#1f1b18] transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-8 sm:px-6 xl:px-12 2xl:px-16">
-      <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1720px] space-y-8">
+    <main className="min-h-screen bg-[#f7f4ed] text-[#1f1b18] transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-8 sm:px-6 xl:px-10">
+      <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1820px] space-y-8">
         
         {/* TOP HEADER WITH AUTO-SAVE BADGE */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e2dcd0] dark:border-white/10 pb-6">
@@ -796,6 +796,23 @@ function SettingsContent() {
                     checked={timerSound}
                     onChange={(e) => setTimerSound(e.target.checked)}
                     className="h-5 w-5 rounded accent-amber-500 cursor-pointer"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between rounded-2xl border border-[#dcd5c7] bg-[#faf7f2] p-4 dark:border-white/8 dark:bg-white/5 cursor-pointer">
+                  <div className="text-left pr-4">
+                    <span className="block text-sm font-bold text-[#1c1815] dark:text-[#fff8ef]">
+                      Auto-add low pantry staples to shopping list
+                    </span>
+                    <span className="text-xs font-medium text-[#6e6356] dark:text-stone-400">
+                      When you mark a pantry staple as out of stock, it is automatically added to your active shopping list
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.autoAddLowPantryToList}
+                    onChange={(e) => updateSettings({ autoAddLowPantryToList: e.target.checked })}
+                    className="h-5 w-5 rounded accent-amber-500 cursor-pointer shrink-0"
                   />
                 </label>
               </div>

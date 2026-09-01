@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { IngredientGroup } from "../../lib/types";
 import { capitalize } from "../../lib/format";
+import { sanitizeCulinaryText } from "../../lib/culinaryTextSanitizer";
 import { convertIngredient } from "../../lib/unitConverter";
 import { findSubstitutionsForIngredient, type Substitution } from "../../lib/substitutions";
 import { getStoredUserSettings, saveUserSettings, type MeasurementUnitSystem } from "../../lib/settings";
@@ -25,12 +26,9 @@ type RecipeIngredientsPanelProps = {
 };
 
 function normalizeIngredient(value: string) {
-  return value.trim().toLowerCase();
+  return sanitizeCulinaryText(value).trim().toLowerCase();
 }
 
-/**
- * Provides a clean culinary fallback label when no exact numerical amount is specified.
- */
 function getFallbackBadge(_name: string): string {
   return "—";
 }
@@ -124,13 +122,26 @@ export default function RecipeIngredientsPanel({
         }`}
       >
         <div className="flex items-center justify-between gap-3 p-3 sm:px-4">
-          <label className="flex min-w-0 items-center gap-3 flex-1 cursor-pointer">
-            {/* CHECKBOX */}
+          <label className="flex min-w-0 items-center gap-3 flex-1 cursor-pointer select-none group/item">
+            {/* SLEEK CUSTOM CHECKBOX */}
+            <div
+              className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
+                isChecked
+                  ? "border-emerald-500 bg-emerald-500 text-stone-950 shadow-xs shadow-emerald-500/25"
+                  : "border-stone-300 bg-stone-100/50 group-hover/item:border-amber-400 dark:border-white/15 dark:bg-white/5 dark:group-hover/item:border-amber-400/50"
+              }`}
+            >
+              {isChecked && (
+                <svg className="h-3 w-3 stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
             <input
               type="checkbox"
               checked={isChecked}
               onChange={() => onToggleIngredient(ingredient)}
-              className="h-4 w-4 shrink-0 accent-emerald-500 cursor-pointer"
+              className="sr-only"
             />
 
             {/* COMPACT QUANTITY BADGE COLUMN */}
@@ -168,7 +179,7 @@ export default function RecipeIngredientsPanel({
                   : "text-stone-900 dark:text-stone-100"
               }`}
             >
-              {capitalize(name || ingredient)}
+              {capitalize(sanitizeCulinaryText(name || ingredient))}
             </span>
           </label>
 
@@ -185,7 +196,9 @@ export default function RecipeIngredientsPanel({
                 }`}
                 title="View smart ingredient substitutes"
               >
-                <span>⇄</span>
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
                 <span className="hidden sm:inline">Swap</span>
               </button>
             )}
@@ -206,7 +219,12 @@ export default function RecipeIngredientsPanel({
         {substitutionData && isExpanded && !isChecked && (
           <div className="border-t border-stone-200/80 bg-[#faf7f2] p-3 sm:px-4 dark:border-white/10 dark:bg-[#1a1411] space-y-2 text-xs animate-in fade-in duration-150">
             <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400">
-              <span>💡 Substitutes for {substitutionData.ingredientName}</span>
+              <span className="flex items-center gap-1">
+                <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span>Substitutes for {substitutionData.ingredientName}</span>
+              </span>
               <button
                 type="button"
                 onClick={() => toggleSubstitutionDrawer(normalizedIngredient)}
@@ -217,26 +235,19 @@ export default function RecipeIngredientsPanel({
             </div>
 
             <div className="space-y-2">
-              {substitutionData.substitutes.map((sub, sIdx) => (
+              {substitutionData.substitutes.map((sub, idx) => (
                 <div
-                  key={sIdx}
-                  className="rounded-xl border border-stone-200 bg-white p-2.5 shadow-2xs dark:border-white/8 dark:bg-[#221a15]"
+                  key={idx}
+                  className="rounded-xl border border-stone-200/90 bg-white p-2.5 dark:border-white/8 dark:bg-white/5 space-y-1"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-stone-900 dark:text-[#fff8ef]">
-                      {sub.name}
+                  <div className="flex items-center justify-between font-bold text-stone-900 dark:text-[#fff8ef]">
+                    <span>{sub.name}</span>
+                    <span className="text-[10px] font-mono text-amber-700 dark:text-amber-400">
+                      Ratio: {sub.ratio}
                     </span>
-                    {sub.dietaryTag && (
-                      <span className="rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
-                        {sub.dietaryTag.replace("_", " ")}
-                      </span>
-                    )}
                   </div>
-                  <p className="text-[11px] font-mono font-semibold text-amber-800 dark:text-amber-300 mt-1">
-                    Ratio: {sub.ratio}
-                  </p>
                   {sub.notes && (
-                    <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-0.5">
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug">
                       {sub.notes}
                     </p>
                   )}
@@ -250,24 +261,26 @@ export default function RecipeIngredientsPanel({
   };
 
   return (
-    <section className="rounded-4xl border border-stone-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#17120f]/90 dark:shadow-[0_24px_80px_rgba(0,0,0,0.3)]">
-      {/* HEADER & PORTION SCALER */}
+    <section className="rounded-4xl border border-stone-200/90 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#17120f]/90 dark:shadow-[0_24px_80px_rgba(0,0,0,0.3)]">
+      {/* HEADER CONTROLS */}
       <div className="mb-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
-            Ingredients
-          </p>
+        <div className="flex items-center justify-between gap-3 border-b border-stone-200/80 pb-4 dark:border-white/8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
+              Ingredients
+            </p>
+          </div>
 
           <div className="flex items-center gap-2">
-            {/* 1-CLICK UNIT CONVERSION SWITCH */}
-            <div className="flex items-center rounded-xl border border-stone-200 bg-stone-100 p-0.5 dark:border-white/10 dark:bg-white/5">
+            {/* UNIT CONVERTER SWITCHER */}
+            <div className="flex items-center rounded-xl border border-stone-200 bg-stone-100/80 p-0.5 dark:border-white/10 dark:bg-white/5">
               <button
                 type="button"
                 onClick={() => handleToggleUnitSystem("metric")}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
+                className={`rounded-lg px-2.5 py-1 text-[11px] transition cursor-pointer ${
                   unitSystem === "metric"
-                    ? "bg-white text-stone-950 shadow-xs dark:bg-amber-500 dark:text-stone-950"
-                    : "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white"
+                    ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 shadow-xs"
+                    : "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white font-semibold"
                 }`}
                 title="Convert to Metric (g, ml, kg)"
               >
@@ -276,10 +289,10 @@ export default function RecipeIngredientsPanel({
               <button
                 type="button"
                 onClick={() => handleToggleUnitSystem("imperial")}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
+                className={`rounded-lg px-2.5 py-1 text-[11px] transition cursor-pointer ${
                   unitSystem === "imperial"
-                    ? "bg-white text-stone-950 shadow-xs dark:bg-amber-500 dark:text-stone-950"
-                    : "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white"
+                    ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 shadow-xs"
+                    : "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white font-semibold"
                 }`}
                 title="Convert to Imperial (oz, lb, cups)"
               >
@@ -309,9 +322,12 @@ export default function RecipeIngredientsPanel({
               −
             </button>
 
-            <span className="min-w-16 text-center text-xs font-black text-amber-700 dark:text-amber-300">
-              👥 {currentServings} serv
-            </span>
+            <div className="flex items-center gap-1 px-1.5 min-w-16 justify-center text-xs font-black text-amber-700 dark:text-amber-300">
+              <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>{currentServings} serv</span>
+            </div>
 
             <button
               type="button"
@@ -334,10 +350,10 @@ export default function RecipeIngredientsPanel({
                 key={factor}
                 type="button"
                 onClick={() => handleSetScale(factor)}
-                className={`rounded-lg px-2.5 py-0.5 text-[11px] font-extrabold transition cursor-pointer ${
+                className={`rounded-lg px-2.5 py-0.5 text-[11px] transition cursor-pointer ${
                   isActive
-                    ? "bg-amber-500 text-stone-950 shadow-xs"
-                    : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/10 dark:hover:text-stone-200"
+                    ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 shadow-xs"
+                    : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/10 dark:hover:text-stone-200 font-semibold"
                 }`}
               >
                 {factor}x
@@ -401,7 +417,7 @@ export default function RecipeIngredientsPanel({
         </ul>
       )}
 
-      {/* GROCERY LIST BUTTON WITH SUCCESS & UNDO STATES */}
+      {/* GROCERY LIST BUTTON WITH SUCCESS & UNDO STATES (SIGNATURE BUTTON DESIGN) */}
       {onAddMissingToGroceryList && (
         <div className="mt-6 border-t border-stone-200 dark:border-white/10 pt-4">
           {isAddedToGrocery ? (
@@ -426,9 +442,11 @@ export default function RecipeIngredientsPanel({
               type="button"
               onClick={onAddMissingToGroceryList}
               disabled={missingCount === 0}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-50 py-3 text-xs sm:text-sm font-bold text-amber-900 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 dark:border-amber-600/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] py-3 text-xs sm:text-sm transition-all duration-150 active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <span>🛒</span>
+              <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
               <span>
                 {missingCount === 0
                   ? "All Checked Off"

@@ -48,6 +48,16 @@ export default function ImportRecipeModal({
     }
   }, [isOpen]);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -146,10 +156,10 @@ export default function ImportRecipeModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Dark Ambient Backdrop Blur */}
+      {/* Solid High-Speed Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/80 transition-opacity animate-in fade-in duration-200"
       />
 
       {/* Modal Container */}

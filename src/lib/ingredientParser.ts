@@ -1,4 +1,5 @@
 import { capitalize } from "./format";
+import { sanitizeCulinaryText } from "./culinaryTextSanitizer";
 
 export type StructuredIngredient = {
   name: string;
@@ -245,7 +246,8 @@ export function parseIngredientString(raw: string): StructuredIngredient {
     return { name: "", original: "" };
   }
 
-  const original = raw.trim();
+  const cleanRaw = sanitizeCulinaryText(raw);
+  const original = cleanRaw || raw.trim();
 
   // 1. Normalize unicode fractions (e.g. ½ -> 1/2)
   let text = original;
@@ -256,8 +258,8 @@ export function parseIngredientString(raw: string): StructuredIngredient {
   // 2. Normalize whitespace, tabs and punctuation
   text = text.replace(/\s+/g, " ").trim();
 
-  // 3. Remove leading bullet characters
-  text = text.replace(/^[-*•·►]\s*/, "");
+  // 3. Remove leading bullet characters and checkbox artifacts
+  text = sanitizeCulinaryText(text);
 
   // 4. Fix glued numbers and units e.g. "200g" -> "200 g", "1/2cup" -> "1/2 cup", "500ml" -> "500 ml"
   text = text.replace(/(\d+)(g|kg|ml|dl|cl|l|oz|lb|tbsp|tsp|cup|c|clove|can|krm|msk|tsk)\b/gi, "$1 $2");

@@ -31,7 +31,12 @@ export default function RecipePreviewCard({
   return (
     <Link
       href={href}
-      className="overflow-hidden rounded-[1.75rem] border border-white/8 bg-stone-900/80 shadow-[0_10px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm transition hover:-translate-y-1 hover:border-white/14 hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+      style={{
+        contentVisibility: "auto",
+        containIntrinsicSize: "0 380px",
+        contain: "paint",
+      }}
+      className="overflow-hidden rounded-[1.75rem] border border-white/8 bg-stone-900/80 shadow-[0_10px_40px_rgba(0,0,0,0.25)] transition hover:-translate-y-1 hover:border-white/14 hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
     >
       <img
         src={recipe.image}

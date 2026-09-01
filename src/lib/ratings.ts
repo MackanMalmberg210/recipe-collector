@@ -8,12 +8,18 @@ function isRecipeRating(value: unknown): value is RecipeRating {
    return typeof value === "number" && value >= 1 && value <= 5;
 }
 
+let ratingsCache: RecipeRatingsMap | null = null;
+
 export function getRecipeRatings(): RecipeRatingsMap {
    if (typeof window === "undefined") return {};
+   if (ratingsCache !== null) return ratingsCache;
 
    const stored = localStorage.getItem(RECIPE_RATINGS_KEY);
 
-   if (!stored) return {};
+   if (!stored) {
+      ratingsCache = {};
+      return ratingsCache;
+   }
 
    try {
       const parsed = JSON.parse(stored) as Record<string, unknown>;
@@ -27,10 +33,12 @@ export function getRecipeRatings(): RecipeRatingsMap {
          ratings[recipeId] = value;
       }
 
+      ratingsCache = ratings;
       return ratings;
    } catch {
       localStorage.removeItem(RECIPE_RATINGS_KEY);
-      return {};
+      ratingsCache = {};
+      return ratingsCache;
    }
 }
 
@@ -44,13 +52,15 @@ export function saveRecipeRating(
 ) {
    if (typeof window === "undefined") return;
 
-   const ratings = getRecipeRatings();
+   const ratings = { ...getRecipeRatings() };
 
    if (rating === null) {
       delete ratings[recipeId];
    } else {
       ratings[recipeId] = rating;
    }
+
+   ratingsCache = ratings;
 
    if (Object.keys(ratings).length === 0) {
       localStorage.removeItem(RECIPE_RATINGS_KEY);

@@ -1,14 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
+  --font-sans: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
 }
 
 html {
-  scroll-behavior: smooth;
   background-color: #f7f4ed;
   color: #1f1b18;
 }
@@ -18,20 +18,25 @@ html.dark {
   color: #fafaf9;
 }
 
+html, body, button, input, select, textarea {
+  font-family: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 body {
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .font-serif {
-  font-family: var(--font-serif), Georgia, serif;
+  font-family: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif !important;
 }
 
 /* Fast, GPU-accelerated drawer transitions without heavy composite re-paints */
 .drawer-spring-transition {
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-  will-change: transform;
 }
 
 /* Sleek bespoke scrollbars matching warm linen & dark espresso */
@@ -55,4 +60,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.5);
+}
+
+/* Dark theme browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #14100c inset !important;
+  -webkit-text-fill-color: #fafaf9 !important;
+  caret-color: #fafaf9 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }

@@ -19,6 +19,16 @@ export default function VisionScanModal({
   defaultMode = "recipe",
   onRecipeExtracted,
 }: VisionScanModalProps) {
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   // ESC key listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,14 +46,17 @@ export default function VisionScanModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Dark Ambient Backdrop */}
+      {/* Solid High-Speed Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/85 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/85 transition-opacity animate-in fade-in duration-200"
       />
 
       {/* Modal Container (Spacious studio canvas) */}
-      <div className="relative w-full max-w-4xl overflow-hidden rounded-4xl border border-stone-200/90 bg-white text-stone-900 shadow-2xl dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 animate-in zoom-in-95 fade-in duration-200 my-auto max-h-[92vh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6">
+      <div
+        style={{ willChange: "scroll-position", transform: "translateZ(0)" }}
+        className="relative w-full max-w-4xl overflow-hidden rounded-4xl border border-stone-200/90 bg-white text-stone-900 shadow-2xl dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 animate-in zoom-in-95 fade-in duration-200 my-auto max-h-[92vh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6"
+      >
         
         {/* Header with Breadcrumb Back and Close buttons */}
         <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/8 pb-4">

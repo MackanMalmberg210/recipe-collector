@@ -17,6 +17,16 @@ export default function ShareRecipeModal({
   const [copied, setCopied] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState(false);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -30,8 +40,8 @@ export default function ShareRecipeModal({
   if (!isOpen) return null;
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = `Check out this recipe for ${recipe.title} on Recipe Collector! 🍲`;
-  const shareSummary = `🍴 ${recipe.title}\n⏱ Cook time: ${recipe.cookTime || 30} mins\n🥘 Ingredients: ${recipe.ingredients.slice(0, 4).join(", ")}...\n\n👉 Full recipe: ${currentUrl}`;
+  const shareText = `Check out this recipe for ${recipe.title} on Recipe Collector!`;
+  const shareSummary = `${recipe.title}\nCook time: ${recipe.cookTime || 30} mins\nIngredients: ${recipe.ingredients.slice(0, 4).join(", ")}...\n\nFull recipe: ${currentUrl}`;
 
   const handleCopyLink = async () => {
     if (navigator.clipboard) {
@@ -69,7 +79,11 @@ export default function ShareRecipeModal({
     {
       id: "sms",
       name: "Messages / SMS",
-      icon: "💬",
+      iconSvg: (
+        <svg className="h-4.5 w-4.5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
       action: () => {
         const body = encodeURIComponent(`${shareText}\n${currentUrl}`);
         window.open(`sms:?&body=${body}`, "_blank");
@@ -78,7 +92,11 @@ export default function ShareRecipeModal({
     {
       id: "whatsapp",
       name: "WhatsApp",
-      icon: "🟢",
+      iconSvg: (
+        <svg className="h-4.5 w-4.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      ),
       action: () => {
         const text = encodeURIComponent(`${shareText}\n${currentUrl}`);
         window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
@@ -87,7 +105,11 @@ export default function ShareRecipeModal({
     {
       id: "email",
       name: "Email",
-      icon: "✉️",
+      iconSvg: (
+        <svg className="h-4.5 w-4.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
       action: () => {
         const subject = encodeURIComponent(`Recipe: ${recipe.title}`);
         const body = encodeURIComponent(`${shareSummary}`);
@@ -96,18 +118,22 @@ export default function ShareRecipeModal({
     },
     {
       id: "tiktok",
-      name: "TikTok / Social (Copy Text)",
-      icon: "🎵",
+      name: "Copy Summary Text",
+      iconSvg: (
+        <svg className="h-4.5 w-4.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
       action: handleCopySnippet,
     },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Backdrop */}
+      {/* Solid High-Speed Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/80 transition-opacity animate-in fade-in duration-200"
       />
 
       {/* Modal Container */}
@@ -116,9 +142,13 @@ export default function ShareRecipeModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/8 pb-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🔗</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </div>
             <div>
-              <h2 className="text-lg font-extrabold tracking-tight text-stone-950 dark:text-stone-50">
+              <h2 className="text-lg font-black tracking-tight text-stone-950 dark:text-stone-50">
                 Share Recipe
               </h2>
               <p className="text-xs text-stone-500 dark:text-stone-400">
@@ -152,7 +182,7 @@ export default function ShareRecipeModal({
             <button
               type="button"
               onClick={handleCopyLink}
-              className="rounded-xl bg-amber-500 hover:bg-amber-600 px-4 py-2 text-xs font-bold text-stone-950 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+              className="rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-xs px-4 py-2 text-xs transition active:scale-95 cursor-pointer shrink-0"
             >
               {copied ? "✓ Copied!" : "Copy Link"}
             </button>
@@ -172,7 +202,9 @@ export default function ShareRecipeModal({
                 onClick={channel.action}
                 className="flex items-center gap-3 rounded-2xl border border-stone-200/90 bg-stone-50/50 p-3.5 text-left text-xs font-bold text-stone-800 hover:bg-amber-500/10 hover:border-amber-500/30 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition active:scale-98 cursor-pointer"
               >
-                <span className="text-lg">{channel.icon}</span>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 border border-white/8 shrink-0">
+                  {channel.iconSvg}
+                </div>
                 <span className="truncate flex-1">
                   {channel.id === "tiktok" && copiedSnippet ? "✓ Copied Text!" : channel.name}
                 </span>
@@ -181,14 +213,16 @@ export default function ShareRecipeModal({
           </div>
         </div>
 
-        {/* Native Web Share Button (on Mobile/Supported browsers) */}
+        {/* Native Web Share Button */}
         {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
           <button
             type="button"
             onClick={handleNativeShare}
             className="w-full flex items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-white hover:bg-stone-100 py-3 text-xs font-bold text-stone-800 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition cursor-pointer shadow-xs"
           >
-            <span>📱</span>
+            <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
             <span>Open System Share Menu</span>
           </button>
         )}

@@ -16,10 +16,10 @@ type RecipeMatchesSectionProps = {
 const DEFAULT_VISIBLE_MATCHES = 12;
 
 const SORT_OPTIONS: { id: RecipeSortMode; label: string; icon: string }[] = [
-  { id: "cook-time", label: "Fastest Cook Time", icon: "⏱" },
-  { id: "calories", label: "Lowest Calories", icon: "🔥" },
-  { id: "alphabetical", label: "Alphabetical (A-Z)", icon: "🔤" },
-  { id: "highest-rated", label: "Highest Rated", icon: "⭐" },
+  { id: "cook-time", label: "Cook Time", icon: "⏱" },
+  { id: "calories", label: "Calories", icon: "🔥" },
+  { id: "alphabetical", label: "A – Z", icon: "🔤" },
+  { id: "highest-rated", label: "Rating", icon: "⭐" },
 ];
 
 function getSectionHeading(
@@ -120,19 +120,17 @@ export default function RecipeMatchesSection({
         </div>
 
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          {/* BESPOKE CUSTOM SORT DROPDOWN */}
+          {/* PROFESSIONAL CLEAN SORT DROPDOWN */}
           <div ref={sortRef} className="relative min-w-[220px]">
             <button
               type="button"
               onClick={() => setIsSortOpen(!isSortOpen)}
-              className="w-full flex items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-[#191410] px-4 py-2.5 text-xs font-semibold text-stone-200 shadow-sm hover:border-amber-400/40 hover:text-amber-300 transition-all duration-100 cursor-pointer group"
+              className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/12 bg-[#171310] px-3.5 py-2 text-sm font-medium text-stone-200 shadow-xs hover:border-amber-400/40 hover:text-white transition cursor-pointer group"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-stone-400 font-normal shrink-0">Sort:</span>
-                <span className="font-bold text-stone-100 flex items-center gap-1.5 truncate">
-                  <span className="flex h-4 w-4 items-center justify-center shrink-0 text-xs">
-                    {activeSortOption.icon}
-                  </span>
+                <span className="text-stone-400 font-normal shrink-0 text-xs uppercase tracking-wider">Sort:</span>
+                <span className="font-semibold text-stone-100 flex items-center gap-2 truncate text-sm">
+                  <span>{activeSortOption.icon}</span>
                   <span className="truncate">{activeSortOption.label}</span>
                 </span>
               </div>
@@ -141,10 +139,10 @@ export default function RecipeMatchesSection({
                 viewBox="0 0 16 16"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth={2.2}
+                strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={`h-3 w-3 shrink-0 text-stone-400 transition-transform duration-150 ${
+                className={`h-3.5 w-3.5 shrink-0 text-stone-400 transition-transform duration-150 ${
                   isSortOpen ? "rotate-180 text-amber-400" : "rotate-0 group-hover:text-stone-200"
                 }`}
               >
@@ -152,12 +150,9 @@ export default function RecipeMatchesSection({
               </svg>
             </button>
 
-            {/* CUSTOM DROPDOWN POPOVER */}
+            {/* PROFESSIONAL DROPDOWN POPOVER (INSTANT MOUNT, PERFECT ALIGNMENT) */}
             {isSortOpen && (
-              <div className="absolute right-0 left-0 top-[calc(100%+6px)] z-30 min-w-[220px] rounded-2xl border border-white/12 bg-[#1c1612]/95 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-500">
-                  Sort Recipes By
-                </div>
+              <div className="absolute right-0 left-0 top-[calc(100%+4px)] z-30 min-w-[220px] rounded-xl border border-white/12 bg-[#1c1612] p-1 shadow-xl">
                 <ul className="space-y-0.5">
                   {SORT_OPTIONS.map((option) => {
                     const isSelected = sortMode === option.id;
@@ -169,23 +164,23 @@ export default function RecipeMatchesSection({
                             onSortModeChange(option.id);
                             setIsSortOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-all duration-100 cursor-pointer ${
+                          className={`w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${
                             isSelected
-                              ? "bg-amber-400/15 text-amber-300 font-bold border border-amber-400/25"
-                              : "text-stone-300 hover:bg-white/8 hover:text-white"
+                              ? "bg-white/10 text-white font-semibold"
+                              : "text-stone-300 hover:bg-white/5 hover:text-white"
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="flex h-5 w-5 items-center justify-center shrink-0 text-sm">
+                            <span className="w-5 text-center shrink-0 text-sm">
                               {option.icon}
                             </span>
                             <span className="truncate">{option.label}</span>
                           </div>
 
                           {isSelected && (
-                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 text-[11px] font-bold shrink-0">
-                              ✓
-                            </span>
+                            <svg className="h-4 w-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                           )}
                         </button>
                       </li>
@@ -214,7 +209,7 @@ export default function RecipeMatchesSection({
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {visibleMatches.map((recipe) => (
+            {visibleMatches.map((recipe, index) => (
               <RecipeCard
                 key={recipe.id}
                 id={recipe.id}
@@ -227,6 +222,7 @@ export default function RecipeMatchesSection({
                 selectedIngredients={[]}
                 origin={recipe.origin}
                 ingredients={recipe.ingredients}
+                priority={index < 12}
               />
             ))}
           </div>

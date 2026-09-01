@@ -108,24 +108,27 @@ export default function TodaysMenuBanner({ allRecipes }: TodaysMenuBannerProps) 
 
             {/* Meal Slot Switcher */}
             {availableMeals.length > 1 ? (
-              <div className="flex items-center gap-1">
-                {availableMeals.map((m) => (
-                  <button
-                    key={m.slot}
-                    type="button"
-                    onClick={() => setActiveSlot(m.slot)}
-                    className={`rounded-xl px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
-                      activeSlot === m.slot
-                        ? "bg-amber-500 text-stone-950 shadow-xs"
-                        : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/10"
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5">
+                {availableMeals.map((m) => {
+                  const isSelected = activeSlot === m.slot;
+                  return (
+                    <button
+                      key={m.slot}
+                      type="button"
+                      onClick={() => setActiveSlot(m.slot)}
+                      className={`rounded-lg transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-500/50 dark:border-amber-400/40 px-3 py-1 text-xs font-bold shadow-xs"
+                          : "bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-amber-500/10 dark:hover:border-amber-500/30 dark:hover:text-amber-300 border border-stone-200 dark:border-white/8 px-2 py-0.5 text-[11px] font-medium"
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
-              <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wider text-stone-700 dark:bg-white/5 dark:text-stone-300">
+              <span className="rounded-lg bg-stone-100 text-stone-700 dark:bg-white/5 dark:text-stone-300 border border-stone-200 dark:border-white/10 px-2.5 py-0.5 text-xs font-semibold">
                 {label}
               </span>
             )}
@@ -139,31 +142,38 @@ export default function TodaysMenuBanner({ allRecipes }: TodaysMenuBannerProps) 
                 <img
                   src={recipe.image}
                   alt={recipe.title}
-                  className="h-full w-full object-cover block transition-transform duration-300 group-hover:scale-105"
+                  className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-3xl">
-                  🍽️
+                  🍲
                 </div>
               )}
             </div>
 
-            <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-2 text-xl font-extrabold text-stone-950 dark:text-[#fff8ef] tracking-tight leading-snug">
+            {/* Dish Info */}
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <h4 className="text-lg sm:text-xl font-bold text-stone-950 dark:text-[#fff8ef] leading-snug line-clamp-1 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition">
                 {recipe.title}
-              </h3>
+              </h4>
 
-              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-300">
-                {recipe.cookTime !== undefined && (
-                  <span className="rounded-xl bg-stone-100 px-3 py-1 dark:bg-white/5 border border-stone-200/60 dark:border-white/5">
-                    ⏱ {recipe.cookTime} mins
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-400">
+                {recipe.cookTime && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 dark:bg-white/5">
+                    <span>⏱️</span>
+                    <span>{recipe.cookTime} mins</span>
                   </span>
                 )}
-                {recipe.calories !== undefined && (
-                  <span className="rounded-xl bg-stone-100 px-3 py-1 dark:bg-white/5 border border-stone-200/60 dark:border-white/5 font-bold text-amber-700 dark:text-amber-300">
-                    🔥 {recipe.calories} kcal
+                {recipe.calories && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 dark:bg-white/5">
+                    <span>🔥</span>
+                    <span>{recipe.calories} kcal</span>
                   </span>
                 )}
+                <span className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 dark:bg-white/5">
+                  <span>🥕</span>
+                  <span>{recipe.ingredients.length} items</span>
+                </span>
               </div>
             </div>
           </div>
@@ -173,18 +183,23 @@ export default function TodaysMenuBanner({ allRecipes }: TodaysMenuBannerProps) 
         <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-stone-100 dark:border-white/6">
           <Link
             href={`/recipes/${recipe.id}?cook=true`}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-stone-950 py-3 px-5 text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer active:scale-95"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 py-3 px-5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer"
           >
-            <span>👨‍🍳</span>
+            <svg className="h-4.5 w-4.5 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <span>Start Cooking</span>
             <span>→</span>
           </Link>
 
           <Link
             href="/planner"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-stone-300/90 bg-white hover:bg-stone-100 text-stone-800 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/15 px-4 py-3 text-xs sm:text-sm font-bold shadow-xs transition-all duration-150 cursor-pointer active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300/90 bg-stone-50 hover:bg-stone-100 text-stone-800 dark:border-white/12 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 px-4 py-3 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
           >
-            <span>📅</span>
+            <svg className="h-4 w-4 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
             <span>Weekly Plan</span>
           </Link>
         </div>
@@ -194,7 +209,7 @@ export default function TodaysMenuBanner({ allRecipes }: TodaysMenuBannerProps) 
 
   // Case B: No meal planned for today
   return (
-    <section className="relative overflow-hidden rounded-4xl border border-stone-200/90 bg-white p-6 sm:p-7 shadow-[0_10px_35px_rgba(0,0,0,0.05)] dark:border-white/10 dark:bg-[#16120f]/95 dark:shadow-[0_16px_50px_rgba(0,0,0,0.4)] h-full flex flex-col justify-between transition-all hover:border-amber-400/40 dark:hover:border-amber-400/30">
+    <section className="relative overflow-hidden rounded-4xl border border-stone-200/90 bg-white p-6 sm:p-7 shadow-[0_10px_35px_rgba(0,0,0,0.05)] dark:border-white/10 dark:bg-[#16120f]/95 dark:shadow-[0_166px_50px_rgba(0,0,0,0.4)] h-full flex flex-col justify-between transition-all hover:border-amber-400/40 dark:hover:border-amber-400/30">
       <div className="space-y-3">
         <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
@@ -206,16 +221,18 @@ export default function TodaysMenuBanner({ allRecipes }: TodaysMenuBannerProps) 
         </h3>
 
         <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-          Your meal schedule for tonight is open. Pick a dish from your cookbook or auto-generate this week&apos;s plan.
+          Your meal schedule for tonight is open. Pick a dish from your cookbook or generate your week&apos;s schedule.
         </p>
       </div>
 
       <div className="mt-6 pt-4 border-t border-stone-100 dark:border-white/6">
         <Link
           href="/planner"
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-stone-950 py-3 px-5 text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer active:scale-95"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 py-3 px-5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer"
         >
-          <span>⚡</span>
+          <svg className="h-4.5 w-4.5 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
           <span>Plan Tonight&apos;s Menu</span>
         </Link>
       </div>

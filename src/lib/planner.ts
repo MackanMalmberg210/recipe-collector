@@ -20,8 +20,6 @@ export type MealSlot = (typeof MEAL_SLOTS)[number];
 export type DayPlan = Record<MealSlot, number | null>;
 export type MealPlan = Record<WeekDay, DayPlan>;
 
-type LegacyMealPlan = Record<WeekDay, number | null>;
-
 export function createEmptyDayPlan(): DayPlan {
    return {
       breakfast: null,
@@ -79,8 +77,6 @@ export function normalizeStoredMealPlan(
       }
 
       if (value === null || typeof value === "number") {
-         // Bakåtkompatibilitet med gamla modellen:
-         // monday: 12 -> monday.dinner = 12
          acc[day] = {
             breakfast: null,
             lunch: null,
@@ -142,14 +138,211 @@ export function getRecipeById(recipes: AppRecipe[], id: number | null) {
    return recipes.find((recipe) => recipe.id === id) ?? null;
 }
 
+/**
+ * Sanitizes meal plan against actual loaded recipes so deleted/ghost recipes are cleared
+ */
+export function sanitizeMealPlan(mealPlan: MealPlan, allRecipes: AppRecipe[]): MealPlan {
+   if (allRecipes.length === 0) return mealPlan;
+
+   const validIds = new Set(allRecipes.map((r) => r.id));
+   let hasChanges = false;
+   const cleanPlan = createEmptyMealPlan();
+
+   WEEK_DAYS.forEach((day) => {
+      MEAL_SLOTS.forEach((slot) => {
+         const recipeId = mealPlan[day]?.[slot];
+         if (recipeId && validIds.has(recipeId)) {
+            cleanPlan[day][slot] = recipeId;
+         } else {
+            cleanPlan[day][slot] = null;
+            if (recipeId) hasChanges = true;
+         }
+      });
+   });
+
+   if (hasChanges) {
+      saveMealPlan(cleanPlan);
+   }
+
+   return cleanPlan;
+}
+
+import { canonicalizeIngredients, capitalize } from "./format";
+
+/**
+ * Smart Auto-Planner: avoids duplicate meals, optimizes slots, and maximizes ingredient overlap for budget efficiency
+ */
+export function smartAutoPlanWeek(
+   currentPlan: MealPlan,
+   allRecipes: AppRecipe[],
+): { nextPlan: MealPlan; filledCount: number } {
+   if (allRecipes.length === 0) return { nextPlan: currentPlan, filledCount: 0 };
+
+   const validIds = new Set(allRecipes.map((r) => r.id));
+   const nextPlan = createEmptyMealPlan();
+   const usedRecipeIds = new Set<number>();
+   const plannedIngredientsSet = new Set<string>();
+
+   // Keep existing valid meals
+   WEEK_DAYS.forEach((day) => {
+      MEAL_SLOTS.forEach((slot) => {
+         const id = currentPlan[day]?.[slot];
+         if (id && validIds.has(id)) {
+            nextPlan[day][slot] = id;
+            usedRecipeIds.add(id);
+            const r = allRecipes.find((item) => item.id === id);
+            r?.ingredients.forEach((ing) => {
+               const list = canonicalizeIngredients(ing);
+               list.forEach((c) => plannedIngredientsSet.add(c.toLowerCase()));
+            });
+         }
+      });
+   });
+
+   let filledCount = 0;
+
+   // Fill missing slots intelligently
+   WEEK_DAYS.forEach((day) => {
+      const todayAssignedCategories = new Set<string>();
+
+      // Check what categories are already used today
+      MEAL_SLOTS.forEach((slot) => {
+         const id = nextPlan[day][slot];
+         if (id) {
+            const r = allRecipes.find((item) => item.id === id);
+            if (r?.category) todayAssignedCategories.add(r.category);
+         }
+      });
+
+      MEAL_SLOTS.forEach((slot) => {
+         if (nextPlan[day][slot]) return; // Already filled
+
+         // Filter candidates by slot suitability
+         const slotFiltered = allRecipes.filter((r) => {
+            if (slot === "breakfast") {
+               return (
+                  r.mealType === "breakfast" ||
+                  (r.category && ["breakfast", "bowl"].includes(r.category)) ||
+                  (r.cookTime !== undefined && r.cookTime <= 20)
+               );
+            }
+            if (slot === "lunch") {
+               return (
+                  r.mealType === "lunch" ||
+                  (r.category && ["salad", "sandwich", "soup", "bowl", "stir-fry"].includes(r.category)) ||
+                  (r.cookTime !== undefined && r.cookTime <= 30)
+               );
+            }
+            // Dinner
+            return (
+               r.mealType === "dinner" ||
+               (r.category && ["main-course", "pasta", "rice", "stir-fry"].includes(r.category)) ||
+               r.cookTime === undefined ||
+               r.cookTime >= 20
+            );
+         });
+
+         const pool = slotFiltered.length > 0 ? slotFiltered : allRecipes;
+
+         // Rank candidates by:
+         // 1) Not used this week
+         // 2) Not same category as today
+         // 3) Ingredient overlap with existing planned meals (reduces grocery shopping list!)
+         const candidateScores = pool.map((recipe) => {
+            let score = 0;
+            const isUnused = !usedRecipeIds.has(recipe.id);
+            if (isUnused) score += 100;
+
+            const isDifferentCategory = !recipe.category || !todayAssignedCategories.has(recipe.category);
+            if (isDifferentCategory) score += 50;
+
+            // Ingredient overlap bonus (smart budget saving)
+            let overlapCount = 0;
+            recipe.ingredients.forEach((ing) => {
+               const list = canonicalizeIngredients(ing);
+               list.forEach((c) => {
+                  if (plannedIngredientsSet.has(c.toLowerCase())) overlapCount++;
+               });
+            });
+            score += Math.min(overlapCount * 6, 36);
+
+            return { recipe, score };
+         });
+
+         candidateScores.sort((a, b) => b.score - a.score);
+         const best = candidateScores[0]?.recipe;
+
+         if (best) {
+            nextPlan[day][slot] = best.id;
+            usedRecipeIds.add(best.id);
+            if (best.category) todayAssignedCategories.add(best.category);
+            best.ingredients.forEach((ing) => {
+               const list = canonicalizeIngredients(ing);
+               list.forEach((c) => plannedIngredientsSet.add(c.toLowerCase()));
+            });
+            filledCount++;
+         }
+      });
+   });
+
+   return { nextPlan, filledCount };
+}
+
+/**
+ * Smart Surprise Meal for a specific slot
+ */
+export function smartSurpriseMeal(
+   day: WeekDay,
+   slot: MealSlot,
+   currentPlan: MealPlan,
+   allRecipes: AppRecipe[],
+): AppRecipe | null {
+   if (allRecipes.length === 0) return null;
+
+   const dayExistingIds = new Set(
+      MEAL_SLOTS.map((s) => currentPlan[day]?.[s]).filter(Boolean),
+   );
+
+   const slotFiltered = allRecipes.filter((r) => {
+      if (slot === "breakfast") {
+         return (
+            r.mealType === "breakfast" ||
+            (r.category && ["breakfast", "bowl"].includes(r.category)) ||
+            (r.cookTime !== undefined && r.cookTime <= 20)
+         );
+      }
+      if (slot === "lunch") {
+         return (
+            r.mealType === "lunch" ||
+            (r.category && ["salad", "sandwich", "soup", "bowl", "stir-fry"].includes(r.category)) ||
+            (r.cookTime !== undefined && r.cookTime <= 30)
+         );
+      }
+      return (
+         r.mealType === "dinner" ||
+         (r.category && ["main-course", "pasta", "rice", "stir-fry"].includes(r.category)) ||
+         r.cookTime === undefined ||
+         r.cookTime >= 20
+      );
+   });
+
+   const pool = slotFiltered.length > 0 ? slotFiltered : allRecipes;
+
+   // Prioritize not used today
+   const available = pool.filter((r) => !dayExistingIds.has(r.id));
+   const finalPool = available.length > 0 ? available : pool;
+
+   return finalPool[Math.floor(Math.random() * finalPool.length)] || null;
+}
+
 export function getPlannedRecipes(
    allRecipes: AppRecipe[],
    mealPlan: MealPlan,
 ): AppRecipe[] {
    return WEEK_DAYS.flatMap((day) =>
-      MEAL_SLOTS.map((slot) => mealPlan[day][slot]),
+      MEAL_SLOTS.map((slot) => mealPlan[day]?.[slot]),
    )
-      .filter((recipeId): recipeId is number => recipeId !== null)
+      .filter((recipeId): recipeId is number => recipeId !== null && recipeId !== undefined)
       .map((recipeId) => allRecipes.find((recipe) => recipe.id === recipeId))
       .filter((recipe): recipe is AppRecipe => recipe !== undefined);
 }
@@ -158,7 +351,7 @@ export function countPlannedMeals(mealPlan: MealPlan) {
    return WEEK_DAYS.reduce((total, day) => {
       return (
          total +
-         MEAL_SLOTS.filter((slot) => mealPlan[day][slot] !== null).length
+         MEAL_SLOTS.filter((slot) => mealPlan[day]?.[slot] !== null && mealPlan[day]?.[slot] !== undefined).length
       );
    }, 0);
 }
@@ -189,38 +382,6 @@ export function getWeekCalories(
    return WEEK_DAYS.reduce((total, day) => {
       return total + getDayCalories(recipes, mealPlan[day]);
    }, 0);
-}
-
-export function getPlannedRecipeSummaries(
-   allRecipes: AppRecipe[],
-   mealPlan: MealPlan,
-   limit = 3,
-) {
-   return WEEK_DAYS.flatMap((day) =>
-      MEAL_SLOTS.map((slot) => {
-         const recipeId = mealPlan[day][slot];
-         if (recipeId === null) return null;
-
-         const recipe = allRecipes.find((item) => item.id === recipeId);
-         if (!recipe) return null;
-
-         return {
-            day,
-            slot,
-            recipe,
-         };
-      }),
-   )
-      .filter(
-         (
-            item,
-         ): item is {
-            day: WeekDay;
-            slot: MealSlot;
-            recipe: AppRecipe;
-         } => item !== null,
-      )
-      .slice(0, limit);
 }
 
 export const DAILY_CALORIE_TARGET_KEY = "dailyCalorieTarget";
@@ -259,10 +420,6 @@ export type PlannerGroceryItem = {
    recipes: AppRecipe[];
 };
 
-function normalizeIngredient(value: string) {
-   return value.trim().toLowerCase();
-}
-
 export function getUniquePlannedIngredients(
    allRecipes: AppRecipe[],
    mealPlan: MealPlan,
@@ -272,55 +429,30 @@ export function getUniquePlannedIngredients(
 
    for (const recipe of plannedRecipes) {
       for (const ingredient of recipe.ingredients) {
-         const normalizedIngredient = normalizeIngredient(ingredient);
+         const canonicalList = canonicalizeIngredients(ingredient);
 
-         if (!normalizedIngredient) continue;
+         for (const item of canonicalList) {
+            const key = item.toLowerCase().trim();
+            if (!key) continue;
 
-         const existingItem = ingredientMap.get(normalizedIngredient);
+            const existingItem = ingredientMap.get(key);
 
-         if (existingItem) {
-            if (!existingItem.recipes.some((item) => item.id === recipe.id)) {
-               existingItem.recipes.push(recipe);
+            if (existingItem) {
+               if (!existingItem.recipes.some((r) => r.id === recipe.id)) {
+                  existingItem.recipes.push(recipe);
+               }
+               continue;
             }
 
-            continue;
+            ingredientMap.set(key, {
+               name: item,
+               recipes: [recipe],
+            });
          }
-
-         ingredientMap.set(normalizedIngredient, {
-            name: normalizedIngredient,
-            recipes: [recipe],
-         });
       }
    }
 
    return Array.from(ingredientMap.values()).sort((a, b) =>
       a.name.localeCompare(b.name),
    );
-}
-
-export function getPlannedIngredientsCount(
-   allRecipes: AppRecipe[],
-   mealPlan: MealPlan,
-) {
-   return getUniquePlannedIngredients(allRecipes, mealPlan).length;
-}
-
-export function getAverageDailyCalories(
-   allRecipes: AppRecipe[],
-   mealPlan: MealPlan,
-) {
-   return Math.round(getWeekCalories(allRecipes, mealPlan) / WEEK_DAYS.length);
-}
-
-export function getPlannedMealSlotsCount(mealPlan: MealPlan) {
-   return WEEK_DAYS.length * MEAL_SLOTS.length;
-}
-
-export function getPlannerCompletionPercentage(mealPlan: MealPlan) {
-   const plannedMeals = countPlannedMeals(mealPlan);
-   const totalSlots = getPlannedMealSlotsCount(mealPlan);
-
-   if (totalSlots === 0) return 0;
-
-   return Math.round((plannedMeals / totalSlots) * 100);
 }

@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import type { ImportedRecipe, IngredientGroup, NutritionInfo } from "../../../lib/types";
 import { normalizeRecipe } from "../../../lib/recipeNormalizer";
 import { parseIngredientList } from "../../../lib/ingredientParser";
+import { sanitizeCulinaryText } from "../../../lib/culinaryTextSanitizer";
 
 type JsonLdNode = {
   "@type"?: string | string[];
@@ -417,7 +418,7 @@ function extractRecipeFromJsonLd(
       if (!recipeNode) continue;
 
       const ingredients = Array.isArray(recipeNode.recipeIngredient)
-        ? recipeNode.recipeIngredient.map((item) => item.trim()).filter(Boolean)
+        ? recipeNode.recipeIngredient.map(sanitizeCulinaryText).filter(Boolean)
         : [];
 
       const instructions = extractInstructions(recipeNode.recipeInstructions);
@@ -630,13 +631,17 @@ function extractRecipeFromHtml(html: string, url: string): ImportedRecipe {
         text,
       )
     ) {
-      ingredients.push(text);
+      const cleanIng = sanitizeCulinaryText(text);
+      if (cleanIng) ingredients.push(cleanIng);
     }
   });
 
   $("ol li").each((_, li) => {
     const text = $(li).text().replace(/\s+/g, " ").trim();
-    if (text) instructions.push(text);
+    if (text) {
+      const cleanStep = sanitizeCulinaryText(text);
+      if (cleanStep) instructions.push(cleanStep);
+    }
   });
 
   const ingredientGroups = parseIngredientGroups(ingredients, $);

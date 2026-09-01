@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { capitalize } from "../../lib/format";
@@ -8,7 +9,7 @@ import StarRating from "../StarRating";
 type QuickPeekModalProps = {
   recipe: AppRecipe | null;
   onClose: () => void;
-  onAddToGrocery: (recipe: AppRecipe) => number;
+  onAddToGrocery: (recipe: AppRecipe) => void;
 };
 
 export default function QuickPeekModal({
@@ -16,6 +17,16 @@ export default function QuickPeekModal({
   onClose,
   onAddToGrocery,
 }: QuickPeekModalProps) {
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!recipe) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [recipe]);
+
   if (!recipe) return null;
 
   const instructions = recipe.instructions ?? [];
@@ -25,11 +36,12 @@ export default function QuickPeekModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-stone-200/90 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 sm:p-7"
+        style={{ willChange: "scroll-position", transform: "translateZ(0)" }}
+        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-stone-200/90 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 sm:p-7"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -43,60 +55,69 @@ export default function QuickPeekModal({
 
         {/* Header with image & title */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          {recipe.image && (
-            <img
-              src={recipe.image}
-              alt={recipe.title}
-              className="h-24 w-24 shrink-0 rounded-2xl object-cover shadow-sm"
-            />
-          )}
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-stone-100 dark:bg-stone-950">
+            {recipe.image ? (
+              <img
+                src={recipe.image}
+                alt={recipe.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-3xl">
+                🍲
+              </div>
+            )}
+          </div>
 
-          <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
-              {formattedCategory && <span>{formattedCategory}</span>}
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {formattedCategory && (
+                <span className="rounded-full bg-stone-100 dark:bg-white/8 px-2.5 py-0.5 text-xs font-bold text-stone-700 dark:text-stone-300">
+                  {formattedCategory}
+                </span>
+              )}
               {recipe.mealType && (
-                <span className="capitalize">• {recipe.mealType}</span>
+                <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold capitalize text-amber-800 dark:text-amber-300">
+                  {recipe.mealType}
+                </span>
               )}
             </div>
 
-            <h2 className="text-xl font-bold tracking-tight text-stone-950 dark:text-stone-50 sm:text-2xl mt-1">
+            <h2 className="text-xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
               {recipe.title}
             </h2>
 
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-stone-500 dark:text-stone-400">
+            <div className="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400 font-medium">
               {recipe.cookTime && <span>⏱ {recipe.cookTime} mins</span>}
-              {recipe.calories && <span>🔥 {recipe.calories} kcal</span>}
-              {recipe.servings && <span>👥 {recipe.servings} servings</span>}
+              {recipe.calories && <span>• 🔥 {recipe.calories} kcal</span>}
+              {recipe.servings && <span>• 👥 {recipe.servings} servings</span>}
             </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="my-5 h-px bg-stone-100 dark:bg-white/8" />
-
-        {/* 2-column preview for Ingredients & Instructions */}
-        <div className="grid gap-6 sm:grid-cols-2">
+        {/* Body (Ingredients + Steps Preview) */}
+        <div className="mt-6 grid gap-6 md:grid-cols-2 border-t border-stone-100 pt-5 dark:border-white/8">
           {/* Ingredients list */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center justify-between">
-              <span>🥕 Ingredients</span>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center justify-between">
+              <span>🥕 Key Ingredients</span>
               <span className="text-[11px] font-normal text-stone-400">
                 ({recipe.ingredients.length})
               </span>
             </h3>
             <ul className="space-y-1.5 max-h-56 overflow-y-auto pr-1 text-xs sm:text-sm text-stone-700 dark:text-stone-300 scrollbar-thin">
               {recipe.ingredients.map((ing, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-amber-500 mt-0.5">•</span>
-                  <span>{ing}</span>
+                <li key={i} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                  <span className="capitalize">{ing}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Steps Preview */}
+          {/* Instructions preview */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center justify-between">
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center justify-between">
               <span>📝 Instructions</span>
               <span className="text-[11px] font-normal text-stone-400">
                 ({instructions.length} steps)
@@ -125,14 +146,17 @@ export default function QuickPeekModal({
           <button
             type="button"
             onClick={() => onAddToGrocery(recipe)}
-            className="flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-xs font-bold text-stone-800 transition hover:bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] dark:text-stone-200 dark:hover:bg-white/5 cursor-pointer"
+            className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-800 transition hover:bg-emerald-500/20 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer"
           >
-            🛒 Add Ingredients to Grocery List
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>Add Ingredients to Grocery</span>
           </button>
 
           <Link
             href={`/recipes/${recipe.id}`}
-            className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold text-stone-950 shadow-sm transition hover:bg-amber-400 dark:bg-amber-500 dark:text-stone-950 dark:hover:bg-amber-400"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-5 py-2.5 text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95"
           >
             <span>Open Full Recipe</span>
             <span>→</span>

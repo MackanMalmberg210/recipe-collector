@@ -1,79 +1,61 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
-import Link from "next/link";
+import { useEffect, useState, useMemo } from "react";
 import { GROCERY_LIST_KEY } from "../../lib/home";
-import { getAllRecipesWithCloud } from "../../lib/recipes";
+import { getAllRecipes, getAllRecipesWithCloud } from "../../lib/recipes";
 import { useToast } from "../../components/ui/ToastProvider";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import ChefVisionStudio from "../../components/vision/ChefVisionStudio";
+import GroceryHeader from "../../components/grocery/GroceryHeader";
+import GroceryQuickAdd from "../../components/grocery/GroceryQuickAdd";
+import GroceryAisleCard from "../../components/grocery/GroceryAisleCard";
+import PantryInventoryView from "../../components/grocery/PantryInventoryView";
+import CookWhatIHaveModal from "../../components/grocery/CookWhatIHaveModal";
+import RenameListModal from "../../components/grocery/RenameListModal";
+import CreateListModal from "../../components/grocery/CreateListModal";
+import { getStoredUserSettings } from "../../lib/settings";
 import {
   GROCERY_CATEGORIES,
   categorizeGroceryItem,
   saveLearnedCategory,
-  COMMON_PANTRY_STAPLES,
+  getPantryInventory,
+  savePantryInventory,
   GROCERY_CUSTOM_LISTS_KEY,
+  formatGroceryItemName,
   type GroceryCategory,
   type GroceryListCollection,
   type StoredGroceryItem,
+  type PantryItem,
 } from "../../lib/groceries";
-
-const LEARNED_PANTRY_KEY = "recipe_learned_pantry_vocab";
-
-const COMMON_PANTRY_SUGGESTIONS = [
-  "Milk", "Oat milk", "Almond milk", "Eggs", "Butter", "Olive oil", "Avocado oil",
-  "Garlic", "Yellow onions", "Red onions", "Scallions", "Lemons", "Limes",
-  "Chicken breast", "Chicken thighs", "Ground beef", "Salmon fillets", "Bacon",
-  "Feta cheese", "Parmesan cheese", "Cheddar cheese", "Heavy cream", "Greek yogurt",
-  "Pasta", "Rice", "Panko breadcrumbs", "Flour", "Sugar", "Brown sugar", "Baking powder",
-  "Soy sauce", "Sesame oil", "Gochujang sauce", "Dijon mustard", "Mayonnaise",
-  "Kosher salt", "Black pepper", "Garlic powder", "Paprika", "Cumin", "Chili flakes",
-  "Fresh parsley", "Fresh dill", "Fresh cilantro", "Fresh basil",
-  "Spinach", "Tomatoes", "Canned diced tomatoes", "Avocados", "Bell peppers",
-  "Coffee beans", "Tea", "Buns", "Bread", "Tortillas", "Apples", "Bananas",
-  "Dish washer tablets", "Dish soap", "Toothpaste", "Laundry detergent"
-];
-
-function normalize(text: string) {
-  return text.trim().toLowerCase();
-}
-
-function formatGroceryItemName(str: string): string {
-  const trimmed = str.trim();
-  if (!trimmed) return "";
-  const chars = Array.from(trimmed);
-  return chars[0].toLocaleUpperCase("sv-SE") + chars.slice(1).join("");
-}
+import type { AppRecipe } from "../../lib/types";
+import { sanitizeCulinaryText } from "../../lib/culinaryTextSanitizer";
+import { canonicalizeIngredients } from "../../lib/format";
 
 export default function GroceriesPage() {
   const { success, info } = useToast();
+
+  // Navigation & view states
+  const [activeTab, setActiveTab] = useState<"shopping_list" | "pantry">("shopping_list");
   const [activeListId, setActiveListId] = useState<string>("main");
-  const [mainListItems, setMainListItems] = useState<StoredGroceryItem[]>([]);
-  const [customLists, setCustomLists] = useState<GroceryListCollection[]>([]);
+  const [groupByAisle, setGroupByAisle] = useState(true);
   const [hasHydrated, setHasHydrated] = useState(false);
 
-  // Input & suggestion state
-  const [newItemText, setNewItemText] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<GroceryCategory | "auto">("auto");
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  // Grocery data
+  const [mainListItems, setMainListItems] = useState<StoredGroceryItem[]>([]);
+  const [customLists, setCustomLists] = useState<GroceryListCollection[]>([]);
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
+  const [recipes, setRecipes] = useState<AppRecipe[]>([]);
   const [learnedVocab, setLearnedVocab] = useState<string[]>([]);
-  const [recipeIngredients, setRecipeIngredients] = useState<string[]>([]);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  // View state
-  const [groupByAisle, setGroupByAisle] = useState(true);
-  const [isStoreMode, setIsStoreMode] = useState(false);
-  const [showCompleted, setShowCompleted] = useState<Record<string, boolean>>({});
-  const [isPantryBannerDismissed, setIsPantryBannerDismissed] = useState(false);
-  const [animatingQtyIndex, setAnimatingQtyIndex] = useState<{ index: number; delta: number } | null>(null);
+  const [recentlyAddedItemId, setRecentlyAddedItemId] = useState<string | null>(null);
 
   // Modals
   const [isVisionModalOpen, setIsVisionModalOpen] = useState(false);
-  const [isNewListModalOpen, setIsNewListModalOpen] = useState(false);
-  const [newListName, setNewListName] = useState("");
+  const [isCookWhatIHaveOpen, setIsCookWhatIHaveOpen] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isNewListModalOpen, setIsNewListModalOpen] = useState(false);
+  const [isRenameListModalOpen, setIsRenameListModalOpen] = useState(false);
 
-  // Load state from storage
+  // Load initial data and guarantee capitalization across all stored items
   const loadData = () => {
     try {
       const storedMain = localStorage.getItem(GROCERY_LIST_KEY);
@@ -81,6 +63,7 @@ export default function GroceriesPage() {
         const parsed = JSON.parse(storedMain) as StoredGroceryItem[];
         const enriched = parsed.map((item) => ({
           ...item,
+          name: formatGroceryItemName(item.name),
           quantity: item.quantity && item.quantity > 0 ? item.quantity : 1,
           category: item.category || categorizeGroceryItem(item.name),
         }));
@@ -96,6 +79,7 @@ export default function GroceriesPage() {
           ...col,
           items: col.items.map((item) => ({
             ...item,
+            name: formatGroceryItemName(item.name),
             quantity: item.quantity && item.quantity > 0 ? item.quantity : 1,
             category: item.category || categorizeGroceryItem(item.name),
           })),
@@ -105,314 +89,371 @@ export default function GroceriesPage() {
         setCustomLists([]);
       }
 
-      const storedVocab = localStorage.getItem(LEARNED_PANTRY_KEY);
-      if (storedVocab) {
-        setLearnedVocab(JSON.parse(storedVocab) as string[]);
-      }
+      setPantryItems(getPantryInventory());
+      setRecipes(getAllRecipes());
+
+      getAllRecipesWithCloud().then((cloudRecs) => {
+        if (cloudRecs && cloudRecs.length > 0) {
+          setRecipes(cloudRecs);
+        }
+      });
     } catch {
-      setMainListItems([]);
+      // Fallback
     }
   };
 
   useEffect(() => {
     loadData();
+    setHasHydrated(true);
 
-    getAllRecipesWithCloud().then((recipes) => {
-      const allIngs = new Set<string>();
-      recipes.forEach((r) => {
-        r.ingredients.forEach((ing) => {
-          const cleaned = ing.replace(/^\d+[\d\s\/\.]*\s*(?:tbsp|tsp|cup|c\.|oz|lb|g|kg|ml|slices|cloves)?\.?\s*/i, "").trim();
-          if (cleaned.length > 2 && cleaned.length < 35) {
-            allIngs.add(formatGroceryItemName(cleaned));
+    // Build clean, deduplicated, capitalized autocomplete vocabulary
+    const allRecs = getAllRecipes();
+    const vocabSet = new Set<string>();
+
+    allRecs.forEach((r) => {
+      (r.ingredients || []).forEach((ing) => {
+        const canonicalList = canonicalizeIngredients(ing);
+        canonicalList.forEach((c) => {
+          const clean = formatGroceryItemName(c);
+          if (clean.length > 1 && clean.length < 35 && !/^\d+/.test(clean)) {
+            vocabSet.add(clean);
           }
         });
       });
-      setRecipeIngredients(Array.from(allIngs));
     });
+    setLearnedVocab(Array.from(vocabSet));
 
-    setHasHydrated(true);
-
-    const handleStorage = () => loadData();
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("grocery_items_updated", handleStorage);
-    window.addEventListener("grocery_items_changed", handleStorage);
+    const handleStorageChange = () => loadData();
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("grocery_list_updated", handleStorageChange);
+    window.addEventListener("pantry_inventory_updated", handleStorageChange);
 
     return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("grocery_items_updated", handleStorage);
-      window.removeEventListener("grocery_items_changed", handleStorage);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("grocery_list_updated", handleStorageChange);
+      window.removeEventListener("pantry_inventory_updated", handleStorageChange);
     };
   }, []);
 
+  // Sync to local storage
+  const saveMainList = (items: StoredGroceryItem[]) => {
+    setMainListItems(items);
+    localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event("grocery_list_updated"));
+  };
+
+  const saveCustomLists = (lists: GroceryListCollection[]) => {
+    setCustomLists(lists);
+    localStorage.setItem(GROCERY_CUSTOM_LISTS_KEY, JSON.stringify(lists));
+    window.dispatchEvent(new Event("grocery_list_updated"));
+  };
+
   // Active items reference
   const currentItems = useMemo(() => {
-    if (activeListId === "main") {
-      return mainListItems;
-    }
+    if (activeListId === "main") return mainListItems;
     const found = customLists.find((l) => l.id === activeListId);
     return found ? found.items : [];
   }, [activeListId, mainListItems, customLists]);
 
-  const activeListName = useMemo(() => {
-    if (activeListId === "main") return "Main Grocery List";
-    const found = customLists.find((l) => l.id === activeListId);
-    return found ? found.name : "Custom List";
-  }, [activeListId, customLists]);
-
-  // Detected un-bought pantry staples
-  const detectedPantryStaples = useMemo(() => {
-    return currentItems.filter((item) => {
-      if (item.bought) return false;
-      const norm = normalize(item.name);
-      return COMMON_PANTRY_STAPLES.some((staple) => norm.includes(staple));
-    });
-  }, [currentItems]);
-
-  // Save current list with precise event dispatching
-  const updateCurrentListItems = (updated: StoredGroceryItem[], addedSingleItem = false) => {
+  const updateCurrentListItems = (newItems: StoredGroceryItem[]) => {
     if (activeListId === "main") {
-      setMainListItems(updated);
-      localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(updated));
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new CustomEvent("grocery_items_changed"));
-      if (addedSingleItem) {
-        window.dispatchEvent(new CustomEvent("grocery_items_updated", { detail: { count: 1 } }));
+      saveMainList(newItems);
+    } else {
+      const updatedLists = customLists.map((l) =>
+        l.id === activeListId ? { ...l, items: newItems } : l
+      );
+      saveCustomLists(updatedLists);
+    }
+  };
+
+  // Add single item with automatic category resolution & Unicode capitalization
+  const handleAddItem = (
+    name: string,
+    categoryOverride?: GroceryCategory,
+    options?: { silent?: boolean; customMessage?: string }
+  ) => {
+    const cleanName = formatGroceryItemName(name);
+    if (!cleanName) return;
+
+    const category = categoryOverride || categorizeGroceryItem(cleanName);
+    if (categoryOverride) {
+      saveLearnedCategory(cleanName, categoryOverride);
+    }
+
+    const existingIndex = currentItems.findIndex(
+      (i) => i.name.toLowerCase().trim() === cleanName.toLowerCase().trim() && !i.bought
+    );
+
+    if (existingIndex >= 0) {
+      const updated = [...currentItems];
+      const targetId = updated[existingIndex].id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      updated[existingIndex].id = targetId;
+      updated[existingIndex].quantity = (updated[existingIndex].quantity || 1) + 1;
+      updateCurrentListItems(updated);
+      setRecentlyAddedItemId(targetId);
+      setTimeout(() => setRecentlyAddedItemId(null), 2500);
+      if (!options?.silent) {
+        info(options?.customMessage || `Increased quantity for "${cleanName}" 🛒`);
       }
     } else {
-      const nextCustom = customLists.map((l) =>
-        l.id === activeListId ? { ...l, items: updated } : l
+      const newItemId = `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const newItem: StoredGroceryItem = {
+        id: newItemId,
+        name: cleanName,
+        quantity: 1,
+        category,
+        bought: false,
+      };
+      updateCurrentListItems([...currentItems, newItem]);
+      setRecentlyAddedItemId(newItemId);
+      setTimeout(() => setRecentlyAddedItemId(null), 2500);
+      if (!options?.silent) {
+        success(options?.customMessage || `Added "${cleanName}" to list!`);
+      }
+    }
+  };
+
+  // Add multiple items from recipe / pantry with capitalization
+  const handleAddMultipleItems = (
+    ingredients: string[],
+    recipeTitle?: string,
+    recipeId?: number | string
+  ) => {
+    const newItemsToAdd: StoredGroceryItem[] = [];
+    const updated = [...currentItems];
+
+    ingredients.forEach((ing) => {
+      const clean = formatGroceryItemName(ing);
+      if (!clean) return;
+
+      const category = categorizeGroceryItem(clean);
+      const existingIdx = updated.findIndex(
+        (i) => i.name.toLowerCase().trim() === clean.toLowerCase().trim() && !i.bought
       );
-      setCustomLists(nextCustom);
-      localStorage.setItem(GROCERY_CUSTOM_LISTS_KEY, JSON.stringify(nextCustom));
-    }
+
+      if (existingIdx >= 0) {
+        updated[existingIdx].quantity = (updated[existingIdx].quantity || 1) + 1;
+        if (recipeTitle) updated[existingIdx].sourceRecipeTitle = recipeTitle;
+        if (recipeId) updated[existingIdx].sourceRecipeId = recipeId;
+      } else {
+        newItemsToAdd.push({
+          id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: clean,
+          quantity: 1,
+          category,
+          bought: false,
+          sourceRecipeTitle: recipeTitle,
+          sourceRecipeId: recipeId,
+        });
+      }
+    });
+
+    updateCurrentListItems([...updated, ...newItemsToAdd]);
+    const totalAdded = ingredients.length;
+    success(`Added ${totalAdded} items to your shopping list! 🛒`);
   };
 
-  const saveLearnedWord = (word: string) => {
-    const formatted = formatGroceryItemName(word.trim());
-    if (!formatted || formatted.length < 2) return;
-
-    let existingStored: string[] = [];
-    try {
-      const raw = localStorage.getItem(LEARNED_PANTRY_KEY);
-      if (raw) existingStored = JSON.parse(raw) as string[];
-    } catch {}
-
-    const updated = Array.from(new Set([formatted, ...existingStored, ...learnedVocab]));
-    setLearnedVocab(updated);
-    try {
-      localStorage.setItem(LEARNED_PANTRY_KEY, JSON.stringify(updated.slice(0, 300)));
-    } catch {}
-  };
-
-  const removeLearnedWord = (word: string) => {
-    const norm = normalize(word);
-    const updated = learnedVocab.filter((w) => normalize(w) !== norm);
-    setLearnedVocab(updated);
-    try {
-      localStorage.setItem(LEARNED_PANTRY_KEY, JSON.stringify(updated));
-    } catch {}
-  };
-
-  const handleAddItem = (nameToAdd?: string) => {
-    const target = nameToAdd || newItemText;
-    const trimmed = target.trim();
-    if (!trimmed) return;
-
-    let parsedQty = 1;
-    let cleanName = trimmed;
-    const qtyMatch = trimmed.match(/^(\d+)\s*(?:x|\*|\s)\s*(.*)$/i);
-    if (qtyMatch) {
-      parsedQty = parseInt(qtyMatch[1], 10) || 1;
-      cleanName = qtyMatch[2].trim();
-    }
-
-    const formatted = formatGroceryItemName(cleanName);
-    const category = selectedCategory === "auto" ? categorizeGroceryItem(formatted) : selectedCategory;
-
-    if (selectedCategory !== "auto") {
-      saveLearnedCategory(formatted, selectedCategory);
-    }
-
-    saveLearnedWord(formatted);
-
-    const existsIndex = currentItems.findIndex((i) => normalize(i.name) === normalize(formatted));
-    if (existsIndex >= 0) {
-      const updated = currentItems.map((item, idx) =>
-        idx === existsIndex
-          ? { ...item, quantity: (item.quantity || 1) + parsedQty, bought: false }
-          : item
-      );
-      updateCurrentListItems(updated);
-      info(`Increased quantity of "${formatted}" (+${parsedQty}).`);
-      setNewItemText("");
-      setShowSuggestions(false);
-      return;
-    }
-
-    const newItem: StoredGroceryItem = {
-      name: formatted,
-      quantity: parsedQty,
-      category,
-      bought: false,
+  // Toggle bought status with Two-Way Pantry synchronization
+  const handleToggleBought = (originalIndex: number) => {
+    if (originalIndex < 0 || originalIndex >= currentItems.length) return;
+    const updated = [...currentItems];
+    const target = updated[originalIndex];
+    const newBoughtState = !target.bought;
+    updated[originalIndex] = {
+      ...target,
+      bought: newBoughtState,
     };
-
-    updateCurrentListItems([...currentItems, newItem], true);
-    setNewItemText("");
-    setShowSuggestions(false);
-    setSelectedCategory("auto");
-    success(`Added ${formatted}! 🛒`);
-  };
-
-  const toggleBought = (index: number) => {
-    const updated = currentItems.map((item, i) =>
-      i === index ? { ...item, bought: !item.bought } : item
-    );
     updateCurrentListItems(updated);
-  };
 
-  const updateQuantity = (index: number, delta: number) => {
-    const item = currentItems[index];
-    if (!item) return;
-
-    const newQty = (item.quantity || 1) + delta;
-    if (newQty <= 0) {
-      removeItem(index);
-      return;
+    // Two-way sync: If item was just checked off (bought: true) and exists in Pantry as out-of-stock, restore it to in-stock!
+    if (newBoughtState) {
+      const targetName = target.name.toLowerCase().trim();
+      const pantryMatch = pantryItems.find(
+        (p) => p.name.toLowerCase().trim() === targetName && !p.inStock
+      );
+      if (pantryMatch) {
+        const updatedPantry = pantryItems.map((p) =>
+          p.id === pantryMatch.id ? { ...p, inStock: true } : p
+        );
+        setPantryItems(updatedPantry);
+        savePantryInventory(updatedPantry);
+        success(`"${target.name}" markerades som 'In Stock' i skafferiet! ✨`);
+      }
     }
+  };
 
-    // Trigger visual pulse animation
-    setAnimatingQtyIndex({ index, delta });
-    setTimeout(() => setAnimatingQtyIndex(null), 350);
+  // Update item quantity
+  const handleUpdateQuantity = (originalIndex: number, delta: number) => {
+    if (originalIndex < 0 || originalIndex >= currentItems.length) return;
+    const updated = [...currentItems];
+    const target = updated[originalIndex];
+    const currentQty = target.quantity && target.quantity > 0 ? target.quantity : 1;
+    const newQty = currentQty + delta;
 
-    const updated = currentItems.map((it, i) =>
-      i === index ? { ...it, quantity: newQty } : it
-    );
+    if (newQty <= 0) {
+      updated.splice(originalIndex, 1);
+    } else {
+      updated[originalIndex] = {
+        ...target,
+        quantity: newQty,
+      };
+    }
     updateCurrentListItems(updated);
   };
 
-  const removeItem = (index: number) => {
-    const updated = currentItems.filter((_, i) => i !== index);
+  // Delete single item
+  const handleDeleteItem = (originalIndex: number) => {
+    if (originalIndex < 0 || originalIndex >= currentItems.length) return;
+    const updated = [...currentItems];
+    updated.splice(originalIndex, 1);
     updateCurrentListItems(updated);
   };
 
+  // Clear completed bought items
   const handleClearCompleted = () => {
-    const updated = currentItems.filter((item) => !item.bought);
-    updateCurrentListItems(updated);
-    success("Cleared purchased items.");
+    const active = currentItems.filter((i) => !i.bought);
+    updateCurrentListItems(active);
   };
 
-  const handleConfirmClearAll = () => {
+  // Clear all items in active list
+  const handleClearAll = () => {
     updateCurrentListItems([]);
     setIsClearModalOpen(false);
-    success("Cleared all items in this list.");
+    success("Cleared all items from this list.");
   };
 
-  // Pantry Check: Mark all detected pantry staples as bought
-  const handlePantryCheck = () => {
-    let matchedCount = 0;
-    const updated = currentItems.map((item) => {
-      const norm = normalize(item.name);
-      const isStaple = COMMON_PANTRY_STAPLES.some((staple) => norm.includes(staple));
-      if (isStaple && !item.bought) {
-        matchedCount++;
-        return { ...item, bought: true };
-      }
-      return item;
-    });
-
-    if (matchedCount === 0) {
-      info("No un-bought pantry staples found in this list.");
-    } else {
-      updateCurrentListItems(updated);
-      setIsPantryBannerDismissed(true);
-      success(`Checked off ${matchedCount} pantry staples in your kitchen! 🧂`);
-    }
-  };
-
-  const handleCreateNewList = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newListName.trim();
-    if (!trimmed) return;
-
+  // Create new custom list
+  const handleCreateNewList = (name: string) => {
     const newList: GroceryListCollection = {
-      id: `list-${Date.now()}`,
-      name: formatGroceryItemName(trimmed),
+      id: `list-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: name.trim(),
       createdAt: Date.now(),
       items: [],
     };
-
-    const nextCustom = [...customLists, newList];
-    setCustomLists(nextCustom);
-    localStorage.setItem(GROCERY_CUSTOM_LISTS_KEY, JSON.stringify(nextCustom));
+    const updated = [...customLists, newList];
+    saveCustomLists(updated);
     setActiveListId(newList.id);
-    setNewListName("");
     setIsNewListModalOpen(false);
-    success(`Created "${newList.name}"! 📋`);
+    success(`Created "${newList.name}"!`);
   };
 
+  // Rename current custom list
+  const handleRenameList = (newName: string) => {
+    if (activeListId === "main") return;
+    const updated = customLists.map((l) =>
+      l.id === activeListId ? { ...l, name: newName.trim() } : l
+    );
+    saveCustomLists(updated);
+    setIsRenameListModalOpen(false);
+    success(`Renamed list to "${newName.trim()}"`);
+  };
+
+  // Delete current custom list
   const handleDeleteCurrentCustomList = () => {
     if (activeListId === "main") return;
-    const nextCustom = customLists.filter((l) => l.id !== activeListId);
-    setCustomLists(nextCustom);
-    localStorage.setItem(GROCERY_CUSTOM_LISTS_KEY, JSON.stringify(nextCustom));
+    const target = customLists.find((l) => l.id === activeListId);
+    const updated = customLists.filter((l) => l.id !== activeListId);
+    saveCustomLists(updated);
     setActiveListId("main");
-    info("Custom list deleted.");
+    info(`Deleted "${target?.name || "list"}" and switched to Main.`);
   };
 
-  const handleCopyForExport = () => {
-    const unbought = currentItems
-      .filter((i) => !i.bought)
-      .map((i) => `• ${(i.quantity || 1) > 1 ? `${i.quantity}x ` : ""}${i.name}`)
-      .join("\n");
-    const bought = currentItems
-      .filter((i) => i.bought)
-      .map((i) => `✓ ${(i.quantity || 1) > 1 ? `${i.quantity}x ` : ""}${i.name}`)
-      .join("\n");
-    const fullText = `🛒 ${activeListName.toUpperCase()}\n\n${unbought}${bought ? `\n\nAlready Bought:\n${bought}` : ""}`;
-    navigator.clipboard.writeText(fullText);
-    success("Copied grocery list to clipboard! 📋");
+  // Copy formatted list to clipboard
+  const handleCopyList = async () => {
+    if (currentItems.length === 0) return;
+    const lines = currentItems.map((i) => {
+      const mark = i.bought ? "[x]" : "[ ]";
+      const qty = i.quantity && i.quantity > 1 ? ` (${i.quantity}x)` : "";
+      const source = i.sourceRecipeTitle ? ` (For: ${i.sourceRecipeTitle})` : "";
+      return `${mark} ${formatGroceryItemName(i.name)}${qty}${source}`;
+    });
+
+    const listName = activeListId === "main" ? "Main Shopping List" : customLists.find((l) => l.id === activeListId)?.name || "Shopping List";
+    const textToCopy = `🛒 ${listName}\n\n${lines.join("\n")}`;
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      success("List copied to clipboard! 📋");
+    } catch {
+      info("Could not copy list to clipboard.");
+    }
   };
 
-  // Autocomplete Suggestions
-  const suggestions = useMemo(() => {
-    const query = newItemText.trim().toLowerCase();
-    if (query.length < 1) return [];
+  // Pantry handlers
+  const handleTogglePantryStock = (id: string) => {
+    const targetItem = pantryItems.find((item) => item.id === id);
+    const becomingOutOfStock = targetItem && targetItem.inStock;
 
-    const existingNames = new Set(currentItems.map((i) => normalize(i.name)));
-    const learnedSet = new Set(learnedVocab.map((w) => normalize(w)));
+    const updated = pantryItems.map((item) =>
+      item.id === id ? { ...item, inStock: !item.inStock } : item
+    );
+    setPantryItems(updated);
+    savePantryInventory(updated);
 
-    const allSources = [
-      ...learnedVocab,
-      ...recipeIngredients,
-      ...COMMON_PANTRY_SUGGESTIONS,
-    ];
-
-    const seen = new Set<string>();
-    const matches: { word: string; inList: boolean; isCustom: boolean }[] = [];
-
-    for (const word of allSources) {
-      const norm = normalize(word);
-      if (seen.has(norm)) continue;
-      seen.add(norm);
-
-      if (norm.startsWith(query) || norm.includes(query)) {
-        matches.push({
-          word,
-          inList: existingNames.has(norm),
-          isCustom: learnedSet.has(norm),
+    // If item was marked as running low / out of stock, auto-add to active shopping list (single notification!)
+    if (becomingOutOfStock && targetItem) {
+      const userSettings = getStoredUserSettings();
+      if (userSettings.autoAddLowPantryToList) {
+        const listName =
+          activeListId === "main"
+            ? "Main Shopping List"
+            : customLists.find((l) => l.id === activeListId)?.name || "Shopping List";
+        handleAddItem(targetItem.name, targetItem.category, {
+          customMessage: `"${targetItem.name}" lades automatiskt till i ${listName}!`,
         });
-        if (matches.length >= 6) break;
       }
     }
+  };
 
-    return matches;
-  }, [newItemText, currentItems, learnedVocab, recipeIngredients]);
+  const handleAddPantryStaple = (name: string, category: GroceryCategory) => {
+    const clean = formatGroceryItemName(name);
+    if (!clean) return;
 
-  // Group items by category (splitting into active & checked)
-  const categorizedGroups = useMemo(() => {
+    const newItem: PantryItem = {
+      id: `pantry-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: clean,
+      category,
+      inStock: true,
+    };
+    const updated = [...pantryItems, newItem];
+    setPantryItems(updated);
+    savePantryInventory(updated);
+    success(`Added "${clean}" to your pantry staples!`);
+  };
+
+  const handleDeletePantryStaple = (id: string) => {
+    const updated = pantryItems.filter((i) => i.id !== id);
+    setPantryItems(updated);
+    savePantryInventory(updated);
+  };
+
+  // Stable category ordering (calibrated by number of ACTIVE unbought items)
+  const [stableCategoryOrder, setStableCategoryOrder] = useState<GroceryCategory[]>([]);
+
+  useEffect(() => {
+    const activeCounts: Partial<Record<GroceryCategory, number>> = {};
+    currentItems.forEach((item) => {
+      if (!item.bought) {
+        const cat = item.category || categorizeGroceryItem(item.name);
+        activeCounts[cat] = (activeCounts[cat] || 0) + 1;
+      }
+    });
+
+    const sortedCats = [...GROCERY_CATEGORIES]
+      .sort((a, b) => (activeCounts[b.id] || 0) - (activeCounts[a.id] || 0))
+      .map((c) => c.id);
+
+    setStableCategoryOrder(sortedCats);
+  }, [activeListId, currentItems.length]);
+
+  // Aisle groups calculation (STABLE ORDER, SORTED ALPHABETICALLY A-Z WITHIN EACH AISLE)
+  const { activeAisles, completedAisles } = useMemo(() => {
     const groups: Record<
       GroceryCategory,
-      { active: { item: StoredGroceryItem; originalIndex: number }[]; checked: { item: StoredGroceryItem; originalIndex: number }[] }
+      {
+        active: { item: StoredGroceryItem; originalIndex: number }[];
+        checked: { item: StoredGroceryItem; originalIndex: number }[];
+      }
     > = {
       produce: { active: [], checked: [] },
       meat_seafood: { active: [], checked: [] },
@@ -433,736 +474,413 @@ export default function GroceriesPage() {
       }
     });
 
-    return groups;
+    const activeList: { cat: GroceryCategory; group: typeof groups[GroceryCategory] }[] = [];
+    const completedList: { cat: GroceryCategory; group: typeof groups[GroceryCategory] }[] = [];
+
+    GROCERY_CATEGORIES.forEach((meta) => {
+      const g = groups[meta.id];
+      if (g.active.length === 0 && g.checked.length === 0) return;
+
+      // Sortera även Aisle-vyns varor i alfabetisk ordning (A–Ö)
+      g.active.sort((a, b) => a.item.name.localeCompare(b.item.name, "sv", { sensitivity: "base" }));
+      g.checked.sort((a, b) => a.item.name.localeCompare(b.item.name, "sv", { sensitivity: "base" }));
+
+      if (g.active.length > 0) {
+        activeList.push({ cat: meta.id, group: g });
+      } else {
+        completedList.push({ cat: meta.id, group: g });
+      }
+    });
+
+    // Stable aisle sorting based on stableCategoryOrder
+    activeList.sort((a, b) => {
+      const idxA = stableCategoryOrder.indexOf(a.cat);
+      const idxB = stableCategoryOrder.indexOf(b.cat);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      return b.group.active.length - a.group.active.length;
+    });
+
+    return { activeAisles: activeList, completedAisles: completedList };
+  }, [currentItems, stableCategoryOrder]);
+
+  // Sort Flat View items: 1) Unchecked first, 2) Alphabetical A-Z
+  const flatSortedItems = useMemo(() => {
+    return currentItems
+      .map((item, originalIndex) => ({ item, originalIndex }))
+      .sort((a, b) => {
+        if (a.item.bought !== b.item.bought) {
+          return a.item.bought ? 1 : -1;
+        }
+        return a.item.name.localeCompare(b.item.name, "sv", { sensitivity: "base" });
+      });
   }, [currentItems]);
 
-  const toggleSectionCompleted = (sectionKey: string) => {
-    setShowCompleted((prev) => ({
-      ...prev,
-      [sectionKey]: !prev[sectionKey],
-    }));
-  };
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null);
+
+  // Close delete confirmation when clicking anywhere outside
+  useEffect(() => {
+    if (confirmDeleteIndex === null) return;
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-confirm-delete]")) return;
+      setConfirmDeleteIndex(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    const timer = setTimeout(() => setConfirmDeleteIndex(null), 4500);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      clearTimeout(timer);
+    };
+  }, [confirmDeleteIndex]);
 
   const remainingCount = currentItems.filter((i) => !i.bought).length;
   const boughtCount = currentItems.filter((i) => i.bought).length;
+  const inStockPantryCount = pantryItems.filter((p) => p.inStock).length;
+  const activeCustomList = customLists.find((l) => l.id === activeListId);
 
   if (!hasHydrated) {
     return (
-      <main className="relative min-h-screen bg-[#110d0b] px-4 py-8 text-stone-100 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="rounded-3xl border border-white/10 bg-[#16120f] p-8 text-stone-400">
-            Loading your grocery manager...
-          </div>
+      <main className="min-h-screen bg-[#110d0b] px-4 py-8 text-stone-100 flex items-center justify-center">
+        <div className="flex items-center gap-3 rounded-2xl bg-[#16120f] border border-white/10 p-6 shadow-xl">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+          <span className="text-sm font-semibold">Opening Kitchen Hub...</span>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="relative min-h-screen bg-[#110d0b] px-4 py-6 sm:px-6 lg:px-8 text-stone-100">
+    <main className="relative min-h-screen bg-[#110d0b] px-4 sm:px-6 xl:px-10 py-6 text-stone-100 pb-28">
       <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* HEADER BAR */}
-        <header className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-[#16120f]/95 p-5 sm:p-6 shadow-[0_18px_60px_rgba(0,0,0,0.3)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1 text-xs font-bold uppercase tracking-widest text-amber-400">
-                <span>🛒</span>
-                <span>Grocery Hub</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#fff8ef]">
-                {activeListName}
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-stone-400">
-                {remainingCount} items to buy {boughtCount > 0 ? `• ${boughtCount} checked off` : ""}
-              </p>
-            </div>
+        <GroceryHeader
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          activeListId={activeListId}
+          onListIdChange={setActiveListId}
+          mainListCount={mainListItems.length}
+          customLists={customLists}
+          onOpenNewListModal={() => setIsNewListModalOpen(true)}
+          onOpenRenameListModal={() => setIsRenameListModalOpen(true)}
+          onDeleteCustomList={handleDeleteCurrentCustomList}
+          remainingCount={remainingCount}
+          boughtCount={boughtCount}
+          pantryInStockCount={inStockPantryCount}
+          onOpenVisionModal={() => setIsVisionModalOpen(true)}
+          onOpenCookWhatIHave={() => setIsCookWhatIHaveOpen(true)}
+          onCopyList={handleCopyList}
+          onClearAll={() => setIsClearModalOpen(true)}
+          groupByAisle={groupByAisle}
+          onToggleGroupByAisle={setGroupByAisle}
+        />
 
-            {/* STREAMLINED ACTION BAR */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* STORE MODE TOGGLE */}
-              <button
-                type="button"
-                onClick={() => setIsStoreMode(!isStoreMode)}
-                className={`inline-flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs sm:text-sm font-bold transition-all duration-100 cursor-pointer ${
-                  isStoreMode
-                    ? "border-emerald-400 bg-emerald-400/20 text-emerald-300 shadow-emerald-400/20"
-                    : "border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white"
-                }`}
-                title="Simplified large shopping checklist"
-              >
-                <span>📱</span>
-                <span>Store Mode</span>
-              </button>
+        {/* TAB A: SHOPPING LIST VIEW */}
+        {activeTab === "shopping_list" && (
+          <div className="space-y-6">
+            
+            {/* QUICK ADD AUTOCOMPLETE COMPONENT */}
+            <GroceryQuickAdd
+              onAddItem={handleAddItem}
+              learnedVocab={learnedVocab}
+              currentItems={currentItems}
+            />
 
-              {/* GROUP BY AISLE / FLAT TOGGLE */}
-              <div className="flex items-center rounded-2xl border border-white/10 bg-white/5 p-0.5">
+            {/* EMPTY STATE */}
+            {currentItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-[#16120f]/50 py-20 text-center space-y-3">
+                <span className="text-5xl">🧺</span>
+                <h3 className="text-xl font-bold text-[#fff8ef]">Your shopping list is empty</h3>
+                <p className="max-w-md text-xs sm:text-sm text-stone-400 leading-relaxed">
+                  Add groceries using the input bar above, or click below to match your pantry staples against your recipes.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setGroupByAisle(true)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    groupByAisle
-                      ? "bg-amber-500 text-stone-950 shadow-xs"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                  title="Organize by supermarket aisles"
+                  onClick={() => setIsCookWhatIHaveOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-6 py-3 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition-all duration-150 active:scale-95 cursor-pointer mt-2"
                 >
-                  🏪 Aisles
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGroupByAisle(false)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    !groupByAisle
-                      ? "bg-amber-500 text-stone-950 shadow-xs"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                  title="Flat simple list"
-                >
-                  ≡ Flat
+                  <svg className="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Find What You Can Cook (Pantry Matcher)</span>
                 </button>
               </div>
+            ) : groupByAisle ? (
+              /* RESPONSIVE BALANCED AISLE GRID (SORTED BY MOST ITEMS FIRST) */
+              <div className="space-y-8">
+                
+                {/* ACTIVE AISLES (PRIORITIZED FIRST IN MULTI-COLUMN GRID) */}
+                {activeAisles.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
+                    {activeAisles.map(({ cat, group }) => (
+                      <GroceryAisleCard
+                        key={cat}
+                        category={cat}
+                        activeItems={group.active}
+                        checkedItems={group.checked}
+                        recentlyAddedItemId={recentlyAddedItemId}
+                        onToggleBought={handleToggleBought}
+                        onUpdateQuantity={handleUpdateQuantity}
+                        onDeleteItem={handleDeleteItem}
+                      />
+                    ))}
+                  </div>
+                )}
 
-              {/* AI VISION SCANNER BUTTON */}
-              <button
-                type="button"
-                onClick={() => setIsVisionModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-3.5 py-2 text-xs sm:text-sm font-bold text-amber-300 transition-all duration-100 cursor-pointer"
-                title="Scan handwritten note or printed receipt with camera"
-              >
-                <span>📷</span>
-                <span>Scan List</span>
-              </button>
+                {/* COMPLETED AISLES (DROPPED TO BOTTOM IN COMPACT CARDS) */}
+                {completedAisles.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t border-white/8">
+                    <div className="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-wider">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Completed Aisles ({completedAisles.length})</span>
+                    </div>
 
-              {/* SHARE ICON BUTTON */}
-              {currentItems.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleCopyForExport}
-                  aria-label="Share / Copy List"
-                  title="Share / Copy list to clipboard"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
-                >
-                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                </button>
-              )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 items-start">
+                      {completedAisles.map(({ cat, group }) => (
+                        <GroceryAisleCard
+                          key={cat}
+                          category={cat}
+                          activeItems={group.active}
+                          checkedItems={group.checked}
+                          recentlyAddedItemId={recentlyAddedItemId}
+                          onToggleBought={handleToggleBought}
+                          onUpdateQuantity={handleUpdateQuantity}
+                          onDeleteItem={handleDeleteItem}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-              {/* CLEAR DONE BUTTON */}
-              {boughtCount > 0 && (
-                <button
-                  type="button"
-                  onClick={handleClearCompleted}
-                  className="inline-flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-stone-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
-                >
-                  <span>✓</span>
-                  <span>Clear {boughtCount} Done</span>
-                </button>
-              )}
+              </div>
+            ) : (
+              /* FLAT CHECKLIST VIEW (SORTED: UNCHECKED FIRST, ALPHABETICAL A-Z) */
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 items-start">
+                {flatSortedItems.map(({ item, originalIndex }) => {
+                  const displayName = formatGroceryItemName(item.name);
+                  const isRecentlyAdded = Boolean(item.id && recentlyAddedItemId === item.id);
 
-              {/* CLEAR ALL BUTTON */}
-              {currentItems.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setIsClearModalOpen(true)}
-                  aria-label="Clear All Items"
-                  title="Clear all items from list"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              )}
+                  return (
+                    <div
+                      key={item.id || `${originalIndex}-${item.name}`}
+                      className={`flex items-center justify-between gap-3 rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${
+                        isRecentlyAdded
+                          ? "ring-2 ring-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.35)] bg-gradient-to-r from-emerald-950/60 via-emerald-900/25 to-[#1f1915] border-emerald-400/60 scale-[1.01]"
+                          : item.bought
+                          ? "border-white/5 bg-black/30 opacity-60"
+                          : "border-white/8 bg-[#1f1915] hover:border-amber-400/30"
+                      }`}
+                    >
+                      <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={item.bought}
+                          onChange={() => handleToggleBought(originalIndex)}
+                          className="h-4.5 w-4.5 rounded accent-amber-500 cursor-pointer shrink-0"
+                        />
 
-              {activeListId !== "main" && (
-                <button
-                  type="button"
-                  onClick={handleDeleteCurrentCustomList}
-                  className="inline-flex items-center gap-1 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition cursor-pointer"
-                >
-                  Delete List
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* MULTI-LIST TABS */}
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/8">
-            <button
-              type="button"
-              onClick={() => setActiveListId("main")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all duration-100 cursor-pointer ${
-                activeListId === "main"
-                  ? "bg-amber-500 text-stone-950 shadow-md shadow-amber-400/20"
-                  : "bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <span>🛒</span>
-              <span>Main List</span>
-              <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
-                activeListId === "main" ? "bg-stone-950/20 text-stone-950" : "bg-white/10 text-stone-400"
-              }`}>
-                {mainListItems.length}
-              </span>
-            </button>
-
-            {customLists.map((list) => (
-              <button
-                key={list.id}
-                type="button"
-                onClick={() => setActiveListId(list.id)}
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all duration-100 cursor-pointer ${
-                  activeListId === list.id
-                    ? "bg-amber-500 text-stone-950 shadow-md shadow-amber-400/20"
-                    : "bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <span>📋</span>
-                <span>{list.name}</span>
-                <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
-                  activeListId === list.id ? "bg-stone-950/20 text-stone-950" : "bg-white/10 text-stone-400"
-                }`}>
-                  {list.items.length}
-                </span>
-              </button>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => setIsNewListModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-dashed border-white/20 bg-white/2 px-3 py-1.5 text-xs font-semibold text-stone-400 hover:border-amber-400 hover:text-amber-300 transition-all duration-100 cursor-pointer"
-            >
-              <span>+</span>
-              <span>New List</span>
-            </button>
-          </div>
-        </header>
-
-        {/* PROACTIVE SMART PANTRY CHECK BANNER */}
-        {detectedPantryStaples.length > 0 && !isPantryBannerDismissed && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-400/25 bg-[#1f1812] p-3.5 sm:px-4 sm:py-3 shadow-md">
-            <div className="flex items-center gap-2.5 text-xs sm:text-sm text-stone-200">
-              <span className="text-base">🧂</span>
-              <span>
-                Found <strong className="text-amber-300">{detectedPantryStaples.length} kitchen staples</strong> (
-                {detectedPantryStaples.slice(0, 3).map((s) => s.name).join(", ")}
-                {detectedPantryStaples.length > 3 ? "..." : ""}). Already have these at home?
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={handlePantryCheck}
-                className="rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-bold text-stone-950 hover:bg-amber-600 transition cursor-pointer shadow-sm"
-              >
-                Mark as Owned
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPantryBannerDismissed(true)}
-                className="rounded-xl bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-stone-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
-                title="Dismiss hint"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* QUICK ADD WITH VISUAL CATEGORY RIBBON */}
-        <section className="relative rounded-3xl border border-white/10 bg-[#16120f] p-4 sm:p-5 shadow-md space-y-3">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAddItem();
-            }}
-            className="flex flex-col sm:flex-row gap-3"
-          >
-            <div className="relative flex-1">
-              <input
-                ref={inputRef}
-                type="text"
-                value={newItemText}
-                onFocus={() => setShowSuggestions(true)}
-                onChange={(e) => {
-                  setNewItemText(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                placeholder="Add item (e.g. 2x Avocados, Dish washer tablets, Feta cheese)..."
-                className="w-full rounded-2xl border border-white/10 bg-[#201813] px-4 py-3 text-sm sm:text-base text-stone-100 placeholder-stone-500 focus:border-amber-400 focus:outline-none transition-colors duration-100"
-              />
-
-              {/* CLEAN AUTOCOMPLETE DROPDOWN */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-2xl border border-white/12 bg-[#201813] shadow-2xl">
-                  <ul className="divide-y divide-white/5 py-1">
-                    {suggestions.map((item) => (
-                      <li
-                        key={item.word}
-                        className="group flex items-center justify-between hover:bg-amber-400/10 transition-colors duration-100 px-4 py-2.5"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleAddItem(item.word)}
-                          className="flex-1 text-left text-xs sm:text-sm font-medium text-stone-200 hover:text-amber-300 transition-colors duration-100 cursor-pointer"
-                        >
-                          <span className={item.inList ? "text-stone-400 line-through" : "text-stone-100 font-semibold"}>
-                            {item.word}
-                          </span>
-                        </button>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={`text-[11px] ${item.inList ? "text-stone-500" : "text-amber-400 font-semibold"}`}>
-                            {item.inList ? "✓ In list" : "+ Add"}
-                          </span>
-
-                          {item.isCustom && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeLearnedWord(item.word);
-                              }}
-                              className="text-stone-500 hover:text-rose-400 transition-colors duration-100 cursor-pointer text-xs p-1 rounded hover:bg-white/5"
-                              title="Remove from learned vocabulary"
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`text-sm sm:text-[15px] font-bold leading-snug break-words ${
+                                item.bought ? "text-stone-400 line-through" : "text-stone-100"
+                              }`}
                             >
-                              ✕
-                            </button>
+                              {displayName}
+                            </span>
+                            {isRecentlyAdded && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400 text-stone-950 font-black text-[10px] px-2 py-0.5 shadow-sm shadow-emerald-400/50 animate-bounce">
+                                ✓ Added
+                              </span>
+                            )}
+                          </div>
+                          {item.sourceRecipeTitle && (
+                            <div className="text-xs font-semibold text-amber-400 mt-0.5 truncate">
+                              📌 For: {item.sourceRecipeTitle}
+                            </div>
                           )}
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+                      </label>
 
-            <button
-              type="submit"
-              disabled={!newItemText.trim()}
-              className="rounded-2xl bg-amber-500 px-6 py-3 text-sm font-bold text-stone-950 hover:bg-amber-600 transition-all duration-100 cursor-pointer disabled:opacity-40 shadow-md shadow-amber-400/20"
-            >
-              Add Item
-            </button>
-          </form>
-
-          {/* INTUITIVE CATEGORY ICON RIBBON */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] text-stone-500 font-semibold mr-1">
-              Aisle:
-            </span>
-
-            {/* AUTO PILL */}
-            <button
-              type="button"
-              onClick={() => setSelectedCategory("auto")}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition-all duration-100 cursor-pointer ${
-                selectedCategory === "auto"
-                  ? "bg-amber-500 text-stone-950 shadow-sm"
-                  : "bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <span>✨</span>
-              <span>Auto-detect</span>
-            </button>
-
-            {/* CATEGORY ICON PILLS */}
-            {GROCERY_CATEGORIES.map((cat) => {
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold transition-all duration-100 cursor-pointer ${
-                    isSelected
-                      ? "bg-amber-500 text-stone-950 font-bold shadow-sm"
-                      : "bg-white/5 text-stone-400 hover:bg-white/10 hover:text-stone-200"
-                  }`}
-                  title={cat.name}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.name.split("&")[0].trim()}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ITEMS LIST */}
-        {currentItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-[#16120f]/50 py-16 text-center">
-            <span className="text-4xl mb-3 text-stone-600">🧺</span>
-            <h3 className="text-lg font-bold text-stone-200">This grocery list is empty</h3>
-            <p className="mt-1 max-w-sm text-xs sm:text-sm text-stone-500 leading-relaxed">
-              Add items using the search above, or send all ingredients for your week from the{" "}
-              <Link href="/planner" className="text-amber-400 hover:underline">
-                Meal Planner
-              </Link>
-              !
-            </p>
-          </div>
-        ) : groupByAisle ? (
-          /* AISLE-CATEGORIZED VIEW */
-          <div className="space-y-6">
-            {GROCERY_CATEGORIES.map((cat) => {
-              const group = categorizedGroups[cat.id];
-              const activeItems = group?.active || [];
-              const checkedItems = group?.checked || [];
-              const totalInCategory = activeItems.length + checkedItems.length;
-              if (totalInCategory === 0) return null;
-
-              const isAccordionOpen = showCompleted[cat.id] ?? false;
-
-              return (
-                <section
-                  key={cat.id}
-                  className="rounded-3xl border border-white/10 bg-[#16120f] p-5 sm:p-6 shadow-md"
-                >
-                  {/* AISLE HEADER */}
-                  <div className="flex items-center justify-between mb-4 border-b border-white/8 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xl">{cat.icon}</span>
-                      <h2 className="text-base sm:text-lg font-bold text-[#fff8ef]">
-                        {cat.name}
-                      </h2>
-                    </div>
-                    <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold ${cat.badgeClass}`}>
-                      {activeItems.length > 0 ? `${activeItems.length} left` : "✓ Done"}
-                    </span>
-                  </div>
-
-                  {/* ACTIVE (UNBOUGHT) ITEMS */}
-                  {activeItems.length > 0 && (
-                    <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {activeItems.map(({ item, originalIndex }) => {
-                        const isAnimating = animatingQtyIndex?.index === originalIndex;
-                        return (
-                          <li
-                            key={`${item.name}-${originalIndex}`}
-                            className="group flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-[#201813]/90 hover:bg-[#271e18] hover:border-amber-400/30 p-3.5 shadow-sm transition-all duration-100"
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center rounded-xl border border-white/10 bg-black/40 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(originalIndex, -1)}
+                            className="h-7 w-7 flex items-center justify-center text-stone-400 hover:text-white text-xs font-black cursor-pointer"
+                            title="Decrease quantity"
                           >
-                            <label className="flex flex-1 items-center gap-3 cursor-pointer min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={item.bought}
-                                onChange={() => toggleBought(originalIndex)}
-                                className="h-5 w-5 shrink-0 accent-emerald-400 cursor-pointer rounded-md"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <span
-                                  className={`truncate block font-semibold ${
-                                    isStoreMode ? "text-base sm:text-lg" : "text-sm"
-                                  } text-stone-100`}
-                                >
-                                  {item.name}
-                                </span>
-                              </div>
-                            </label>
+                            −
+                          </button>
+                          <span className="px-2 text-xs font-mono font-bold text-amber-300 min-w-[22px] text-center">
+                            {item.quantity || 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(originalIndex, 1)}
+                            className="h-7 w-7 flex items-center justify-center text-stone-400 hover:text-white text-xs font-black cursor-pointer"
+                            title="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
 
-                            {/* TACTILE QUANTITY STEPPER WITH MICRO-ANIMATION */}
-                            <div className="relative flex items-center gap-1 rounded-xl bg-black/40 border border-white/10 px-1 py-0.5 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(originalIndex, -1)}
-                                className="h-6 w-6 rounded-lg text-xs font-bold text-stone-400 hover:bg-white/10 hover:text-rose-400 transition-transform active:scale-75 cursor-pointer flex items-center justify-center"
-                                title="Decrease quantity"
-                              >
-                                -
-                              </button>
-                              
-                              <span
-                                className={`px-1.5 text-xs font-mono font-bold min-w-5 text-center transition-all duration-150 ${
-                                  isAnimating
-                                    ? "scale-125 text-amber-200 bg-amber-400/25 rounded-md"
-                                    : "text-amber-300"
-                                }`}
-                              >
-                                {item.quantity || 1}
-                              </span>
-
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(originalIndex, 1)}
-                                className="h-6 w-6 rounded-lg text-xs font-bold text-stone-400 hover:bg-white/10 hover:text-emerald-300 transition-transform active:scale-75 cursor-pointer flex items-center justify-center"
-                                title="Increase quantity"
-                              >
-                                +
-                              </button>
-
-                              {/* POP INDICATOR */}
-                              {isAnimating && (
-                                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-black text-amber-300 animate-bounce">
-                                  {animatingQtyIndex.delta > 0 ? "+1" : "-1"}
-                                </span>
-                              )}
-                            </div>
-
+                        {/* DELETE BUTTON WITH INLINE CONFIRMATION */}
+                        {confirmDeleteIndex === originalIndex ? (
+                          <div data-confirm-delete="true" className="flex items-center gap-1 shrink-0 animate-in fade-in duration-100">
                             <button
                               type="button"
-                              onClick={() => removeItem(originalIndex)}
-                              className="opacity-0 group-hover:opacity-100 text-stone-500 hover:text-rose-400 transition-colors duration-100 cursor-pointer p-1"
-                              title="Delete item"
+                              onClick={() => {
+                                handleDeleteItem(originalIndex);
+                                setConfirmDeleteIndex(null);
+                              }}
+                              className="rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[11px] font-bold px-2 py-1 hover:bg-rose-500/30 transition cursor-pointer shadow-xs"
+                              title="Click to confirm removal"
+                            >
+                              Delete?
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteIndex(null)}
+                              className="text-stone-400 hover:text-stone-200 text-xs px-1 cursor-pointer"
+                              title="Cancel"
                             >
                               ✕
                             </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-
-                  {/* COLLAPSIBLE CHECKED ITEMS ACCORDION */}
-                  {checkedItems.length > 0 && (
-                    <div className={activeItems.length > 0 ? "mt-4 pt-3 border-t border-white/5" : ""}>
-                      <button
-                        type="button"
-                        onClick={() => toggleSectionCompleted(cat.id)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/6 bg-white/2 px-3 py-1.5 text-xs font-semibold text-stone-400 hover:border-white/12 hover:bg-white/5 hover:text-stone-200 transition-all duration-100 cursor-pointer group"
-                      >
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
-                          ✓
-                        </span>
-                        <span>
-                          {checkedItems.length} purchased {checkedItems.length === 1 ? "item" : "items"}
-                        </span>
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className={`h-3 w-3 transition-transform duration-200 ${
-                            isAccordionOpen ? "rotate-180 text-amber-300" : "rotate-0 text-stone-500 group-hover:text-stone-300"
-                          }`}
-                        >
-                          <path d="M4 6l4 4 4-4" />
-                        </svg>
-                      </button>
-
-                      {isAccordionOpen && (
-                        <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 mt-2.5">
-                          {checkedItems.map(({ item, originalIndex }) => (
-                            <li
-                              key={`${item.name}-${originalIndex}`}
-                              className="group flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-3 opacity-60 hover:opacity-100 transition duration-100"
-                            >
-                              <label className="flex flex-1 items-center gap-3 cursor-pointer min-w-0">
-                                <input
-                                  type="checkbox"
-                                  checked={item.bought}
-                                  onChange={() => toggleBought(originalIndex)}
-                                  className="h-4.5 w-4.5 shrink-0 accent-emerald-400 cursor-pointer rounded-md"
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <span className="truncate block text-xs sm:text-sm font-medium text-emerald-200 line-through">
-                                    {(item.quantity || 1) > 1 ? `${item.quantity}x ` : ""}
-                                    {item.name}
-                                  </span>
-                                </div>
-                              </label>
-
-                              <button
-                                type="button"
-                                onClick={() => removeItem(originalIndex)}
-                                className="opacity-0 group-hover:opacity-100 text-stone-500 hover:text-rose-400 transition-colors duration-100 cursor-pointer text-xs p-1"
-                                title="Delete item"
-                              >
-                                ✕
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          </div>
-        ) : (
-          /* FLAT CHECKLIST VIEW */
-          <section className="rounded-3xl border border-white/10 bg-[#16120f] p-5 sm:p-6 shadow-md">
-            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {currentItems.map((item, index) => {
-                const catMeta = GROCERY_CATEGORIES.find((c) => c.id === item.category);
-                const isAnimating = animatingQtyIndex?.index === index;
-
-                return (
-                  <li
-                    key={`${item.name}-${index}`}
-                    className={`group flex items-center justify-between gap-3 rounded-2xl border p-3.5 transition-all duration-100 ${
-                      item.bought
-                        ? "border-emerald-500/15 bg-emerald-500/5 opacity-60"
-                        : "border-white/8 bg-[#201813]/90 hover:bg-[#271e18] hover:border-amber-400/30 shadow-sm"
-                    }`}
-                  >
-                    <label className="flex flex-1 items-center gap-3 cursor-pointer min-w-0">
-                      <input
-                        type="checkbox"
-                        checked={item.bought}
-                        onChange={() => toggleBought(index)}
-                        className="h-5 w-5 shrink-0 accent-emerald-400 cursor-pointer rounded-md"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <span
-                          className={`truncate block font-medium ${
-                            isStoreMode ? "text-base sm:text-lg" : "text-sm"
-                          } ${
-                            item.bought ? "text-emerald-200 line-through" : "text-stone-100 font-semibold"
-                          }`}
-                        >
-                          {item.name}
-                        </span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteIndex(originalIndex)}
+                            className="h-8 w-8 flex items-center justify-center rounded-xl text-stone-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                            title="Delete item"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
-                    </label>
-
-                    {/* QUANTITY STEPPER WITH MICRO-ANIMATION */}
-                    <div className="relative flex items-center gap-1 rounded-xl bg-black/40 border border-white/10 px-1 py-0.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(index, -1)}
-                        className="h-6 w-6 rounded-lg text-xs font-bold text-stone-400 hover:bg-white/10 hover:text-rose-400 transition-transform active:scale-75 cursor-pointer flex items-center justify-center"
-                        title="Decrease quantity"
-                      >
-                        -
-                      </button>
-                      <span
-                        className={`px-1.5 text-xs font-mono font-bold min-w-5 text-center transition-all duration-150 ${
-                          isAnimating
-                            ? "scale-125 text-amber-200 bg-amber-400/25 rounded-md"
-                            : "text-amber-300"
-                        }`}
-                      >
-                        {item.quantity || 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(index, 1)}
-                        className="h-6 w-6 rounded-lg text-xs font-bold text-stone-400 hover:bg-white/10 hover:text-emerald-300 transition-transform active:scale-75 cursor-pointer flex items-center justify-center"
-                        title="Increase quantity"
-                      >
-                        +
-                      </button>
-
-                      {isAnimating && (
-                        <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-black text-amber-300 animate-bounce">
-                          {animatingQtyIndex.delta > 0 ? "+1" : "-1"}
-                        </span>
-                      )}
                     </div>
+                  );
+                })}
+              </div>
+            )}
 
-                    {catMeta && (
-                      <span className="text-xs text-stone-500 shrink-0" title={catMeta.name}>
-                        {catMeta.icon}
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      className="opacity-0 group-hover:opacity-100 text-stone-500 hover:text-rose-400 transition-colors duration-100 cursor-pointer p-1"
-                      title="Delete item"
-                    >
-                      ✕
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+          </div>
         )}
+
+        {/* TAB B: PANTRY INVENTORY & RECIPE MATCHER VIEW */}
+        {activeTab === "pantry" && (
+          <PantryInventoryView
+            pantryItems={pantryItems}
+            learnedVocab={learnedVocab}
+            onToggleStock={handleTogglePantryStock}
+            onAddItem={handleAddPantryStaple}
+            onDeleteItem={handleDeletePantryStaple}
+            onAddMissingToGroceryList={(items) => handleAddMultipleItems(items)}
+            onOpenCookWhatIHave={() => setIsCookWhatIHaveOpen(true)}
+          />
+        )}
+
+        {/* BACK TO TOP BUTTON (CENTERED AT BOTTOM) */}
+        <div className="flex justify-center pt-8 pb-4">
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="inline-flex items-center gap-2 rounded-full border border-stone-300/80 bg-white px-5 py-2.5 text-xs font-extrabold text-stone-700 shadow-xs hover:border-amber-500 hover:bg-amber-500/5 hover:text-amber-700 dark:border-white/12 dark:bg-[#16120f] dark:text-stone-300 dark:hover:border-amber-400/50 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 transition-all cursor-pointer"
+            title="Scroll back to top"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            <span>Back to Top</span>
+          </button>
+        </div>
+
       </div>
 
       {/* CREATE NEW LIST MODAL */}
       {isNewListModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            onClick={() => setIsNewListModalOpen(false)}
-            className="absolute inset-0 bg-black/70 transition-opacity"
-          />
-          <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#191410] p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-[#fff8ef] mb-2">Create New Grocery List</h3>
-            <p className="text-xs text-stone-400 mb-4">
-              Give your list a name (e.g. <em>Asian Supermarket</em>, <em>Party Supplies</em>, <em>Costco</em>).
-            </p>
-            <form onSubmit={handleCreateNewList} className="space-y-4">
-              <input
-                type="text"
-                autoFocus
-                value={newListName}
-                onChange={(e) => setNewListName(e.target.value)}
-                placeholder="List name..."
-                className="w-full rounded-2xl border border-white/10 bg-[#221b16] px-4 py-2.5 text-sm text-stone-100 placeholder-stone-500 focus:border-amber-400 focus:outline-none"
-              />
-              <div className="flex justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsNewListModalOpen(false)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-stone-300 hover:bg-white/10"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!newListName.trim()}
-                  className="rounded-2xl bg-amber-500 px-4 py-2 text-xs font-bold text-stone-950 hover:bg-amber-600 disabled:opacity-40"
-                >
-                  Create List
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <CreateListModal
+          isOpen={isNewListModalOpen}
+          onClose={() => setIsNewListModalOpen(false)}
+          onCreate={handleCreateNewList}
+        />
       )}
 
-      {/* VISION SCANNER MODAL */}
+      {/* RENAME LIST MODAL */}
+      {isRenameListModalOpen && activeCustomList && (
+        <RenameListModal
+          isOpen={isRenameListModalOpen}
+          onClose={() => setIsRenameListModalOpen(false)}
+          currentName={activeCustomList.name}
+          onSave={handleRenameList}
+        />
+      )}
+
+      {/* PANTRY MATCHER MODAL */}
+      <CookWhatIHaveModal
+        isOpen={isCookWhatIHaveOpen}
+        onClose={() => setIsCookWhatIHaveOpen(false)}
+        recipes={recipes}
+        pantryItems={pantryItems}
+        onAddMissingToGroceryList={handleAddMultipleItems}
+      />
+
+      {/* VISION CAMERA OCR MODAL */}
       {isVisionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div
+          onClick={() => setIsVisionModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150 cursor-pointer"
+        >
           <div
-            onClick={() => setIsVisionModalOpen(false)}
-            className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity"
-          />
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-stone-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#16120f] my-auto">
-            <div className="flex items-center justify-between border-b border-stone-200 dark:border-white/10 pb-4 mb-5">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📷</span>
-                <h3 className="text-lg font-bold text-stone-950 dark:text-[#fff8ef]">
-                  Scan Paper Grocery List
-                </h3>
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/12 bg-[#16120f] p-6 shadow-2xl space-y-4 cursor-default"
+          >
+            <div className="flex items-center justify-between border-b border-white/8 pb-3">
+              <div className="flex items-center gap-2 text-sm font-bold text-amber-300">
+                <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Grocery List Scanner</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsVisionModalOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/20 transition cursor-pointer"
+                className="h-9 w-9 flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-stone-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                title="Close scanner"
               >
                 ✕
               </button>
             </div>
-
             <ChefVisionStudio
               initialMode="grocery"
-              onCloseModal={() => setIsVisionModalOpen(false)}
+              lockMode={true}
+              onCloseModal={() => {
+                setIsVisionModalOpen(false);
+                loadData();
+              }}
             />
           </div>
         </div>
       )}
 
       {/* CLEAR ALL CONFIRM MODAL */}
-      <ConfirmModal
-        isOpen={isClearModalOpen}
-        title="Clear All Items?"
-        description={`This will delete all items from "${activeListName}". This cannot be undone.`}
-        confirmLabel="Clear All"
-        cancelLabel="Keep Items"
-        isDestructive
-        onConfirm={handleConfirmClearAll}
-        onCancel={() => setIsClearModalOpen(false)}
-      />
+      {isClearModalOpen && (
+        <ConfirmModal
+          isOpen={isClearModalOpen}
+          title="Empty Grocery List?"
+          description="Are you sure you want to remove all items from this grocery list? This action cannot be undone."
+          confirmLabel="Yes, Clear All"
+          cancelLabel="Cancel"
+          isDestructive={true}
+          onConfirm={handleClearAll}
+          onCancel={() => setIsClearModalOpen(false)}
+        />
+      )}
+
     </main>
   );
 }

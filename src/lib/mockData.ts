@@ -2,7 +2,7 @@ export const recipes = [
   {
     id: 1,
     title: "Creamy Garlic Parmesan Chicken Pasta",
-    image: "https://images.unsplash.com/photo-1608897013039-887f21d8c804?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1608897013039-887f21d8c804?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 25,
     calories: 580,
     servings: 4,
@@ -31,7 +31,7 @@ export const recipes = [
   {
     id: 2,
     title: "15-Minute Chili Garlic Sesame Noodles",
-    image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 15,
     calories: 390,
     servings: 2,
@@ -58,7 +58,7 @@ export const recipes = [
   {
     id: 3,
     title: "Crispy Pan-Seared Salmon with Lemon Herb Butter",
-    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 18,
     calories: 510,
     servings: 2,
@@ -86,7 +86,7 @@ export const recipes = [
   {
     id: 4,
     title: "Grilled Steak Quinoa Bowl with Fresh Chimichurri",
-    image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 25,
     calories: 620,
     servings: 2,
@@ -114,7 +114,7 @@ export const recipes = [
   {
     id: 5,
     title: "Classic Shakshuka with Feta & Crusty Bread",
-    image: "https://images.unsplash.com/photo-1590412200988-a436970781fa?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1590412200988-a436970781fa?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 20,
     calories: 340,
     servings: 2,
@@ -145,7 +145,7 @@ export const recipes = [
   {
     id: 6,
     title: "Cozy Coconut Red Lentil Dahl with Basmati Rice",
-    image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 25,
     calories: 420,
     servings: 4,
@@ -176,7 +176,7 @@ export const recipes = [
   {
     id: 7,
     title: "20-Minute Crispy Beef & Broccoli Stir-Fry",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 20,
     calories: 480,
     servings: 3,
@@ -205,7 +205,7 @@ export const recipes = [
   {
     id: 8,
     title: "Greek Chicken Gyros with Homemade Tzatziki",
-    image: "https://images.unsplash.com/photo-1561651823-34feb02250e4?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1561651823-34feb02250e4?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 25,
     calories: 530,
     servings: 4,
@@ -235,7 +235,7 @@ export const recipes = [
   {
     id: 9,
     title: "Classic Swedish Meatballs with Creamy Gravy & Mash",
-    image: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 35,
     calories: 680,
     servings: 4,
@@ -267,7 +267,7 @@ export const recipes = [
   {
     id: 10,
     title: "Mediterranean Crispy Chickpea & Avocado Salad",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 15,
     calories: 360,
     servings: 2,
@@ -296,7 +296,7 @@ export const recipes = [
   {
     id: 11,
     title: "Crispy Fried Egg & Avocado Breakfast Rice Bowl",
-    image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 10,
     calories: 380,
     servings: 1,
@@ -324,7 +324,7 @@ export const recipes = [
   {
     id: 12,
     title: "One-Pot Creamy Tuscan Garlic Chicken",
-    image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 25,
     calories: 590,
     servings: 4,
@@ -353,7 +353,7 @@ export const recipes = [
   {
     id: 13,
     title: "Baja-Style Crispy Fish Tacos with Lime Slaw",
-    image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 20,
     calories: 440,
     servings: 3,
@@ -382,7 +382,7 @@ export const recipes = [
   {
     id: 14,
     title: "5-Ingredient Authentic Roman Cacio e Pepe",
-    image: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 15,
     calories: 460,
     servings: 2,
@@ -407,7 +407,7 @@ export const recipes = [
   {
     id: 15,
     title: "High-Protein Cottage Cheese Pesto Bowl",
-    image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 12,
     calories: 410,
     servings: 1,
@@ -434,7 +434,7 @@ export const recipes = [
   {
     id: 16,
     title: "Cheesy One-Skillet Mexican Black Bean Dip",
-    image: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 15,
     calories: 370,
     servings: 3,

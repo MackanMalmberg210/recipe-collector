@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { getAllRecipes, getAllRecipesWithCloud, getMockRecipes } from "../lib/recipes";
 import type { AppRecipe, RecipeSortMode } from "../lib/types";
 import HomeHero, { type TasteVibe } from "../components/home/HomeHero";
@@ -14,6 +14,7 @@ import { getStoredUserSettings, DEFAULT_USER_SETTINGS, isRecipeDietaryCompatible
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [allRecipes, setAllRecipes] = useState<AppRecipe[]>(getMockRecipes);
   const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
   const [activeVibe, setActiveVibe] = useState<TasteVibe>("all");
@@ -23,10 +24,13 @@ export default function HomePage() {
   const [visionMode, setVisionMode] = useState<"recipe" | "meal_analyzer">("meal_analyzer");
 
   const loadRecipes = async () => {
-    setAllRecipes(getAllRecipes());
+    const local = getAllRecipes();
+    setAllRecipes(local);
     try {
       const combined = await getAllRecipesWithCloud();
-      setAllRecipes(combined);
+      if (combined.length !== local.length || combined.some((r, i) => r.id !== local[i]?.id)) {
+        setAllRecipes(combined);
+      }
     } catch {}
   };
 
@@ -38,18 +42,10 @@ export default function HomePage() {
       setUserSettings(getStoredUserSettings());
     };
 
-    const handleFocus = async () => {
-      const recipes = await getAllRecipesWithCloud();
-      setAllRecipes(recipes);
-      setUserSettings(getStoredUserSettings());
-    };
-
-    window.addEventListener("focus", handleFocus);
     window.addEventListener("storage", handleSettingsUpdate);
     window.addEventListener("user_settings_updated", handleSettingsUpdate);
 
     return () => {
-      window.removeEventListener("focus", handleFocus);
       window.removeEventListener("storage", handleSettingsUpdate);
       window.removeEventListener("user_settings_updated", handleSettingsUpdate);
     };
@@ -109,11 +105,11 @@ export default function HomePage() {
       getFilteredRecipes(
         vibeFilteredRecipes,
         [],
-        searchTerm,
+        deferredSearchTerm,
         false,
         sortMode,
       ),
-    [vibeFilteredRecipes, searchTerm, sortMode],
+    [vibeFilteredRecipes, deferredSearchTerm, sortMode],
   );
 
   return (

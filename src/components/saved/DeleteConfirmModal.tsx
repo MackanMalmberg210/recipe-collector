@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { AppRecipe } from "../../lib/types";
 
 type DeleteConfirmModalProps = {
@@ -15,11 +16,21 @@ export default function DeleteConfirmModal({
   onCancel,
   isPermanent = false,
 }: DeleteConfirmModalProps) {
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!recipe) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [recipe]);
+
   if (!recipe) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-150"
       onClick={onCancel}
     >
       <div
@@ -47,21 +58,20 @@ export default function DeleteConfirmModal({
           )}
         </p>
 
-        <div className="mt-6 flex items-center justify-end gap-3 border-t border-stone-100 pt-5 dark:border-white/8">
+        <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-700 transition hover:bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] dark:text-stone-300 dark:hover:bg-white/5 cursor-pointer"
+            className="rounded-2xl border border-stone-200 bg-stone-50 px-5 py-2.5 text-xs sm:text-sm font-bold text-stone-700 hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 transition cursor-pointer"
           >
             Cancel
           </button>
-
           <button
             type="button"
             onClick={() => onConfirm(recipe)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm transition hover:bg-rose-500 active:scale-[0.98] cursor-pointer"
+            className="rounded-2xl bg-rose-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-rose-700 shadow-md hover:shadow-rose-600/30 transition cursor-pointer"
           >
-            <span>{isPermanent ? "Delete Permanently" : "Move to Trash"}</span>
+            {isPermanent ? "Yes, Delete Permanently" : "Move to Trash"}
           </button>
         </div>
       </div>
