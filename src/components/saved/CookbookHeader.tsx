@@ -122,7 +122,7 @@ export default function CookbookHeader({
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50">
               {title}
             </h1>
-            <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-0.5 text-xs font-black text-amber-800 dark:bg-amber-400/15 dark:text-amber-300">
+            <span className="rounded-full border border-stone-200 bg-stone-100 px-3 py-0.5 text-xs font-bold text-stone-600 dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#a8a29e]">
               {resultCount} {resultCount === 1 ? "recipe" : "recipes"}
             </span>
           </div>

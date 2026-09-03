@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { GROCERY_LIST_KEY } from "../../lib/home";
 import { getAllRecipesWithCloud } from "../../lib/recipes";
-import { getPantryInventory, savePantryInventory, formatGroceryItemName } from "../../lib/groceries";
+import { getPantryInventory, savePantryInventory, formatGroceryItemName, isSameGroceryItem } from "../../lib/groceries";
 
 type GroceryItem = {
   name: string;
@@ -207,7 +207,7 @@ export default function FloatingGroceryDrawer() {
     // Immediately save word to learned vocabulary dictionary
     saveLearnedWord(formatted);
 
-    const exists = items.some((item) => normalize(item.name) === normalize(formatted));
+    const exists = items.some((item) => isSameGroceryItem(item.name, formatted));
     if (exists) {
       setNewItemText("");
       setShowSuggestions(false);

@@ -45,7 +45,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="font-sans antialiased bg-[#f7f5f0] text-stone-900 dark:bg-[#12100e] dark:text-stone-100 min-h-screen pb-16 md:pb-0 selection:bg-amber-500/30 selection:text-amber-200 flex flex-col justify-between"
+        className="font-sans antialiased bg-[#faf8f5] text-[#1c1917] dark:bg-[#12100e] dark:text-[#fafaf9] min-h-screen pb-16 md:pb-0 selection:bg-amber-500/30 selection:text-amber-200 flex flex-col justify-between"
       >
         <ToastProvider>
           <Navbar />

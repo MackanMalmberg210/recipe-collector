@@ -8,6 +8,7 @@ import RecipeHero from "./recipe-detail/RecipeHero";
 import RecipeVideoPlayer from "./recipe-detail/RecipeVideoPlayer";
 import RecipeInstructions from "./recipe-detail/RecipeInstructions";
 import RecipeJournalPanel from "./recipe-detail/RecipeJournalPanel";
+import RecipeChefTipsCard from "./recipe-detail/RecipeChefTipsCard";
 import RecipeIngredientsPanel from "./recipe-detail/RecipeIngredientsPanel";
 import SimilarRecipesPanel from "./recipe-detail/SimilarRecipesPanel";
 import CookModeModal from "./recipe-detail/CookModeModal";
@@ -23,6 +24,8 @@ import {
   removeSavedRecipe,
 } from "../lib/recipes";
 import { getRecipeRating } from "../lib/ratings";
+import { parseIngredientString } from "../lib/ingredientParser";
+import { formatGroceryItemName, getStemmedWord, categorizeGroceryItem } from "../lib/groceries";
 
 type RecipeDetailedViewProps = {
   recipe: AppRecipe;
@@ -209,26 +212,41 @@ export default function RecipeDetailedView({
     }
 
     const existingList = localStorage.getItem(GROCERY_LIST_KEY);
-    let parsedList: { name: string; bought: boolean }[] = [];
+    let parsedList: any[] = [];
 
     if (existingList) {
       try {
-        parsedList = JSON.parse(existingList) as { name: string; bought: boolean }[];
+        parsedList = JSON.parse(existingList);
       } catch {
         localStorage.removeItem(GROCERY_LIST_KEY);
       }
     }
 
-    const existingNames = new Set(
-      parsedList.map((item) => normalizeIngredient(item.name)),
+    const existingStems = new Set(
+      parsedList.map((item) => getStemmedWord(item.name)),
     );
 
-    const newItems = missingIngredients
-      .filter((ingredient) => !existingNames.has(normalizeIngredient(ingredient)))
-      .map((ingredient) => ({
-        name: ingredient,
-        bought: false,
-      }));
+    const newItems: any[] = [];
+    const addedStems = new Set<string>();
+
+    missingIngredients.forEach((rawIngredient) => {
+      const parsed = parseIngredientString(rawIngredient);
+      const cleanName = formatGroceryItemName(parsed.name || rawIngredient);
+      const stem = getStemmedWord(cleanName);
+
+      if (!existingStems.has(stem) && !addedStems.has(stem)) {
+        newItems.push({
+          id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: cleanName,
+          quantity: 1,
+          category: categorizeGroceryItem(cleanName),
+          bought: false,
+          sourceRecipeTitle: recipe.title,
+          sourceRecipeId: recipe.id,
+        });
+        addedStems.add(stem);
+      }
+    });
 
     if (newItems.length === 0) {
       info("All missing ingredients are already in your grocery list! 🛒");
@@ -289,15 +307,18 @@ export default function RecipeDetailedView({
   };
 
   return (
-    <main className="min-h-screen bg-[#fbf9f5] px-4 py-8 text-stone-900 transition dark:bg-[#0e0c0a] dark:text-[#fff8ef] sm:px-6 xl:px-10">
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] space-y-8">
+    <main className="min-h-screen bg-[#faf8f5] px-4 py-8 text-[#1c1917] transition dark:bg-[#12100e] dark:text-[#fafaf9] sm:px-6 xl:px-10 relative overflow-hidden">
+      {/* SUBTLE, BALANCED AMBIENT GLOW */}
+      <div className="pointer-events-none absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-amber-500/4 blur-[160px] dark:bg-amber-500/5" />
+
+      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] space-y-8 relative z-10">
         {/* TOP BACK BREADCRUMB */}
         <div>
           <Link
             href="/saved"
-            className="inline-flex items-center gap-2 rounded-2xl border border-stone-300/90 bg-white px-4 py-2 text-xs sm:text-sm font-bold text-stone-700 shadow-2xs hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer"
+            className="inline-flex items-center gap-2.5 rounded-2xl border border-stone-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-extrabold text-stone-950 shadow-xs hover:bg-stone-50 hover:border-stone-400 dark:border-[#3a3129] dark:bg-[#1f1b18] dark:text-white dark:hover:border-amber-500/40 dark:hover:bg-[#27211d] transition cursor-pointer active:scale-95"
           >
-            <span>←</span>
+            <span className="text-amber-500 font-black text-sm">←</span>
             <span>Back to Cookbook</span>
           </Link>
         </div>
@@ -314,7 +335,7 @@ export default function RecipeDetailedView({
           onUndoAddMissing={handleUndoAddMissing}
           onOpenCookMode={() => setIsCookModeOpen(true)}
           onOpenShareModal={() => setIsShareModalOpen(true)}
-          onDeleteRecipe={recipe.origin !== "mock" ? handleDeleteRecipe : undefined}
+          onDeleteRecipe={handleDeleteRecipe}
         />
 
         {/* HOLISTIC 2-COLUMN CULINARY LAYOUT */}
@@ -333,6 +354,9 @@ export default function RecipeDetailedView({
 
             {/* 3. Combined Cooking Journal (Ratings & Chef's Note Card) */}
             <RecipeJournalPanel recipeId={recipe.id} />
+
+            {/* 4. Chef's Pro Tips & Pairings (balances column height for recipes with many ingredients) */}
+            <RecipeChefTipsCard recipe={recipe} />
           </div>
 
           {/* RIGHT COLUMN: KITCHEN SIDEBAR (STICKY) */}

@@ -179,8 +179,8 @@ export default function KitchenHubSection({
 
               {activeTab === "imported" && (
                 <Link
-                  href="/import"
-                  className="inline-flex rounded-2xl bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 transition hover:bg-amber-600"
+                  href="/saved?import=true"
+                  className="inline-flex rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-xs px-4 py-2 text-sm transition active:scale-95"
                 >
                   Import recipe
                 </Link>

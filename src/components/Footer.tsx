@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="relative mt-16 px-4 sm:px-6 lg:px-10 pb-12 pt-6">
       {/* FLOATING BENTO CULINARY CONSOLE */}
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] rounded-4xl border border-stone-800/90 bg-gradient-to-b from-[#181310] via-[#130f0c] to-[#0c0908] text-white p-7 sm:p-10 lg:p-12 shadow-[0_20px_70px_rgba(0,0,0,0.35)] relative overflow-hidden">
+      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] rounded-4xl border border-stone-800/90 bg-gradient-to-b from-[#1c1916] via-[#141210] to-[#0c0a09] text-white p-7 sm:p-10 lg:p-12 shadow-[0_20px_70px_rgba(0,0,0,0.35)] relative overflow-hidden dark:border-[#2e2722]">
         
         {/* SUBTLE AMBIENT CORNER GLOW */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-amber-500/5 blur-3xl" />

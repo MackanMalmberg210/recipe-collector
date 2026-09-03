@@ -22,6 +22,8 @@ import {
   savePantryInventory,
   GROCERY_CUSTOM_LISTS_KEY,
   formatGroceryItemName,
+  getStemmedWord,
+  isSameGroceryItem,
   type GroceryCategory,
   type GroceryListCollection,
   type StoredGroceryItem,
@@ -181,7 +183,7 @@ export default function GroceriesPage() {
     }
 
     const existingIndex = currentItems.findIndex(
-      (i) => i.name.toLowerCase().trim() === cleanName.toLowerCase().trim() && !i.bought
+      (i) => isSameGroceryItem(i.name, cleanName) && !i.bought
     );
 
     if (existingIndex >= 0) {
@@ -213,14 +215,14 @@ export default function GroceriesPage() {
     }
   };
 
-  // Add multiple items from recipe / pantry with capitalization
+  // Add multiple items from recipe / pantry with capitalization & stemming deduplication
   const handleAddMultipleItems = (
     ingredients: string[],
     recipeTitle?: string,
     recipeId?: number | string
   ) => {
-    const newItemsToAdd: StoredGroceryItem[] = [];
     const updated = [...currentItems];
+    const newItemsToAdd: StoredGroceryItem[] = [];
 
     ingredients.forEach((ing) => {
       const clean = formatGroceryItemName(ing);
@@ -228,7 +230,7 @@ export default function GroceriesPage() {
 
       const category = categorizeGroceryItem(clean);
       const existingIdx = updated.findIndex(
-        (i) => i.name.toLowerCase().trim() === clean.toLowerCase().trim() && !i.bought
+        (i) => isSameGroceryItem(i.name, clean) && !i.bought
       );
 
       if (existingIdx >= 0) {

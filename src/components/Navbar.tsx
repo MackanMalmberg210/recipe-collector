@@ -190,7 +190,7 @@ export default function Navbar() {
   return (
     <>
       {/* TOP DESKTOP & MOBILE HEADER */}
-      <nav className="sticky top-0 z-40 w-full border-b border-stone-300/90 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-white/12 dark:bg-[#130f0c]/95 px-4 sm:px-6 xl:px-10">
+      <nav className="sticky top-0 z-40 w-full border-b border-stone-200 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-[#2e2722] dark:bg-[#12100e]/95 px-4 sm:px-6 xl:px-10">
         <div className="relative mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between">
           
           {/* LOGO & BRAND (LEFT) */}
@@ -219,13 +219,13 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition-all duration-150 cursor-pointer ${
                     isActive
-                      ? "bg-amber-500/15 text-amber-900 border border-amber-500/40 shadow-xs dark:bg-amber-400/15 dark:text-amber-300 dark:border-amber-400/30 font-bold"
-                      : "text-stone-600 hover:bg-stone-200/60 hover:text-stone-950 dark:text-stone-400 dark:hover:bg-white/8 dark:hover:text-stone-100 border border-transparent hover:border-stone-300/60 dark:hover:border-white/10"
+                      ? "bg-stone-100 text-stone-950 border border-stone-300/80 dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27] font-bold shadow-xs"
+                      : "text-stone-600 hover:bg-stone-100 hover:text-stone-950 dark:text-stone-400 dark:hover:bg-white/5 dark:hover:text-stone-100 border border-transparent font-medium"
                   }`}
                 >
-                  <span className={isActive ? "text-amber-600 dark:text-amber-400" : "text-stone-400 group-hover:text-stone-600 dark:text-stone-500 dark:group-hover:text-stone-300"}>{link.icon}</span>
+                  <span className={isActive ? "text-amber-500" : "text-stone-400 group-hover:text-stone-600 dark:text-stone-500 dark:group-hover:text-stone-300"}>{link.icon}</span>
                   <span>{link.label}</span>
                 </Link>
               );
@@ -398,11 +398,11 @@ export default function Navbar() {
                       href={link.href}
                       className={`flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold transition ${
                         isActive
-                          ? "bg-amber-500 text-stone-950 font-black shadow-md shadow-amber-400/20"
-                          : "text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-white/5"
+                          ? "bg-stone-100 text-stone-950 border border-stone-300/80 dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27] font-extrabold shadow-2xs"
+                          : "text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-white/5"
                       }`}
                     >
-                      <span className={isActive ? "text-stone-950" : "text-amber-500"}>
+                      <span className={isActive ? "text-amber-500" : "text-stone-400 dark:text-stone-500"}>
                         {link.icon}
                       </span>
                       <span>{link.label}</span>

@@ -63,6 +63,9 @@ export type ImportedRecipe = {
   cookTime?: number;
   servings?: number;
   servingsText?: string;
+  category?: RecipeCategory;
+  mealType?: MealType;
+  tags?: string[];
   ingredients: string[];
   structuredIngredients?: StructuredIngredient[];
   ingredientGroups?: IngredientGroup[];

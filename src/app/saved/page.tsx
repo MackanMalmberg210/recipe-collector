@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import CookbookEmptyState from "../../components/saved/CookbookEmptyState";
 import CookbookGrid from "../../components/saved/CookbookGrid";
 import CookbookSidebar, {
@@ -89,7 +90,10 @@ function getRecipeSearchTokens(recipe: AppRecipe) {
   ];
 }
 
-export default function SavedRecipesPage() {
+function SavedRecipesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [allRecipes, setAllRecipes] = useState<AppRecipe[]>([]);
   const [userRecipes, setUserRecipes] = useState<AppRecipe[]>([]);
   const [importedRecipes, setImportedRecipes] = useState<AppRecipe[]>([]);
@@ -111,6 +115,13 @@ export default function SavedRecipesPage() {
   const [recipeForGroceryModal, setRecipeForGroceryModal] = useState<AppRecipe | null>(null);
 
   const { success: toastSuccess, info: toastInfo } = useToast();
+
+  // Automatically trigger import modal if navigated with ?import=true
+  useEffect(() => {
+    if (searchParams.get("import") === "true") {
+      setIsImportModalOpen(true);
+    }
+  }, [searchParams]);
 
   const loadData = async () => {
     setSavedRecipeIds(getSavedRecipeIds());
@@ -448,7 +459,7 @@ export default function SavedRecipesPage() {
                 hasTotalRecipes={currentDataset.length > 0}
                 onResetFilters={handleResetFilters}
                 onSelectFilter={setActiveFilter}
-                onOpenImportModal={() => setIsAddModalOpen(true)}
+                onOpenImportModal={() => setIsImportModalOpen(true)}
               />
             ) : (
               <CookbookGrid
@@ -500,10 +511,19 @@ export default function SavedRecipesPage() {
       {/* IMPORT RECIPE MODAL OVERLAY (With Back button to Add Hub) */}
       <ImportRecipeModal
         isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
+        initialUrl={searchParams.get("url") || ""}
+        onClose={() => {
+          setIsImportModalOpen(false);
+          if (searchParams.get("import") === "true") {
+            router.replace("/saved");
+          }
+        }}
         onBack={() => {
           setIsImportModalOpen(false);
           setIsAddModalOpen(true);
+          if (searchParams.get("import") === "true") {
+            router.replace("/saved");
+          }
         }}
         onRecipeSaved={() => {
           loadData();
@@ -534,5 +554,19 @@ export default function SavedRecipesPage() {
         onClose={() => setRecipeForGroceryModal(null)}
       />
     </main>
+  );
+}
+
+export default function SavedRecipesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f7f5f0] dark:bg-[#12100e] flex items-center justify-center p-8">
+          <div className="h-7 w-7 animate-spin rounded-full border-3 border-amber-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <SavedRecipesContent />
+    </Suspense>
   );
 }

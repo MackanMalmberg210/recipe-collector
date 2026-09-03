@@ -18,7 +18,7 @@ export default function HomePage() {
   const [allRecipes, setAllRecipes] = useState<AppRecipe[]>(getMockRecipes);
   const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
   const [activeVibe, setActiveVibe] = useState<TasteVibe>("all");
-  const [sortMode, setSortMode] = useState<RecipeSortMode>("cook-time");
+  const [sortMode, setSortMode] = useState<RecipeSortMode>("alphabetical");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isVisionScanOpen, setIsVisionScanOpen] = useState(false);
   const [visionMode, setVisionMode] = useState<"recipe" | "meal_analyzer">("meal_analyzer");
@@ -124,6 +124,7 @@ export default function HomePage() {
           onSearchChange={setSearchTerm}
           totalRecipes={allRecipes.length}
           filteredCount={filteredRecipes.length}
+          onOpenImport={() => setIsImportModalOpen(true)}
         />
 
         {/* 2. DYNAMIC 2-COLUMN HUB: TODAY'S MENU & CHEF AI VISION */}

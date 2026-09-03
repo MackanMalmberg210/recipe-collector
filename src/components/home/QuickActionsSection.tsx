@@ -31,7 +31,7 @@ export default function QuickActionsSection({
               Create recipe
             </Link>
 
-            <Link href="/import" className={actionPillBase}>
+            <Link href="/saved?import=true" className={actionPillBase}>
               <span className="text-amber-300">●</span>
               Import recipe
             </Link>

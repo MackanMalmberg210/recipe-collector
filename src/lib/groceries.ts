@@ -382,6 +382,127 @@ export function getCustomGroceryLists(): GroceryListCollection[] {
 }
 
 /**
+ * Smart Culinary Stemmer & Singular/Plural Normalizer.
+ * Matches words regardless of singular/plural forms (e.g. Avocado <-> Avocados, Tomato <-> Tomatoes, Onion <-> Onions).
+ */
+export function getStemmedWord(raw: string): string {
+  if (!raw || typeof raw !== "string") return "";
+  let s = sanitizeCulinaryText(raw).toLowerCase().trim();
+
+  // Strip common packaging/prep words
+  s = s.replace(/\b(?:fresh|dried|organic|raw|ripe|chopped|diced|sliced|minced|peeled|ground)\b/g, "").replace(/\s+/g, " ").trim();
+
+  // Common culinary irregulars and plural mappings (Swedish & English)
+  const irregularPlurals: Record<string, string> = {
+    tomatoes: "tomato",
+    tomater: "tomat",
+    potatoes: "potato",
+    potatisar: "potatis",
+    avocados: "avocado",
+    avocadoes: "avocado",
+    onions: "onion",
+    lökar: "lök",
+    cloves: "clove",
+    klyftor: "klyfta",
+    fillets: "fillet",
+    filéer: "filé",
+    eggs: "egg",
+    ägg: "ägg",
+    limes: "lime",
+    lemons: "lemon",
+    citroner: "citron",
+    carrots: "carrot",
+    morötter: "morot",
+    cucumbers: "cucumber",
+    gurkor: "gurka",
+    peppers: "pepper",
+    paprikor: "paprika",
+    berries: "berry",
+    bär: "bär",
+    strawberries: "strawberry",
+    jordgubbar: "jordgubb",
+    blueberries: "blueberry",
+    blåbär: "blåbär",
+    cherries: "cherry",
+    körsbär: "körsbär",
+    apples: "apple",
+    äpplen: "äpple",
+    mushrooms: "mushroom",
+    svampar: "svamp",
+    noodles: "noodle",
+    nudlar: "nudel",
+    chickpeas: "chickpea",
+    kikärtor: "kikärta",
+    lentils: "lentil",
+    linser: "lins",
+    beans: "bean",
+    bönor: "böna",
+    walnuts: "walnut",
+    valnötter: "valnöt",
+    almonds: "almond",
+    mandlar: "mandel",
+    peanuts: "peanut",
+    jordnötter: "jordnöt",
+    pistachios: "pistachio",
+    pistagenötter: "pistagenöt",
+    seeds: "seed",
+    frön: "frö",
+    leaves: "leaf",
+    blad: "blad",
+    shallots: "shallot",
+    schalottenlökar: "schalottenlök",
+    scallions: "scallion",
+    salladslökar: "salladslök",
+    leeks: "leek",
+    purjolökar: "purjolök",
+  };
+
+  if (irregularPlurals[s]) {
+    return irregularPlurals[s];
+  }
+
+  // Multi-word stem check (e.g. "cherry tomatoes" -> "cherry tomato")
+  const words = s.split(" ");
+  const lastWord = words[words.length - 1];
+  if (irregularPlurals[lastWord]) {
+    words[words.length - 1] = irregularPlurals[lastWord];
+    return words.join(" ");
+  }
+
+  // Standard regular suffix stripping
+  if (s.endsWith("ies") && s.length > 4) {
+    return s.slice(0, -3) + "y";
+  }
+  if (s.endsWith("es") && s.length > 4 && !s.endsWith("ches") && !s.endsWith("shes") && !s.endsWith("sses")) {
+    return s.slice(0, -2);
+  }
+  if (s.endsWith("s") && !s.endsWith("ss") && s.length > 3) {
+    return s.slice(0, -1);
+  }
+
+  return s;
+}
+
+export function isSameGroceryItem(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const stemA = getStemmedWord(a);
+  const stemB = getStemmedWord(b);
+  if (stemA === stemB) return true;
+  return stemA.replace(/\s+/g, "") === stemB.replace(/\s+/g, "");
+}
+
+/**
+ * Universal formatter for grocery item names:
+ * Sanitizes input and guarantees that the first character is always capitalized.
+ */
+export function formatGroceryItemName(raw: string): string {
+  if (!raw || typeof raw !== "string") return "";
+  const cleaned = sanitizeCulinaryText(raw).trim();
+  if (!cleaned) return "";
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+/**
  * Adds recipe ingredients directly to either the Main shopping list or any custom list.
  */
 export function addIngredientsToChosenList(
@@ -395,7 +516,7 @@ export function addIngredientsToChosenList(
   }
 
   const cleanIngredients = ingredients
-    .map((i) => i.trim())
+    .map((i) => formatGroceryItemName(i))
     .filter((i) => i.length > 0);
 
   if (cleanIngredients.length === 0) {
@@ -411,12 +532,12 @@ export function addIngredientsToChosenList(
       } catch {}
     }
 
-    const existingNames = new Set(current.map((i) => i.name.toLowerCase().trim()));
+    const existingStems = new Set(current.map((i) => getStemmedWord(i.name)));
     const newItems: StoredGroceryItem[] = [];
 
     cleanIngredients.forEach((ing) => {
-      const norm = ing.toLowerCase().trim();
-      if (!existingNames.has(norm)) {
+      const stem = getStemmedWord(ing);
+      if (!existingStems.has(stem)) {
         newItems.push({
           id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           name: ing,
@@ -426,7 +547,7 @@ export function addIngredientsToChosenList(
           sourceRecipeTitle: recipeTitle,
           sourceRecipeId: recipeId,
         });
-        existingNames.add(norm);
+        existingStems.add(stem);
       }
     });
 
@@ -445,12 +566,12 @@ export function addIngredientsToChosenList(
     return { addedCount: 0, listName: "Shopping List" };
   }
 
-  const existingNames = new Set(targetList.items.map((i) => i.name.toLowerCase().trim()));
+  const existingStems = new Set(targetList.items.map((i) => getStemmedWord(i.name)));
   const newItems: StoredGroceryItem[] = [];
 
   cleanIngredients.forEach((ing) => {
-    const norm = ing.toLowerCase().trim();
-    if (!existingNames.has(norm)) {
+    const stem = getStemmedWord(ing);
+    if (!existingStems.has(stem)) {
       newItems.push({
         id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         name: ing,
@@ -460,7 +581,7 @@ export function addIngredientsToChosenList(
         sourceRecipeTitle: recipeTitle,
         sourceRecipeId: recipeId,
       });
-      existingNames.add(norm);
+      existingStems.add(stem);
     }
   });
 
@@ -474,16 +595,5 @@ export function addIngredientsToChosenList(
   window.dispatchEvent(new CustomEvent("grocery_items_updated", { detail: { count: newItems.length } }));
 
   return { addedCount: newItems.length, listName: targetList.name };
-}
-
-/**
- * Universal formatter for grocery item names:
- * Sanitizes input and guarantees that the first character is always capitalized.
- */
-export function formatGroceryItemName(raw: string): string {
-  if (!raw || typeof raw !== "string") return "";
-  const cleaned = sanitizeCulinaryText(raw).trim();
-  if (!cleaned) return "";
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 

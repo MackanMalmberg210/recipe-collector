@@ -16,9 +16,9 @@ type RecipeMatchesSectionProps = {
 const DEFAULT_VISIBLE_MATCHES = 12;
 
 const SORT_OPTIONS: { id: RecipeSortMode; label: string; icon: string }[] = [
+  { id: "alphabetical", label: "A – Z", icon: "🔤" },
   { id: "cook-time", label: "Cook Time", icon: "⏱" },
   { id: "calories", label: "Calories", icon: "🔥" },
-  { id: "alphabetical", label: "A – Z", icon: "🔤" },
   { id: "highest-rated", label: "Rating", icon: "⭐" },
 ];
 

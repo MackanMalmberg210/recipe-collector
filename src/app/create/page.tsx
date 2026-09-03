@@ -251,7 +251,7 @@ export default function CreateRecipePage() {
   const previewTags = tags.length > 0 ? tags : (hasContent ? autoMetadata.tags : []);
 
   return (
-    <main className="min-h-screen bg-[#f8f6f2] text-stone-900 transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-8 sm:px-6 xl:px-10">
+    <main className="min-h-screen bg-[#faf8f5] text-[#1c1917] transition-colors duration-300 dark:bg-[#12100e] dark:text-[#fafaf9] px-4 py-8 sm:px-6 xl:px-10">
       
       {/* AMBIENT BACKGROUND GLOW */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -357,14 +357,14 @@ export default function CreateRecipePage() {
                       Recipe photo
                     </label>
 
-                    <div className="flex items-center gap-1 rounded-xl border border-stone-300/80 bg-stone-100 p-1 text-xs dark:border-white/10 dark:bg-[#201b18]">
+                    <div className="flex items-center gap-1 rounded-xl border border-stone-200 bg-stone-100 p-1 text-xs dark:border-[#2e2722] dark:bg-[#141210]">
                       <button
                         type="button"
                         onClick={() => setImageUploadMode("file")}
                         className={`rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
                           imageUploadMode === "file"
-                            ? "bg-white text-stone-950 shadow-xs dark:bg-amber-500 dark:text-stone-950"
-                            : "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white"
+                            ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 shadow-xs"
+                            : "text-stone-600 hover:text-stone-900 dark:text-[#a8a29e] dark:hover:text-[#fafaf9]"
                         }`}
                       >
                         Upload file
@@ -374,8 +374,8 @@ export default function CreateRecipePage() {
                         onClick={() => setImageUploadMode("url")}
                         className={`rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
                           imageUploadMode === "url"
-                            ? "bg-white text-stone-950 shadow-xs dark:bg-amber-500 dark:text-stone-950"
-                            : "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white"
+                            ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 shadow-xs"
+                            : "text-stone-600 hover:text-stone-900 dark:text-[#a8a29e] dark:hover:text-[#fafaf9]"
                         }`}
                       >
                         Web image URL
@@ -399,7 +399,7 @@ export default function CreateRecipePage() {
                       className={`flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-6 text-center transition cursor-pointer ${
                         isDraggingOver
                           ? "border-amber-500 bg-amber-500/10"
-                          : "border-stone-300 bg-stone-50/50 hover:bg-stone-100/70 dark:border-white/15 dark:bg-[#1c1815]/60 dark:hover:bg-[#221e1a]"
+                          : "border-stone-200 bg-stone-50/50 hover:bg-stone-100/70 dark:border-[#2e2722] dark:bg-[#1a1715] dark:hover:bg-[#24201c]"
                       }`}
                     >
                       <input
@@ -422,7 +422,12 @@ export default function CreateRecipePage() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-2">
-                          <span className="text-3xl">📷</span>
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </div>
                           <p className="text-xs font-bold text-stone-800 dark:text-stone-200">
                             Click to upload or drag and drop
                           </p>
@@ -440,19 +445,19 @@ export default function CreateRecipePage() {
                           value={imageUrlInput}
                           onChange={(e) => setImageUrlInput(e.target.value)}
                           placeholder="Paste image link here..."
-                          className="flex-1 rounded-2xl border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-white/12 dark:bg-[#1c1815] dark:text-stone-50 dark:placeholder:text-stone-600 dark:focus:border-amber-400"
+                          className="flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1a1715] dark:text-[#fafaf9] dark:placeholder:text-stone-600 dark:focus:border-amber-400"
                         />
                         <button
                           type="button"
                           onClick={handleApplyImageUrl}
-                          className="rounded-2xl bg-stone-900 px-5 py-3 text-xs font-bold text-stone-50 shadow-sm transition hover:bg-stone-800 dark:bg-amber-500 dark:text-stone-950 dark:hover:bg-amber-400 cursor-pointer"
+                          className="rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] px-5 py-3 text-xs transition active:scale-95 cursor-pointer"
                         >
                           Apply
                         </button>
                       </div>
 
                       {image && (
-                        <div className="flex items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 p-3 dark:border-white/10 dark:bg-[#1c1815]">
+                        <div className="flex items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 p-3 dark:border-[#2e2722] dark:bg-[#1a1715]">
                           <p className="truncate text-xs font-medium text-stone-600 dark:text-stone-300">
                             Active: {image}
                           </p>
@@ -472,8 +477,11 @@ export default function CreateRecipePage() {
                 {/* 3-Column Stats Row */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                      ⏱ Cook time (min)
+                    <label className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
+                      <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Cook time (min)</span>
                     </label>
                     <input
                       type="number"
@@ -485,8 +493,11 @@ export default function CreateRecipePage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                      👥 Servings
+                    <label className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
+                      <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span>Servings</span>
                     </label>
                     <input
                       type="number"
@@ -498,8 +509,12 @@ export default function CreateRecipePage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                      🔥 Calories (kcal)
+                    <label className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
+                      <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                      </svg>
+                      <span>Calories (kcal)</span>
                     </label>
                     <input
                       type="number"
@@ -559,12 +574,17 @@ export default function CreateRecipePage() {
                 />
 
                 <div className="mt-3 flex items-center justify-between border-t border-stone-200/60 pt-2.5 text-[11px] text-stone-400 dark:border-white/6 dark:text-stone-500">
-                  <span>💡 Tip: Write each ingredient on a new line. Quantities and units are parsed automatically.</span>
+                  <span className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <span>Write each ingredient on a new line. Quantities and units are parsed automatically.</span>
+                  </span>
                   {ingredientText && (
                     <button
                       type="button"
                       onClick={() => setIngredientText("")}
-                      className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 font-semibold cursor-pointer"
+                      className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 font-semibold cursor-pointer shrink-0 ml-2"
                     >
                       Clear list
                     </button>
@@ -635,12 +655,17 @@ export default function CreateRecipePage() {
                 />
 
                 <div className="mt-3 flex items-center justify-between border-t border-stone-200/60 pt-2.5 text-[11px] text-stone-400 dark:border-white/6 dark:text-stone-500">
-                  <span>💡 Tip: Press Enter to create a new step. Numbers/bullets are formatted automatically.</span>
+                  <span className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <span>Press Enter to create a new step. Numbers/bullets are formatted automatically.</span>
+                  </span>
                   {instructionText && (
                     <button
                       type="button"
                       onClick={() => setInstructionText("")}
-                      className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 font-semibold cursor-pointer"
+                      className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 font-semibold cursor-pointer shrink-0 ml-2"
                     >
                       Clear text
                     </button>
@@ -676,9 +701,11 @@ export default function CreateRecipePage() {
                 className="flex w-full items-center justify-between text-left cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl shrink-0">
-                    🏷️
-                  </span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400 shrink-0">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
                   <div>
                     <h3 className="text-base font-bold text-stone-900 dark:text-stone-100 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
                       04. Category &amp; Custom Tags <span className="text-xs font-normal text-stone-400 dark:text-stone-500">(Optional)</span>
@@ -735,10 +762,10 @@ export default function CreateRecipePage() {
                           key={type}
                           type="button"
                           onClick={() => setMealType(mealType === type ? null : type)}
-                          className={`rounded-2xl px-4 py-2 text-xs font-bold capitalize transition cursor-pointer ${
+                          className={`rounded-2xl px-4 py-2 text-xs font-bold capitalize transition cursor-pointer active:scale-95 ${
                             mealType === type
-                              ? "bg-amber-500 text-stone-950 shadow-sm ring-2 ring-amber-500"
-                              : "border border-stone-300/90 bg-stone-50 text-stone-700 hover:bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] dark:text-stone-300 dark:hover:bg-white/5"
+                              ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 shadow-xs ring-1 ring-amber-400/40"
+                              : "border border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100 dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#d6d3d1] dark:hover:bg-[#28231f] dark:hover:text-[#fafaf9]"
                           }`}
                         >
                           {type}
@@ -767,13 +794,13 @@ export default function CreateRecipePage() {
                     <select
                       value={category ?? ""}
                       onChange={(e) => setCategory(e.target.value ? (e.target.value as RecipeCategory) : null)}
-                      className="w-full rounded-2xl border border-stone-300 bg-stone-50 px-4 py-3 text-sm font-semibold capitalize text-stone-900 outline-none transition focus:border-amber-500 focus:bg-white dark:border-white/12 dark:bg-[#1c1815] dark:text-stone-50 dark:focus:border-amber-400 cursor-pointer"
+                      className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold capitalize text-stone-900 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#fafaf9] dark:focus:border-amber-400 cursor-pointer"
                     >
-                      <option value="" className="dark:bg-stone-900">
+                      <option value="" className="dark:bg-[#1f1b18]">
                         Auto-detect from recipe ({hasContent ? autoMetadata.category.replace(/-/g, " ") : "Main Course"})
                       </option>
                       {CATEGORIES.map((cat) => (
-                        <option key={cat.value} value={cat.value} className="capitalize dark:bg-stone-900">
+                        <option key={cat.value} value={cat.value} className="capitalize dark:bg-[#1f1b18]">
                           {cat.label}
                         </option>
                       ))}
@@ -820,13 +847,17 @@ export default function CreateRecipePage() {
                           }
                         }}
                         placeholder="Add custom tag (e.g. dinner, spicy)..."
-                        className="flex-1 rounded-2xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-white/12 dark:bg-[#1c1815] dark:text-stone-50 dark:placeholder:text-stone-600 dark:focus:border-amber-400"
+                        className="flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#fafaf9] dark:placeholder:text-stone-600 dark:focus:border-amber-400"
                       />
                       <button
                         type="button"
                         onClick={() => handleAddTag(tagInput)}
                         disabled={!tagInput.trim()}
-                        className="rounded-2xl border border-stone-300 bg-stone-100 px-4 py-2.5 text-xs font-bold text-stone-800 transition hover:bg-stone-200 disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 cursor-pointer"
+                        className={`rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer active:scale-95 ${
+                          tagInput.trim()
+                            ? "bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-xs"
+                            : "border border-stone-200 bg-stone-100 text-stone-400 dark:border-[#2e2722] dark:bg-[#141210] dark:text-[#78716c] opacity-50 cursor-not-allowed"
+                        }`}
                       >
                         + Add tag
                       </button>
@@ -872,8 +903,10 @@ export default function CreateRecipePage() {
                   </>
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center p-6 text-center text-stone-400 dark:text-stone-500">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-200/70 text-2xl dark:bg-white/5">
-                      🍲
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
                     </div>
                     <p className="mt-3 text-xs font-bold text-stone-600 dark:text-stone-300">
                       Photo preview
@@ -898,14 +931,24 @@ export default function CreateRecipePage() {
                   </h3>
 
                   <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-bold text-stone-600 dark:text-stone-300">
-                    <span className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
-                      ⏱ {cookTime.trim() ? `${cookTime} min` : "— min"}
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
+                      <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{cookTime.trim() ? `${cookTime} min` : "— min"}</span>
                     </span>
-                    <span className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
-                      👥 {servings.trim() ? `${servings} serv` : "— serv"}
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
+                      <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span>{servings.trim() ? `${servings} serv` : "— serv"}</span>
                     </span>
-                    <span className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
-                      🔥 {calories.trim() ? `${calories} kcal` : "— kcal"}
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
+                      <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                      </svg>
+                      <span>{calories.trim() ? `${calories} kcal` : "— kcal"}</span>
                     </span>
                   </div>
                 </div>
@@ -959,7 +1002,11 @@ export default function CreateRecipePage() {
                       : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
-                  <span className="font-bold">{title.trim() ? "✓" : "○"}</span>
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
+                    title.trim() ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
+                  }`}>
+                    {title.trim() ? "✓" : ""}
+                  </span>
                   <span>Recipe title added</span>
                 </li>
 
@@ -970,8 +1017,10 @@ export default function CreateRecipePage() {
                       : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
-                  <span className="font-bold">
-                    {rawIngredients.length > 0 ? "✓" : "○"}
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
+                    rawIngredients.length > 0 ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
+                  }`}>
+                    {rawIngredients.length > 0 ? "✓" : ""}
                   </span>
                   <span>At least 1 ingredient</span>
                 </li>
@@ -983,8 +1032,10 @@ export default function CreateRecipePage() {
                       : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
-                  <span className="font-bold">
-                    {cleanedInstructions.length > 0 ? "✓" : "○"}
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
+                    cleanedInstructions.length > 0 ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
+                  }`}>
+                    {cleanedInstructions.length > 0 ? "✓" : ""}
                   </span>
                   <span>At least 1 instruction step</span>
                 </li>
@@ -992,8 +1043,11 @@ export default function CreateRecipePage() {
 
               {/* Error or Success message */}
               {error && (
-                <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
-                  ⚠️ {error}
+                <div className="mb-4 flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+                  <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{error}</span>
                 </div>
               )}
 
@@ -1009,7 +1063,7 @@ export default function CreateRecipePage() {
                   type="button"
                   onClick={handleSaveRecipe}
                   disabled={isSaving}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-stone-950 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md transition hover:bg-stone-800 disabled:opacity-60 dark:bg-amber-500 dark:text-stone-950 dark:hover:bg-amber-400 cursor-pointer"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 py-3.5 text-xs sm:text-sm font-bold text-stone-950 border border-amber-600/60 shadow-md shadow-amber-500/20 transition disabled:opacity-60 cursor-pointer active:scale-98"
                 >
                   {isSaving ? (
                     <>
@@ -1033,9 +1087,13 @@ export default function CreateRecipePage() {
                   type="button"
                   onClick={handleSaveAndOpen}
                   disabled={isSaving}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-stone-100 py-3 text-xs sm:text-sm font-bold text-stone-800 transition hover:bg-stone-200 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 cursor-pointer"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-stone-100 py-3 text-xs sm:text-sm font-bold text-stone-800 transition hover:bg-stone-200 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 cursor-pointer active:scale-98"
                 >
-                  Save & Open in Cook Mode →
+                  <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Save &amp; Open in Cook Mode →</span>
                 </button>
               </div>
             </section>

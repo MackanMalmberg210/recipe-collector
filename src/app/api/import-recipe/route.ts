@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
-import type { ImportedRecipe, IngredientGroup, NutritionInfo } from "../../../lib/types";
+import type { ImportedRecipe, IngredientGroup, NutritionInfo, RecipeCategory, MealType } from "../../../lib/types";
 import { normalizeRecipe } from "../../../lib/recipeNormalizer";
 import { parseIngredientList } from "../../../lib/ingredientParser";
 import { sanitizeCulinaryText } from "../../../lib/culinaryTextSanitizer";
@@ -659,78 +659,128 @@ function extractRecipeFromHtml(html: string, url: string): ImportedRecipe {
   };
 }
 
-async function extractSocialMediaRecipeWithAi(
-  url: string,
-  rawText: string,
-  imageUrl: string,
-  authorName: string,
-  geminiKey: string
-): Promise<ImportedRecipe | null> {
-  const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"];
-  const prompt = `You are an expert culinary AI. Analyze this cooking video post / caption / transcript from TikTok or Instagram.
-Post content:
-"${rawText}"
+const RECIPE_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    title: { type: "STRING" },
+    description: { type: "STRING" },
+    cookTime: { type: "INTEGER" },
+    servings: { type: "INTEGER" },
+    category: { type: "STRING" },
+    mealType: { type: "STRING" },
+    ingredients: { type: "ARRAY", items: { type: "STRING" } },
+    instructions: { type: "ARRAY", items: { type: "STRING" } },
+    tags: { type: "ARRAY", items: { type: "STRING" } },
+  },
+  required: ["title", "ingredients", "instructions"],
+};
 
-Extract and reconstruct the full recipe:
-1. title: appetizing name of the dish
-2. description: brief 1-2 sentence culinary summary
-3. cookTime: estimated total time in minutes (number)
-4. servings: number of servings (number)
-5. category: recipe category (e.g. pasta, dinner, dessert, breakfast, salad, soup, snack)
-6. ingredients: complete list of ingredients with amounts and units
-7. instructions: clear step-by-step cooking steps in order
+function normalizeCategory(cat?: string): RecipeCategory {
+  if (!cat) return "main-course";
+  const c = cat.toLowerCase();
+  if (c.includes("pasta") || c.includes("noodle")) return "pasta";
+  if (c.includes("rice") || c.includes("risotto")) return "rice";
+  if (c.includes("salad")) return "salad";
+  if (c.includes("soup") || c.includes("stew")) return "soup";
+  if (c.includes("sandwich") || c.includes("burger") || c.includes("wrap")) return "sandwich";
+  if (c.includes("bowl")) return "bowl";
+  if (c.includes("stir-fry") || c.includes("wok")) return "stir-fry";
+  if (c.includes("breakfast") || c.includes("brunch")) return "breakfast";
+  if (c.includes("dessert") || c.includes("sweet") || c.includes("cake") || c.includes("cookie")) return "dessert";
+  return "main-course";
+}
 
-Return ONLY valid JSON matching this schema:
-{
-  "title": "string",
-  "description": "string",
-  "cookTime": 25,
-  "servings": 4,
-  "category": "main-course",
-  "ingredients": ["1 tbsp olive oil", "2 cloves garlic"],
-  "instructions": ["Step 1...", "Step 2..."]
-}`;
+function normalizeMealType(m?: string): MealType {
+  if (!m) return "dinner";
+  const l = m.toLowerCase();
+  if (l.includes("breakfast")) return "breakfast";
+  if (l.includes("lunch")) return "lunch";
+  if (l.includes("snack")) return "snack";
+  return "dinner";
+}
 
-  for (const modelName of modelsToTry) {
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1 },
-        }),
-      });
+async function callSingleGeminiModel(
+  modelName: string,
+  prompt: string,
+  geminiKey: string,
+  signal?: AbortSignal
+): Promise<any> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
+  const generationConfig: Record<string, any> = {
+    responseMimeType: "application/json",
+    responseSchema: RECIPE_RESPONSE_SCHEMA,
+    temperature: 0.1,
+    maxOutputTokens: 2000,
+  };
 
-      if (response.ok) {
-        const result = await response.json();
-        const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (jsonText) {
-          let cleaned = jsonText.trim();
-          if (cleaned.startsWith("```")) {
-            cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
-          }
-          const parsed = JSON.parse(cleaned);
-          const ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
-          return {
-            title: parsed.title || "TikTok Recipe",
-            description: parsed.description || "",
-            image: imageUrl || "",
-            cookTime: Number(parsed.cookTime) || 25,
-            servings: Number(parsed.servings) || 4,
-            ingredients,
-            structuredIngredients: parseIngredientList(ingredients),
-            instructions: Array.isArray(parsed.instructions) ? parsed.instructions : [],
-            sourceUrl: url,
-            sourceName: authorName ? `@${authorName} (TikTok)` : "TikTok",
-          };
-        }
-      }
-    } catch {
-      continue;
-    }
+  if (modelName.includes("3.6") || modelName.includes("latest") || modelName.includes("3.8")) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
   }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal,
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`${modelName} returned HTTP ${response.status}`);
+  }
+
+  const result = await response.json();
+  const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!jsonText) throw new Error("No candidate content");
+  return JSON.parse(jsonText);
+}
+
+async function extractRecipeFromTextWithAi(
+  rawText: string,
+  geminiKey: string,
+  url = "",
+  authorName = ""
+): Promise<ImportedRecipe | null> {
+  const prompt = `Convert this raw recipe text into a clean standardized recipe with ingredients, amounts, and step-by-step instructions:\n\n${rawText}`;
+  
+  // Parallel race: launch top fast models simultaneously. The first valid response wins and aborts the others!
+  const candidateModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"];
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const parsed = await Promise.any(
+      candidateModels.map(async (modelName) => {
+        return await callSingleGeminiModel(modelName, prompt, geminiKey, controller.signal);
+      })
+    );
+
+    clearTimeout(timeoutId);
+    controller.abort();
+
+    const ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+    return {
+      title: parsed.title || "Untitled Recipe",
+      description: parsed.description || "",
+      image: "",
+      cookTime: Number(parsed.cookTime) || 25,
+      servings: Number(parsed.servings) || 4,
+      category: normalizeCategory(parsed.category),
+      mealType: normalizeMealType(parsed.mealType),
+      tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+      ingredients,
+      structuredIngredients: parseIngredientList(ingredients),
+      instructions: Array.isArray(parsed.instructions) ? parsed.instructions : [],
+      sourceUrl: url,
+      sourceName: authorName ? `@${authorName}` : url ? "Web Link" : "Pasted Notes",
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.error("Parallel AI race failed:", err);
+  }
+
   return null;
 }
 
@@ -738,15 +788,44 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const targetUrl = typeof body?.url === "string" ? body.url.trim() : "";
+    const rawText = typeof body?.text === "string" ? body.text.trim() : "";
 
-    if (!targetUrl) {
+    if (!targetUrl && !rawText) {
       return NextResponse.json(
-        { error: "URL is required for importing a recipe." },
+        { error: "A web URL or recipe text is required for importing." },
         { status: 400 },
       );
     }
 
     const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+    // DIRECT RAW TEXT / NOTES AI EXTRACTION
+    if (rawText) {
+      if (!geminiKey) {
+        return NextResponse.json(
+          { error: "AI service key is not configured for text extraction." },
+          { status: 500 },
+        );
+      }
+
+      const aiRecipe = await extractRecipeFromTextWithAi(rawText, geminiKey, targetUrl, "");
+      if (!aiRecipe || !aiRecipe.ingredients || aiRecipe.ingredients.length === 0) {
+        return NextResponse.json(
+          { error: "Could not identify a recipe in the provided text. Please ensure it contains ingredients or cooking instructions." },
+          { status: 422 },
+        );
+      }
+
+      const normalized = normalizeRecipe({
+        ...aiRecipe,
+        origin: "imported",
+      } as any);
+
+      return NextResponse.json({
+        success: true,
+        recipe: normalized,
+      });
+    }
 
     // 1. TIKTOK SPECIALIZED HANDLER (oEmbed + AI Recipe Reconstruction)
     if (targetUrl.includes("tiktok.com")) {
@@ -759,7 +838,7 @@ export async function POST(request: Request) {
           const thumbnail = oembedData.thumbnail_url || "";
 
           if (geminiKey && caption) {
-            const aiRecipe = await extractSocialMediaRecipeWithAi(targetUrl, caption, thumbnail, author, geminiKey);
+            const aiRecipe = await extractRecipeFromTextWithAi(caption, geminiKey, targetUrl, author);
             if (aiRecipe && aiRecipe.ingredients.length > 0) {
               const normalized = normalizeRecipe({
                 ...aiRecipe,
@@ -803,24 +882,29 @@ export async function POST(request: Request) {
     }
 
     // If standard extraction yielded few or no ingredients and we have Gemini, perform AI rescue
-    if ((!imported.ingredients || imported.ingredients.length === 0) && geminiKey) {
+    if ((!imported || !imported.ingredients || imported.ingredients.length === 0) && geminiKey) {
       const $ = cheerio.load(html);
       const pageTitle = $("title").text().trim();
       const pageMeta = $("meta[name='description']").attr("content") || $("meta[property='og:description']").attr("content") || "";
       const bodySnippet = $("body").text().replace(/\s+/g, " ").slice(0, 4000);
-      const mainImage = extractBestHtmlImage(html, targetUrl);
 
-      const aiFallback = await extractSocialMediaRecipeWithAi(
-        targetUrl,
+      const aiFallback = await extractRecipeFromTextWithAi(
         `${pageTitle}\n${pageMeta}\n${bodySnippet}`,
-        mainImage,
-        "",
-        geminiKey
+        geminiKey,
+        targetUrl,
+        ""
       );
 
       if (aiFallback && aiFallback.ingredients.length > 0) {
         imported = aiFallback;
       }
+    }
+
+    if (!imported) {
+      return NextResponse.json(
+        { error: "Failed to extract recipe from this web page. Please check the URL or paste the recipe text." },
+        { status: 422 },
+      );
     }
 
     const normalized = normalizeRecipe({

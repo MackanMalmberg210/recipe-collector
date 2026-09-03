@@ -4,12 +4,17 @@ import { useState, useEffect } from "react";
 import type { AppRecipe } from "../../lib/types";
 import { convertIngredient } from "../../lib/unitConverter";
 import { getStoredUserSettings, type MeasurementUnitSystem } from "../../lib/settings";
+import { getRecipeRating, saveRecipeRating, type RecipeRating } from "../../lib/ratings";
+import { capitalize } from "../../lib/format";
+import { sanitizeCulinaryText } from "../../lib/culinaryTextSanitizer";
 
 type CookModeModalProps = {
   recipe: AppRecipe;
   isOpen: boolean;
   onClose: () => void;
 };
+
+const RECIPE_NOTES_KEY = "recipe_collector_notes";
 
 export default function CookModeModal({
   recipe,
@@ -20,14 +25,25 @@ export default function CookModeModal({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showIngredients, setShowIngredients] = useState(false);
   const [unitSystem, setUnitSystem] = useState<MeasurementUnitSystem>("metric");
-
-  useEffect(() => {
-    setUnitSystem(getStoredUserSettings().unitSystem || "metric");
-  }, [isOpen]);
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  // Completion Rating Modal state
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedRating, setSelectedRating] = useState<number>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [cookingNote, setCookingNote] = useState("");
+
+  useEffect(() => {
+    setUnitSystem(getStoredUserSettings().unitSystem || "metric");
+    const existingRating = getRecipeRating(recipe.id);
+    if (existingRating) {
+      setSelectedRating(existingRating);
+    }
+  }, [isOpen, recipe.id]);
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -39,12 +55,14 @@ export default function CookModeModal({
     };
   }, [isOpen]);
 
-  // Reset step on open
+  // Reset step & states on open
   useEffect(() => {
     if (isOpen) {
       setCurrentStepIndex(0);
       setIsTimerRunning(false);
       setTimerSeconds(null);
+      setShowRatingModal(false);
+      setCheckedIngredients(new Set());
     }
   }, [isOpen]);
 
@@ -94,22 +112,61 @@ export default function CookModeModal({
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
+  const toggleIngredientCheck = (idx: number) => {
+    setCheckedIngredients((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+      }
+      return next;
+    });
+  };
+
+  const handleFinishCooking = () => {
+    setShowRatingModal(true);
+  };
+
+  const handleSaveRatingAndClose = () => {
+    if (selectedRating > 0) {
+      saveRecipeRating(recipe.id, selectedRating as RecipeRating);
+      window.dispatchEvent(
+        new CustomEvent("recipe_rating_updated", {
+          detail: { recipeId: recipe.id, rating: selectedRating },
+        }),
+      );
+    }
+
+    if (cookingNote.trim()) {
+      try {
+        const storedNotes = localStorage.getItem(RECIPE_NOTES_KEY);
+        const parsed = storedNotes ? (JSON.parse(storedNotes) as Record<string, string>) : {};
+        parsed[recipe.id] = cookingNote.trim();
+        localStorage.setItem(RECIPE_NOTES_KEY, JSON.stringify(parsed));
+      } catch {
+        // Ignore
+      }
+    }
+
+    setShowRatingModal(false);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#120e0c] text-stone-100 animate-in fade-in duration-200">
       {/* TOP KITCHEN HEADER */}
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-6 sm:px-10 bg-[#17120f]">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400">
-            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+          <svg className="h-5 w-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <div>
             <h2 className="text-sm sm:text-base font-bold text-[#fff8ef] line-clamp-1">
               Cook Mode: {recipe.title}
             </h2>
-            <p className="text-xs text-amber-200/60">
+            <p className="text-xs text-amber-200/60 font-medium">
               Step {currentStepIndex + 1} of {steps.length}
             </p>
           </div>
@@ -119,10 +176,10 @@ export default function CookModeModal({
           <button
             type="button"
             onClick={() => setShowIngredients(!showIngredients)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95 cursor-pointer ${
               showIngredients
-                ? "border-amber-500 bg-amber-500/20 text-amber-200"
-                : "border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white"
+                ? "border-amber-400/50 bg-amber-400 text-stone-950 shadow-sm shadow-amber-400/20"
+                : "border-white/10 bg-white/5 text-stone-200 hover:bg-white/10 hover:text-white"
             }`}
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -145,7 +202,7 @@ export default function CookModeModal({
       {/* PROGRESS TRACKER */}
       <div className="h-1.5 w-full bg-white/5">
         <div
-          className="h-full bg-amber-400 transition-all duration-300"
+          className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
           style={{
             width: `${((currentStepIndex + 1) / steps.length) * 100}%`,
           }}
@@ -153,7 +210,7 @@ export default function CookModeModal({
       </div>
 
       {/* MAIN BODY */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* STEP CONTENT AREA */}
         <main className="flex flex-1 flex-col justify-between p-6 sm:p-12 lg:p-16 max-w-4xl mx-auto overflow-y-auto">
           <div className="space-y-6 my-auto">
@@ -223,7 +280,7 @@ export default function CookModeModal({
             )}
           </div>
 
-          {/* BOTTOM STEP CONTROLS (Clean, unambiguous Previous / Next) */}
+          {/* BOTTOM STEP CONTROLS */}
           <footer className="mt-12 flex items-center justify-between gap-4 border-t border-white/10 pt-6">
             <button
               type="button"
@@ -242,7 +299,7 @@ export default function CookModeModal({
               type="button"
               onClick={() => {
                 if (isLastStep) {
-                  onClose();
+                  handleFinishCooking();
                 } else {
                   setCurrentStepIndex((prev) => Math.min(steps.length - 1, prev + 1));
                 }
@@ -258,34 +315,195 @@ export default function CookModeModal({
           </footer>
         </main>
 
-        {/* SIDE INGREDIENTS SHEET */}
+        {/* ELEVATED INGREDIENTS SIDE DRAWER */}
         {showIngredients && (
-          <aside className="w-80 sm:w-96 border-l border-white/10 bg-[#17120f] p-6 overflow-y-auto animate-in slide-in-from-right duration-200">
-            <h4 className="text-base font-bold text-[#fff8ef] mb-4">
-              Ingredients Quick View
-            </h4>
-            <ul className="space-y-2.5">
+          <aside className="w-80 sm:w-96 border-l border-white/10 bg-[#17120f] flex flex-col h-full overflow-hidden animate-in slide-in-from-right duration-200 z-10 shadow-2xl">
+            {/* DRAWER HEADER */}
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h4 className="text-base font-bold text-[#fff8ef]">
+                  Ingredients Checklist
+                </h4>
+                <p className="text-xs text-stone-400 mt-0.5 font-medium">
+                  {checkedIngredients.size} of {recipe.ingredients.length} ready
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowIngredients(false)}
+                className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+                title="Close drawer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* INGREDIENT LIST */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {recipe.ingredients.map((ing, i) => {
+                const isChecked = checkedIngredients.has(i);
                 const { amount, unit, name } = convertIngredient(ing, unitSystem);
                 const quantity = [amount, unit].filter(Boolean).join(" ");
+                const cleanName = capitalize(sanitizeCulinaryText(name || ing));
+
                 return (
-                  <li
+                  <div
                     key={i}
-                    className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/3 p-3 text-xs text-stone-200"
+                    onClick={() => toggleIngredientCheck(i)}
+                    className={`flex items-center justify-between gap-3 rounded-2xl border p-3 text-xs transition cursor-pointer select-none ${
+                      isChecked
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200/70"
+                        : "border-white/8 bg-[#211915]/80 hover:bg-[#281e18] hover:border-amber-400/30 text-stone-200"
+                    }`}
                   >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* CUSTOM CHECKBOX */}
+                      <div
+                        className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
+                          isChecked
+                            ? "border-emerald-500 bg-emerald-500 text-stone-950 shadow-xs shadow-emerald-500/25"
+                            : "border-white/20 bg-white/5"
+                        }`}
+                      >
+                        {isChecked && (
+                          <svg className="h-3 w-3 stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* INGREDIENT NAME */}
+                      <span className={`truncate flex-1 font-semibold text-sm ${isChecked ? "line-through text-emerald-300/60" : "text-stone-100"}`}>
+                        {cleanName}
+                      </span>
+                    </div>
+
+                    {/* QUANTITY BADGE */}
                     {quantity && (
-                      <span className="rounded-lg bg-amber-400/15 border border-amber-400/25 px-2 py-0.5 font-bold text-amber-300 font-mono shrink-0">
+                      <span className={`shrink-0 rounded-lg py-0.5 px-2 text-xs font-mono font-bold transition ${
+                        isChecked
+                          ? "bg-emerald-500/15 text-emerald-300 line-through"
+                          : "bg-white/8 text-amber-300 border border-white/10"
+                      }`}>
                         {quantity}
                       </span>
                     )}
-                    <span className="truncate flex-1">{name || ing}</span>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
+
+            {/* DRAWER FOOTER */}
+            {checkedIngredients.size > 0 && (
+              <div className="p-3 border-t border-white/10 text-center">
+                <button
+                  type="button"
+                  onClick={() => setCheckedIngredients(new Set())}
+                  className="text-xs text-stone-400 hover:text-white font-medium hover:underline cursor-pointer"
+                >
+                  Reset checklist
+                </button>
+              </div>
+            )}
           </aside>
         )}
       </div>
+
+      {/* COMPLETION RATING POP-UP MODAL */}
+      {showRatingModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/12 bg-[#17120f] text-white p-6 sm:p-8 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-center">
+            
+            <div className="space-y-2">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-stone-950 shadow-lg shadow-amber-500/30">
+                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-black text-[#fff8ef] pt-2">
+                Dish Completed! 🎉
+              </h3>
+              <p className="text-xs sm:text-sm text-stone-400">
+                How did &ldquo;{recipe.title}&rdquo; turn out?
+              </p>
+            </div>
+
+            {/* INTERACTIVE 5-STAR RATING */}
+            <div className="flex items-center justify-center gap-2 py-1">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const isFilled = star <= (hoverRating || selectedRating);
+                return (
+                  <button
+                    key={star}
+                    type="button"
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setSelectedRating(star)}
+                    className="p-1 transition-transform hover:scale-130 active:scale-90 cursor-pointer"
+                    title={`Rate ${star} of 5 stars`}
+                  >
+                    <svg
+                      className={`h-8 w-8 transition-colors ${
+                        isFilled
+                          ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                          : "text-stone-700 fill-transparent hover:text-amber-400/50"
+                      }`}
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                      />
+                    </svg>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* OPTIONAL CHEF NOTE */}
+            <div className="space-y-1 text-left">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
+                Add a quick cooking note (optional)
+              </label>
+              <textarea
+                rows={2}
+                value={cookingNote}
+                onChange={(e) => setCookingNote(e.target.value)}
+                placeholder="e.g. Perfect seasoning, baked 2 mins less..."
+                className="w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-stone-100 placeholder-stone-500 focus:border-amber-400 focus:outline-none transition resize-none"
+              />
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRatingModal(false);
+                  onClose();
+                }}
+                className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-3 text-xs font-bold text-stone-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
+              >
+                Skip
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveRatingAndClose}
+                className="flex-1 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] py-3 text-xs transition active:scale-95 cursor-pointer"
+              >
+                Save &amp; Finish
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
