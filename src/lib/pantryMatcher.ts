@@ -36,9 +36,10 @@ function extractIngredientKeywords(ingredientText: string): string[] {
 
 export function calculateRecipePantryMatch(
   recipe: AppRecipe,
-  inStockPantryItems: PantryItem[]
+  inStockPantryItems: PantryItem[],
+  precomputedPantryKeywords?: string[]
 ): PantryRecipeMatch {
-  const pantryKeywords = inStockPantryItems
+  const pantryKeywords = precomputedPantryKeywords || inStockPantryItems
     .filter((p) => p.inStock)
     .map((p) => p.name.toLowerCase().trim());
 
@@ -92,8 +93,10 @@ export function findBestPantryMatches(
   const inStock = pantryItems.filter((p) => p.inStock);
   if (inStock.length === 0 || recipes.length === 0) return [];
 
+  const pantryKeywords = inStock.map((p) => p.name.toLowerCase().trim());
+
   const evaluated = recipes.map((recipe) =>
-    calculateRecipePantryMatch(recipe, inStock)
+    calculateRecipePantryMatch(recipe, inStock, pantryKeywords)
   );
 
   // Filter recipes that have at least some match and sort by highest match percentage
