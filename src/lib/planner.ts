@@ -178,7 +178,8 @@ export function smartAutoPlanWeek(
 ): { nextPlan: MealPlan; filledCount: number } {
    if (allRecipes.length === 0) return { nextPlan: currentPlan, filledCount: 0 };
 
-   const validIds = new Set(allRecipes.map((r) => r.id));
+   const recipeMap = new Map(allRecipes.map((r) => [r.id, r]));
+   const validIds = new Set(recipeMap.keys());
    const nextPlan = createEmptyMealPlan();
    const usedRecipeIds = new Set<number>();
    const plannedIngredientsSet = new Set<string>();
@@ -221,7 +222,7 @@ export function smartAutoPlanWeek(
       MEAL_SLOTS.forEach((slot) => {
          const id = nextPlan[day][slot];
          if (id) {
-            const r = allRecipes.find((item) => item.id === id);
+            const r = recipeMap.get(id);
             if (r?.category) todayAssignedCategories.add(r.category);
          }
       });
