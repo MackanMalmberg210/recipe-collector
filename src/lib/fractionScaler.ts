@@ -84,7 +84,7 @@ export function formatAmountToFraction(amount: number): string {
  */
 export function cleanAuthorNotes(text: string): string {
   if (!text) return "";
-  let cleaned = text
+  const cleaned = text
     // Remove all parenthetical notes like (about 7 oz), (approx 200g), (I use this one), (divided), (optional) etc.
     .replace(/\s*\([^)]*\)/g, "")
     // Remove trailing/leading punctuation

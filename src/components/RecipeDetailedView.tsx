@@ -274,8 +274,9 @@ export default function RecipeDetailedView({
 
     try {
       const parsedList = JSON.parse(existingList) as { name: string; bought: boolean }[];
+      const lastAddedSet = new Set(lastAddedItems);
       const filtered = parsedList.filter(
-        (item) => !lastAddedItems.includes(normalizeIngredient(item.name)),
+        (item) => !lastAddedSet.has(normalizeIngredient(item.name)),
       );
       localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(filtered));
       setIsAddedToGrocery(false);
