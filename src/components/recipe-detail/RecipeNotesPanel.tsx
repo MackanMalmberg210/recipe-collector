@@ -133,32 +133,28 @@ export default function RecipeNotesPanel({ recipeId }: RecipeNotesPanelProps) {
       )}
 
       <div className="mt-8 border-t border-white/10 pt-6">
-        <h3 className="mb-2 text-lg font-semibold text-[#fff8ef]">
-          Rate this recipe
-        </h3>
-        <p className="mb-4 text-sm leading-6 text-stone-400">
-          Rate a recipe after trying it out. You can give it a rating from 1 to
-          5 stars, with 1 being the lowest and 5 being the highest. Consider
-          factors such as taste, ease of preparation, and overall satisfaction
-          when rating the recipe.
-        </p>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              className={`text-3xl transition-colors ${
-                (hoverRating !== null ? hoverRating : rating ?? 0) >= star
-                  ? "text-amber-400"
-                  : "text-white/20"
-              }`}
-              onClick={() => handleRate(star)}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(null)}
-            >
-              ★
-            </button>
-          ))}
+        <div className="flex items-center gap-4">
+          <h3 className="text-lg font-semibold text-[#fff8ef]">
+            Rate this dish:
+          </h3>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                className={`text-3xl transition-colors ${
+                  (hoverRating !== null ? hoverRating : rating ?? 0) >= star
+                    ? "text-amber-400"
+                    : "text-white/20"
+                }`}
+                onClick={() => handleRate(star)}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(null)}
+              >
+                ★
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
