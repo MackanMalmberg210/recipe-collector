@@ -167,7 +167,7 @@ export function sanitizeMealPlan(mealPlan: MealPlan, allRecipes: AppRecipe[]): M
    return cleanPlan;
 }
 
-import { canonicalizeIngredients, capitalize } from "./format";
+import { canonicalizeIngredients } from "./format";
 
 /**
  * Smart Auto-Planner: avoids duplicate meals, optimizes slots, and maximizes ingredient overlap for budget efficiency
@@ -184,6 +184,19 @@ export function smartAutoPlanWeek(
    const usedRecipeIds = new Set<number>();
    const plannedIngredientsSet = new Set<string>();
 
+   // Pre-compute canonical ingredients for all recipes to avoid redundant work in loops
+   const recipeIngredientsCache = new Map<number, string[]>();
+   for (const r of allRecipes) {
+      const canonical = [];
+      for (const ing of r.ingredients) {
+         const list = canonicalizeIngredients(ing);
+         for (const c of list) {
+            canonical.push(c.toLowerCase());
+         }
+      }
+      recipeIngredientsCache.set(r.id, canonical);
+   }
+
    // Keep existing valid meals
    WEEK_DAYS.forEach((day) => {
       MEAL_SLOTS.forEach((slot) => {
@@ -191,11 +204,10 @@ export function smartAutoPlanWeek(
          if (id && validIds.has(id)) {
             nextPlan[day][slot] = id;
             usedRecipeIds.add(id);
-            const r = recipeMap.get(id);
-            r?.ingredients.forEach((ing) => {
-               const list = canonicalizeIngredients(ing);
-               list.forEach((c) => plannedIngredientsSet.add(c.toLowerCase()));
-            });
+            const cached = recipeIngredientsCache.get(id);
+            if (cached) {
+               cached.forEach((c) => plannedIngredientsSet.add(c));
+            }
          }
       });
    });
@@ -259,12 +271,12 @@ export function smartAutoPlanWeek(
 
             // Ingredient overlap bonus (smart budget saving)
             let overlapCount = 0;
-            recipe.ingredients.forEach((ing) => {
-               const list = canonicalizeIngredients(ing);
-               list.forEach((c) => {
-                  if (plannedIngredientsSet.has(c.toLowerCase())) overlapCount++;
+            const cached = recipeIngredientsCache.get(recipe.id);
+            if (cached) {
+               cached.forEach((c) => {
+                  if (plannedIngredientsSet.has(c)) overlapCount++;
                });
-            });
+            }
             score += Math.min(overlapCount * 6, 36);
 
             return { recipe, score };
@@ -277,10 +289,10 @@ export function smartAutoPlanWeek(
             nextPlan[day][slot] = best.id;
             usedRecipeIds.add(best.id);
             if (best.category) todayAssignedCategories.add(best.category);
-            best.ingredients.forEach((ing) => {
-               const list = canonicalizeIngredients(ing);
-               list.forEach((c) => plannedIngredientsSet.add(c.toLowerCase()));
-            });
+            const cached = recipeIngredientsCache.get(best.id);
+            if (cached) {
+               cached.forEach((c) => plannedIngredientsSet.add(c));
+            }
             filledCount++;
          }
       });

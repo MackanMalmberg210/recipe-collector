@@ -273,7 +273,7 @@ export function parseIngredientString(raw: string): StructuredIngredient {
   }
 
   // 6. Extract trailing prep notes after comma e.g. "garlic, minced and peeled"
-  let extractedNotes: string[] = [];
+  const extractedNotes: string[] = [];
   if (parentheticalInfo) {
     extractedNotes.push(parentheticalInfo);
   }
