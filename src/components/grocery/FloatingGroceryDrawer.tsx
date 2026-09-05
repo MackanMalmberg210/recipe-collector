@@ -85,9 +85,10 @@ export default function FloatingGroceryDrawer() {
       .then((recipes) => {
         if (!Array.isArray(recipes)) return;
         const allIngs = new Set<string>();
+        const AMOUNT_PREFIX_REGEX = /^\d+[\d\s\/\.]*\s*(?:tbsp|tsp|cup|c\.|oz|lb|g|kg|ml|slices|cloves)?\.?\s*/i;
         recipes.forEach((r) => {
           (r.ingredients || []).forEach((ing) => {
-            const cleaned = ing.replace(/^\d+[\d\s\/\.]*\s*(?:tbsp|tsp|cup|c\.|oz|lb|g|kg|ml|slices|cloves)?\.?\s*/i, "").trim();
+            const cleaned = ing.replace(AMOUNT_PREFIX_REGEX, "").trim();
             if (cleaned.length > 2 && cleaned.length < 35) {
               allIngs.add(formatGroceryItemName(cleaned));
             }
