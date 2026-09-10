@@ -70,17 +70,17 @@ export default function PlannerRecipeDeck({
 
       {/* SLIDE-OUT PANTRY DRAWER */}
       <aside
-        className={`absolute left-0 top-0 bottom-0 flex h-full w-full max-w-md sm:max-w-xl lg:max-w-2xl flex-col overflow-hidden border-r border-stone-200/90 bg-white text-stone-950 shadow-2xl transition-transform duration-200 ease-out dark:border-white/12 dark:bg-[#15110e] dark:text-stone-100 ${
+        className={`absolute left-0 top-0 bottom-0 flex h-full w-full max-w-md sm:max-w-xl lg:max-w-2xl flex-col overflow-hidden rounded-r-[32px] border-r border-slate-200/90 bg-white text-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out dark:border-white/12 dark:bg-[#15110e] dark:text-stone-100 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* PANTRY HEADER - CLEAN TYPOGRAPHY */}
-        <header className="flex h-20 shrink-0 items-center justify-between border-b border-stone-100 px-6 sm:px-8 bg-stone-50/80 dark:border-white/10 dark:bg-[#1a1511]">
+        {/* PANTRY HEADER */}
+        <header className="flex h-20 shrink-0 items-center justify-between border-b border-slate-100 px-6 sm:px-8 bg-slate-50/50 dark:border-white/10 dark:bg-[#1a1511]">
           <div>
-            <h2 className="text-xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50">
+            <h2 className="text-xl font-bold tracking-tight text-slate-950 dark:text-stone-50">
               My Cookbook
             </h2>
-            <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-stone-400 mt-0.5">
               Browse your saved recipe collection • {filteredRecipes.length} available
             </p>
           </div>
@@ -88,7 +88,7 @@ export default function PlannerRecipeDeck({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer text-base font-bold"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer text-base font-bold"
             title="Close Drawer"
           >
             ✕
@@ -96,13 +96,13 @@ export default function PlannerRecipeDeck({
         </header>
 
         {/* SEARCH & FILTERS */}
-        <div className="border-b border-stone-100 p-5 sm:p-6 bg-white dark:border-white/8 dark:bg-[#1a1410]/60 space-y-3.5 shrink-0">
+        <div className="border-b border-slate-100 p-5 sm:p-6 bg-white dark:border-white/8 dark:bg-[#1a1410]/60 space-y-3.5 shrink-0">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search recipes, ingredients, tags..."
-            className="w-full rounded-2xl border border-stone-300 bg-stone-50/60 px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-950 placeholder-stone-400 focus:border-amber-500 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-[#221b16] dark:text-stone-100 dark:placeholder-stone-500"
+            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-950 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-[#221b16] dark:text-stone-100 dark:placeholder-stone-500"
           />
 
           <div className="flex flex-wrap gap-2">
@@ -119,8 +119,8 @@ export default function PlannerRecipeDeck({
                 onClick={() => setFilter(f.id as DeckFilter)}
                 className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
                   filter === f.id
-                    ? "bg-amber-500 text-stone-950 shadow-xs border border-amber-600/50"
-                    : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/10"
+                    ? "bg-slate-900 text-white shadow-xs border border-slate-900 dark:bg-white dark:text-slate-950"
+                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/10"
                 }`}
               >
                 {f.label}
@@ -129,18 +129,18 @@ export default function PlannerRecipeDeck({
           </div>
         </div>
 
-        {/* 2-COLUMN RECIPE GRID - 100% NATIVE COMPOSITOR SCROLL */}
+        {/* 2-COLUMN RECIPE GRID */}
         <div
           style={{ willChange: "scroll-position", transform: "translateZ(0)" }}
           className="min-h-0 flex-1 overflow-y-scroll overscroll-contain p-5 sm:p-6"
         >
           {filteredRecipes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-56 text-center text-stone-400 dark:text-stone-500">
-              <svg className="h-10 w-10 mb-3 text-stone-400 dark:text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="flex flex-col items-center justify-center h-56 text-center text-slate-400 dark:text-stone-500">
+              <svg className="h-10 w-10 mb-3 text-slate-300 dark:text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <p className="text-sm font-bold text-stone-800 dark:text-stone-200">No recipes matched your search</p>
-              <p className="text-xs text-stone-500 mt-1">Try clearing filters or search terms</p>
+              <p className="text-sm font-bold text-slate-800 dark:text-stone-200">No recipes matched your search</p>
+              <p className="text-xs text-slate-500 mt-1">Try clearing filters or search terms</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -153,11 +153,11 @@ export default function PlannerRecipeDeck({
                     containIntrinsicSize: "0 140px",
                     contain: "paint",
                   }}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-4 hover:border-amber-500/60 dark:border-white/10 dark:bg-[#1f1915] dark:hover:border-amber-400/50 dark:hover:bg-[#251e19] shadow-xs transition-colors duration-100 ease-out"
+                  className="group relative flex flex-col justify-between rounded-[22px] border border-slate-200/90 bg-white p-4 hover:border-slate-400 dark:border-white/10 dark:bg-[#1f1915] shadow-xs hover:shadow-md transition-all duration-200 ease-out"
                 >
                   <div className="flex gap-4 items-start">
-                    {/* LARGER THUMBNAIL */}
-                    <div className="relative h-20 w-20 sm:h-22 sm:w-22 shrink-0 overflow-hidden rounded-2xl bg-stone-200 dark:bg-stone-900 shadow-sm border border-stone-200/80 dark:border-white/10">
+                    {/* THUMBNAIL */}
+                    <div className="relative h-20 w-20 sm:h-22 sm:w-22 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-stone-900 border border-slate-200/80 dark:border-white/10">
                       {recipe.image ? (
                         <img
                           src={recipe.image}

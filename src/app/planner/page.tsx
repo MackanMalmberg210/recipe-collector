@@ -218,45 +218,51 @@ export default function PlannerPage() {
   }
 
   return (
-    <div className="relative min-h-screen px-4 py-6 sm:px-6 xl:px-10 text-stone-950 dark:text-stone-100">
+    <div className="relative min-h-screen bg-[#FCFCFC] px-4 py-6 sm:px-6 xl:px-10 text-slate-900 transition-colors duration-300 dark:bg-[#0A0A0A] dark:text-stone-100">
       <div className="relative mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* HEADER BAR */}
-        <header className="flex flex-col gap-4 rounded-3xl border border-stone-200/90 bg-white dark:border-white/[0.08] dark:bg-[#16120f]/95 p-5 sm:p-6 shadow-sm dark:shadow-[0_18px_60px_rgba(0,0,0,0.3)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+        <header className="flex flex-col gap-4 rounded-[32px] border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#151210] p-6 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.05)]">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1.5">
               {/* USP TYPOGRAPHY HEADER */}
-              <div className="flex items-center gap-2 mb-1 text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-white/10 px-3 py-1 text-xs font-bold text-slate-800 dark:text-stone-300">
+                <svg className="h-3.5 w-3.5 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>Weekly Meal Planner</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-950 dark:text-[#fff8ef]">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-stone-50">
                 Take the stress out of daily cooking.
               </h1>
               
-              <p className="mt-1 text-xs sm:text-sm text-stone-500 dark:text-stone-400">
-                Save time, eat healthier, and streamline your weekly groceries • <strong className="text-stone-800 dark:text-stone-200">{plannedMealsCount}/21</strong> meals planned • Target: <strong className="text-stone-800 dark:text-stone-200">{dailyCalorieTarget}</strong> kcal/day
-              </p>
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-stone-400">
+                <span>Save time, eat healthier, and streamline your weekly groceries</span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-white/10 px-2 py-0.5 font-bold text-slate-900 dark:text-stone-100">
+                  {plannedMealsCount}/21 planned
+                </span>
+                <span>•</span>
+                <span>Target: <strong className="text-slate-900 dark:text-stone-100">{dailyCalorieTarget}</strong> kcal/day</span>
+              </div>
             </div>
 
             {/* STREAMLINED ACTION TOOLBAR */}
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               
               {/* COOKBOOK RECIPES BUTTON */}
               <button
                 type="button"
                 onClick={() => setIsPantryOpen(true)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 hover:bg-stone-100 hover:border-amber-500/50 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-stone-800 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:border-amber-400/40 dark:hover:bg-white/8 transition cursor-pointer shadow-xs active:scale-95"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 px-3.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition cursor-pointer shadow-xs active:scale-95"
                 title="Browse Cookbook recipes"
               >
-                <svg className="h-4 w-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 shrink-0 text-slate-600 dark:text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 <span>Cookbook</span>
-                <span className="rounded-full bg-amber-500 text-stone-950 px-2 py-0.2 text-[10px] font-black shadow-xs">
+                <span className="rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 px-2 py-0.2 text-[10px] font-black shadow-xs">
                   {allRecipes.length}
                 </span>
               </button>
@@ -265,27 +271,27 @@ export default function PlannerPage() {
               <button
                 type="button"
                 onClick={handleAutoSuggestWeek}
-                className="inline-flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 dark:border-amber-500/25 dark:bg-amber-500/10 px-4 py-2.5 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs active:scale-95"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 text-xs sm:text-sm border border-slate-900 shadow-xs dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 transition cursor-pointer active:scale-95"
               >
                 <span>✨</span>
                 <span>Suggest Meals</span>
               </button>
 
-              {/* SEND TO GROCERY LIST (BRAND AMBER GRADIENT) */}
+              {/* SEND TO GROCERY LIST (SOLID HIGH CONTRAST EMERALD) */}
               <button
                 type="button"
                 onClick={() => setIsGroceryModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-4.5 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition cursor-pointer active:scale-95"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 px-4.5 text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer active:scale-95"
               >
-                <svg className="h-4 w-4 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <svg className="h-4 w-4 shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <span>Send to Grocery</span>
               </button>
 
-              {/* DAILY CALORIE TARGET INPUT - CENTERED */}
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-3.5 py-2 text-xs font-semibold text-stone-700 dark:border-white/10 dark:bg-white/5 dark:text-stone-300">
-                <span className="text-stone-500 dark:text-stone-400">Target:</span>
+              {/* DAILY CALORIE TARGET INPUT */}
+              <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-stone-300">
+                <span className="text-slate-500 dark:text-stone-400">Target:</span>
                 <input
                   type="number"
                   min="500"
@@ -296,9 +302,9 @@ export default function PlannerPage() {
                     setDailyCalorieTarget(val);
                     saveDailyCalorieTarget(val);
                   }}
-                  className="w-16 rounded-xl bg-white dark:bg-black/50 py-1 text-center font-mono font-bold text-amber-700 dark:text-amber-300 border border-stone-300 dark:border-white/12 focus:outline-none focus:border-amber-500 text-xs shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-14 rounded-lg bg-white dark:bg-black/50 py-0.5 text-center font-mono font-bold text-slate-900 dark:text-stone-100 border border-slate-300 dark:border-white/12 focus:outline-none focus:border-slate-900 text-xs shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-[10px] text-stone-400 dark:text-stone-500">kcal</span>
+                <span className="text-[10px] text-slate-400 dark:text-stone-500">kcal</span>
               </div>
 
               {/* CLEAR WEEK */}
@@ -308,7 +314,7 @@ export default function PlannerPage() {
                   onClick={() => setIsClearWeekModalOpen(true)}
                   aria-label="Clear entire week"
                   title="Clear entire week plan"
-                  className="inline-flex items-center justify-center h-10 w-10 rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:border-rose-500/30 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition cursor-pointer active:scale-95"
+                  className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-slate-200 bg-white text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:border-white/10 dark:bg-white/5 dark:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer active:scale-95 shadow-xs"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -355,7 +361,7 @@ export default function PlannerPage() {
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex items-center gap-2 rounded-full border border-stone-300/80 bg-white px-5 py-2.5 text-xs font-extrabold text-stone-700 shadow-xs hover:border-amber-500 hover:bg-amber-500/5 hover:text-amber-700 dark:border-white/12 dark:bg-[#16120f] dark:text-stone-300 dark:hover:border-amber-400/50 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950 dark:border-white/12 dark:bg-[#151210] dark:text-stone-300 dark:hover:bg-white/10 transition-all cursor-pointer"
             title="Scroll back to top"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

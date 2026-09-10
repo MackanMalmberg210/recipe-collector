@@ -200,15 +200,15 @@ export default function PlannerGroceryModal({
       />
 
       {/* WIDE LUXURY MODAL DIALOG */}
-      <div className="relative flex max-h-[92vh] w-full max-w-4xl xl:max-w-5xl flex-col overflow-hidden rounded-3xl border border-stone-200/90 bg-white shadow-2xl transition-all dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative flex max-h-[92vh] w-full max-w-4xl xl:max-w-5xl flex-col overflow-hidden rounded-[32px] border border-slate-200/90 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-all dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 animate-in fade-in zoom-in-95 duration-150">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-stone-100 px-6 py-5 sm:px-8 dark:border-white/8">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 sm:px-8 dark:border-white/8">
           <div>
-            <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50">
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950 dark:text-stone-50">
               Send Week to Grocery List
             </h3>
-            <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-stone-400 mt-0.5">
               {plannedIngredients.length} ingredients from {plannedRecipes.length} planned meals
             </p>
           </div>
@@ -217,13 +217,13 @@ export default function PlannerGroceryModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer text-base font-bold"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer text-base font-bold"
           >
             ✕
           </button>
         </div>
 
-        {/* BODY (100% NATIVE HARDWARE COMPOSITOR SCROLL) */}
+        {/* BODY */}
         <div
           style={{ willChange: "scroll-position", transform: "translateZ(0)" }}
           className="flex-1 overflow-y-scroll overscroll-contain p-6 sm:p-8 space-y-6"
@@ -231,12 +231,12 @@ export default function PlannerGroceryModal({
           {/* MAIN INGREDIENTS SECTION */}
           <div className="space-y-4">
             {/* ITEMS TO ADD (TOP) */}
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] p-5 dark:border-amber-500/20 dark:bg-[#1c1612] space-y-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 dark:border-white/10 dark:bg-[#1c1612] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-stone-300">
                   Ingredients to Add ({selectedIngredientNames.size} selected)
                 </span>
-                <span className="text-xs text-stone-400">
+                <span className="text-xs text-slate-400">
                   Click any item to toggle
                 </span>
               </div>
@@ -252,8 +252,8 @@ export default function PlannerGroceryModal({
                         onClick={() => toggleIngredient(item.name)}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
                           isSelected
-                            ? "border-amber-500 bg-amber-500/20 text-amber-950 dark:text-amber-200 shadow-2xs"
-                            : "border-stone-200 bg-white text-stone-400 line-through opacity-70 hover:opacity-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-500"
+                            ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950 shadow-xs"
+                            : "border-slate-200 bg-white text-slate-400 line-through opacity-70 hover:opacity-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-500"
                         }`}
                       >
                         <span className="text-xs">{isSelected ? "✓" : "✕"}</span>
@@ -263,7 +263,7 @@ export default function PlannerGroceryModal({
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-stone-500 py-2">
+                <p className="text-xs text-slate-500 py-2">
                   All weekly ingredients are already in your pantry or shopping list!
                 </p>
               )}
@@ -271,12 +271,12 @@ export default function PlannerGroceryModal({
 
             {/* ALREADY IN PANTRY OR LIST (BOTTOM - MUTED) */}
             {alreadyOwnedItems.length > 0 && (
-              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/60 p-4.5 dark:border-white/8 dark:bg-white/[0.02] space-y-2.5">
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4.5 dark:border-white/8 dark:bg-white/[0.02] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-stone-400">
                     Already in Pantry or Shopping List ({alreadyOwnedItems.length})
                   </span>
-                  <span className="text-[11px] text-stone-400">
+                  <span className="text-[11px] text-slate-400">
                     Unselected by default
                   </span>
                 </div>
@@ -294,15 +294,16 @@ export default function PlannerGroceryModal({
                         onClick={() => toggleIngredient(item.name)}
                         className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
                           isSelected
-                            ? "border-amber-500 bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-2xs font-bold"
-                            : "border-stone-200 bg-white/70 text-stone-500 hover:text-stone-800 dark:border-white/8 dark:bg-white/3 dark:text-stone-400 dark:hover:text-stone-200"
+                            ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950 shadow-xs font-bold"
+                            : "border-slate-200 bg-white/70 text-slate-500 hover:text-slate-800 dark:border-white/8 dark:bg-white/3 dark:text-stone-400 dark:hover:text-stone-200"
                         }`}
                       >
-                        <span>{isSelected ? "✓" : "+"}</span>
                         <span>{item.name}</span>
-                        <span className="rounded-md bg-stone-200/80 dark:bg-white/10 px-1.5 py-0.2 text-[10px] font-bold text-stone-600 dark:text-stone-300">
-                          {inPantry ? "Pantry" : "In List"}
-                        </span>
+                        {inPantry && (
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                            (in pantry)
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -311,9 +312,9 @@ export default function PlannerGroceryModal({
             )}
           </div>
 
-          {/* DESTINATION LIST CHOOSER */}
+          {/* DESTINATION LIST ACCORDION */}
           <div className="space-y-3 pt-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-stone-500">
               Select Destination Shopping List
             </label>
 
@@ -326,28 +327,28 @@ export default function PlannerGroceryModal({
                 }}
                 className={`flex items-center justify-between p-4 rounded-2xl border transition cursor-pointer ${
                   selectedListId === "main" && !isCreatingNew
-                    ? "border-amber-500/70 bg-amber-500/10 text-stone-950 dark:text-amber-300 font-bold ring-1 ring-amber-500/30"
-                    : "border-stone-200 bg-stone-50/70 hover:bg-stone-100 dark:border-white/8 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/8"
+                    ? "border-slate-900 bg-slate-900/5 text-slate-950 dark:border-white/30 dark:bg-white/10 dark:text-white font-bold"
+                    : "border-slate-200 bg-white hover:bg-slate-50 dark:border-white/8 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/8"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    <ShoppingCartIcon className="h-5 w-5" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-800 dark:bg-white/10 dark:text-stone-200">
+                    <ClipboardIcon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">Main Shopping List</p>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                      {mainListCount} {mainListCount === 1 ? "item" : "items"}
-                    </p>
+                    <span className="text-xs sm:text-sm font-bold block">Main Shopping List</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      {mainListCount} existing item{mainListCount === 1 ? "" : "s"}
+                    </span>
                   </div>
                 </div>
                 <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
                   selectedListId === "main" && !isCreatingNew
-                    ? "border-amber-500 bg-amber-500"
-                    : "border-stone-400 dark:border-stone-600"
+                    ? "border-slate-900 bg-slate-900 dark:border-white dark:bg-white"
+                    : "border-slate-400 dark:border-stone-600"
                 }`}>
                   {selectedListId === "main" && !isCreatingNew && (
-                    <div className="h-2 w-2 rounded-full bg-white dark:bg-stone-950" />
+                    <div className="h-2 w-2 rounded-full bg-white dark:bg-slate-950" />
                   )}
                 </div>
               </label>
@@ -364,28 +365,28 @@ export default function PlannerGroceryModal({
                     }}
                     className={`flex items-center justify-between p-4 rounded-2xl border transition cursor-pointer ${
                       isChosen
-                        ? "border-amber-500/70 bg-amber-500/10 text-stone-950 dark:text-amber-300 font-bold ring-1 ring-amber-500/30"
-                        : "border-stone-200 bg-stone-50/70 hover:bg-stone-100 dark:border-white/8 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/8"
+                        ? "border-slate-900 bg-slate-900/5 text-slate-950 dark:border-white/30 dark:bg-white/10 dark:text-white font-bold"
+                        : "border-slate-200 bg-white hover:bg-slate-50 dark:border-white/8 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/8"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                        <ClipboardIcon className="h-5 w-5" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-800 dark:bg-white/10 dark:text-stone-200">
+                        <ClipboardIcon className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold">{list.name}</p>
-                        <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                          {list.items.length} {list.items.length === 1 ? "item" : "items"}
-                        </p>
+                        <span className="text-xs sm:text-sm font-bold block">{list.name}</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          {list.items.length} item{list.items.length === 1 ? "" : "s"}
+                        </span>
                       </div>
                     </div>
                     <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
                       isChosen
-                        ? "border-amber-500 bg-amber-500"
-                        : "border-stone-400 dark:border-stone-600"
+                        ? "border-slate-900 bg-slate-900 dark:border-white dark:bg-white"
+                        : "border-slate-400 dark:border-stone-600"
                     }`}>
                       {isChosen && (
-                        <div className="h-2 w-2 rounded-full bg-white dark:bg-stone-950" />
+                        <div className="h-2 w-2 rounded-full bg-white dark:bg-slate-950" />
                       )}
                     </div>
                   </label>
@@ -399,20 +400,20 @@ export default function PlannerGroceryModal({
                 <button
                   type="button"
                   onClick={() => setIsCreatingNew(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer pt-1"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-stone-300 hover:underline cursor-pointer pt-1"
                 >
                   <span>+ Create new custom list (e.g. &ldquo;Weekly Shopping&rdquo;)</span>
                 </button>
               ) : (
-                <div className="p-4 rounded-2xl border border-amber-500/50 bg-amber-500/5 space-y-2">
+                <div className="p-4 rounded-2xl border border-slate-300 bg-slate-50/50 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                    <span className="text-xs font-bold text-slate-900 dark:text-stone-300">
                       New List Name
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsCreatingNew(false)}
-                      className="text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
+                      className="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-stone-200 cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -423,7 +424,7 @@ export default function PlannerGroceryModal({
                     onChange={(e) => setNewListName(e.target.value)}
                     placeholder="e.g. Weekly Groceries, Sunday Market..."
                     autoFocus
-                    className="w-full rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-950 placeholder:font-normal placeholder:text-stone-400 outline-none focus:border-amber-500 dark:border-white/12 dark:bg-[#1a1512] dark:text-stone-50"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-950 placeholder:font-normal placeholder:text-slate-400 outline-none focus:border-slate-900 dark:border-white/12 dark:bg-[#1a1512] dark:text-stone-50"
                   />
                 </div>
               )}
@@ -432,11 +433,11 @@ export default function PlannerGroceryModal({
         </div>
 
         {/* ACTIONS FOOTER */}
-        <div className="flex items-center justify-end gap-3 border-t border-stone-100 px-6 py-4.5 sm:px-8 dark:border-white/8">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4.5 sm:px-8 dark:border-white/8">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-xs sm:text-sm font-bold text-stone-700 transition hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 cursor-pointer"
+            className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 cursor-pointer"
           >
             Cancel
           </button>
@@ -445,9 +446,9 @@ export default function PlannerGroceryModal({
             type="button"
             onClick={handleAdd}
             disabled={selectedIngredientNames.size === 0}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-40"
           >
-            <ShoppingCartIcon className="h-4 w-4 text-stone-950" />
+            <ShoppingCartIcon className="h-4 w-4 text-white" />
             <span>Send {selectedIngredientNames.size} Ingredients</span>
           </button>
         </div>

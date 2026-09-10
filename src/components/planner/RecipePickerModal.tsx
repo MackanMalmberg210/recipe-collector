@@ -220,15 +220,15 @@ const RecipeItemCard = memo(function RecipeItemCard({
       type="button"
       onClick={() => onSelect(recipe.id)}
       style={{ willChange: "transform", transform: "translateZ(0)" }}
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border text-left transition-all duration-150 ease-out cursor-pointer active:scale-98 ${
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-[24px] border text-left transition-all duration-150 ease-out cursor-pointer active:scale-98 ${
         isSelected
-          ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10 dark:border-amber-400 dark:bg-amber-400/10 ring-2 ring-amber-500/50"
-          : "border-stone-200/90 bg-white hover:border-amber-500/60 hover:shadow-md dark:border-white/10 dark:bg-[#1f1915] dark:hover:border-amber-400/50 dark:hover:bg-[#251e19]"
+          ? "border-slate-900 bg-slate-900/5 shadow-md dark:border-white dark:bg-white/10 ring-2 ring-slate-900 dark:ring-white"
+          : "border-slate-200/90 bg-white hover:border-slate-400 hover:shadow-md dark:border-white/10 dark:bg-[#1f1915] dark:hover:border-white/20"
       }`}
     >
       <div>
         {/* Thumbnail Hero */}
-        <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-stone-100 dark:bg-stone-900">
+        <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-slate-100 dark:bg-stone-900">
           {image ? (
             <img
               src={image}
@@ -238,27 +238,27 @@ const RecipeItemCard = memo(function RecipeItemCard({
               className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-stone-400">
-              <PlateIcon className="h-10 w-10 text-stone-400" />
+            <div className="flex h-full w-full items-center justify-center text-slate-400">
+              <PlateIcon className="h-10 w-10 text-slate-300 dark:text-stone-700" />
             </div>
           )}
 
           {/* Badges Overlay */}
           <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 pointer-events-none">
             {isPreferred && (
-              <span className="rounded-lg bg-amber-500 text-stone-950 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+              <span className="rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs">
                 Recommended
               </span>
             )}
             {category && (
-              <span className="rounded-lg bg-black/60 backdrop-blur-xs text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+              <span className="rounded-full bg-slate-900/80 backdrop-blur-md border border-white/20 text-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                 {category}
               </span>
             )}
           </div>
 
           {isSelected && (
-            <div className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-stone-950 text-xs font-black shadow-sm">
+            <div className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 text-xs font-black shadow-sm">
               ✓
             </div>
           )}
@@ -456,20 +456,20 @@ function StandardRecipePickerModal({
       />
 
       {/* MODAL DIALOG - OBSIDIAN PALETTE */}
-      <div className="relative z-10 flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl sm:rounded-4xl border border-stone-200/90 bg-white text-stone-900 shadow-2xl transition-all dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100">
+      <div className="relative z-10 flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] sm:rounded-[36px] border border-slate-200/90 bg-white text-slate-900 shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-all dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100">
         
         {/* MODAL HEADER */}
-        <div className="flex items-center justify-between border-b border-stone-100 px-6 py-4.5 sm:px-8 dark:border-white/8">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4.5 sm:px-8 dark:border-white/8">
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 border border-amber-500/20">
+              <span className="rounded-full bg-slate-100 dark:bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-800 dark:text-stone-300">
                 {formatMealSlot(slot)}
               </span>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-950 dark:text-stone-50">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950 dark:text-stone-50">
                 Choose {formatMealSlot(slot)}
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-stone-400 mt-0.5">
               {isSnackSlot
                 ? "Select a healthy quick bite, fruit, smoothie, or search to log any snack."
                 : `${filteredRecipes.length} recipes available • Recommended matches prioritized`}
@@ -494,7 +494,7 @@ function StandardRecipePickerModal({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer text-base font-bold"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white transition cursor-pointer text-base font-bold"
             >
               ✕
             </button>
@@ -502,10 +502,10 @@ function StandardRecipePickerModal({
         </div>
 
         {/* FULL-WIDTH SEARCH & FILTER CONTROLS */}
-        <div className="border-b border-stone-100 bg-stone-50/70 px-6 py-4 sm:px-8 dark:border-white/8 dark:bg-[#1a1411]/80 space-y-3 shrink-0">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 sm:px-8 dark:border-white/8 dark:bg-[#1a1411]/80 space-y-3 shrink-0">
           {/* Search Input */}
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-stone-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
@@ -517,25 +517,25 @@ function StandardRecipePickerModal({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={isSnackSlot ? "Search snacks, fruits, smoothies, energy bites..." : "Search recipes by title, ingredients, cuisine..."}
               autoFocus
-              className="h-11 w-full rounded-2xl border border-stone-300 bg-white py-2 pl-11 pr-10 text-xs sm:text-sm font-semibold text-stone-950 placeholder:font-normal placeholder:text-stone-400 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-white/12 dark:bg-[#1e1713] dark:text-stone-50 dark:placeholder:text-stone-500"
+              className="h-11 w-full rounded-2xl border border-slate-300 bg-white py-2 pl-11 pr-10 text-xs sm:text-sm font-semibold text-slate-950 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-white/12 dark:bg-[#1e1713] dark:text-stone-50 dark:placeholder:text-stone-500"
             />
 
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-stone-400 hover:text-stone-700 dark:text-stone-400 dark:hover:text-white cursor-pointer text-sm"
+                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 dark:text-stone-400 dark:hover:text-white cursor-pointer text-sm"
               >
                 ✕
               </button>
             )}
           </div>
 
-          {/* SMART 1-CLICK QUICK LOG BAR (ZERO GUESSWORK FOR CALORIES) */}
+          {/* SMART 1-CLICK QUICK LOG BAR */}
           {smartEstimate && (
-            <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/10 text-stone-900 dark:text-stone-100 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-slate-300 bg-white dark:bg-black/30 text-slate-900 dark:text-stone-100 animate-in fade-in slide-in-from-top-1 duration-150 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-stone-200 dark:border-white/10 bg-stone-900">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-900">
                   <img
                     src={smartEstimate.defaultImage}
                     alt={smartEstimate.title}
@@ -544,14 +544,14 @@ function StandardRecipePickerModal({
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900 dark:text-amber-400">
                       Smart 1-Click Log
                     </span>
-                    <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
+                    <span className="text-[11px] text-slate-500 dark:text-stone-400 font-medium">
                       • {smartEstimate.portion}
                     </span>
                   </div>
-                  <p className="truncate text-xs sm:text-sm font-bold text-stone-950 dark:text-stone-50">
+                  <p className="truncate text-xs sm:text-sm font-bold text-slate-950 dark:text-stone-50">
                     {smartEstimate.title}
                   </p>
                 </div>
@@ -561,9 +561,9 @@ function StandardRecipePickerModal({
                 type="button"
                 onClick={() => handleLogEstimated(smartEstimate)}
                 disabled={isLoggingCustom}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold px-3.5 py-2 text-xs shadow-xs transition active:scale-95 cursor-pointer shrink-0 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2 text-xs shadow-xs transition active:scale-95 cursor-pointer shrink-0 disabled:opacity-50 dark:bg-white dark:text-slate-950"
               >
-                <FlameIcon className="h-3.5 w-3.5" />
+                <FlameIcon className="h-3.5 w-3.5 text-amber-400" />
                 <span>Log {smartEstimate.calories} kcal</span>
                 <PlusIcon className="h-3 w-3" />
               </button>
@@ -581,8 +581,8 @@ function StandardRecipePickerModal({
                   onClick={() => setActiveFilter(chip.value)}
                   className={`shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
                     active
-                      ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 shadow-xs border border-amber-600/50 font-black"
-                      : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10"
+                      ? "bg-slate-900 text-white shadow-xs border border-slate-900 font-bold dark:bg-white dark:text-slate-950 dark:border-white"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10"
                   }`}
                 >
                   {chip.label}
