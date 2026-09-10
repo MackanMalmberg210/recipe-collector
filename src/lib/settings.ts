@@ -23,7 +23,11 @@ export type UserSettings = {
   autoScaleRecipes: boolean;
   autoAddLowPantryToList: boolean;
   subscriptionTier: "free" | "pro";
+  monthlyAiScansUsed?: number;
+  monthlyAiScansResetDate?: string;
 };
+
+export const FREE_MONTHLY_AI_SCANS_LIMIT = 3;
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   unitSystem: "metric",
@@ -33,6 +37,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   autoScaleRecipes: true,
   autoAddLowPantryToList: true, // Auto-add low pantry staples to shopping list
   subscriptionTier: "free",
+  monthlyAiScansUsed: 0,
+  monthlyAiScansResetDate: "",
 };
 
 export const USER_SETTINGS_KEY = "recipe_collector_user_settings";
@@ -54,7 +60,84 @@ export function saveUserSettings(settings: UserSettings): void {
     localStorage.setItem(USER_SETTINGS_KEY, JSON.stringify(settings));
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("user_settings_updated", { detail: settings }));
+
+    // Background cloud sync
+    import("./sync/cloudSync").then(({ syncCloudUserSettings }) => {
+      syncCloudUserSettings(settings).catch(() => {});
+    });
+  } catch {
+    // Ignore storage write errors
+  }
+}
+
+export function getAiScanUsage(settings?: UserSettings): {
+  used: number;
+  max: number;
+  isUnlimited: boolean;
+  remaining: number;
+  canScan: boolean;
+} {
+  const s = settings || getStoredUserSettings();
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
+  if (s.subscriptionTier === "pro") {
+    return {
+      used: s.monthlyAiScansUsed || 0,
+      max: Infinity,
+      isUnlimited: true,
+      remaining: Infinity,
+      canScan: true,
+    };
+  }
+
+  const used = s.monthlyAiScansResetDate === currentMonth ? (s.monthlyAiScansUsed || 0) : 0;
+  const remaining = Math.max(0, FREE_MONTHLY_AI_SCANS_LIMIT - used);
+
+  return {
+    used,
+    max: FREE_MONTHLY_AI_SCANS_LIMIT,
+    isUnlimited: false,
+    remaining,
+    canScan: remaining > 0,
+  };
+}
+
+export function recordAiScanUsage(): void {
+  const s = getStoredUserSettings();
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentUsed = s.monthlyAiScansResetDate === currentMonth ? (s.monthlyAiScansUsed || 0) : 0;
+
+  saveUserSettings({
+    ...s,
+    monthlyAiScansUsed: currentUsed + 1,
+    monthlyAiScansResetDate: currentMonth,
+  });
+}
+
+export function toggleSubscriptionTier(): "free" | "pro" {
+  const current = getStoredUserSettings();
+  const newTier = current.subscriptionTier === "pro" ? "free" : "pro";
+  saveUserSettings({
+    ...current,
+    subscriptionTier: newTier,
+  });
+  return newTier;
+}
+
+export async function getStoredUserSettingsWithCloud(): Promise<UserSettings> {
+  const local = getStoredUserSettings();
+  try {
+    const { fetchCloudUserSettings } = await import("./sync/cloudSync");
+    const cloud = await fetchCloudUserSettings();
+    if (cloud) {
+      const merged: UserSettings = { ...local, ...cloud };
+      if (typeof window !== "undefined") {
+        localStorage.setItem(USER_SETTINGS_KEY, JSON.stringify(merged));
+      }
+      return merged;
+    }
   } catch {}
+  return local;
 }
 
 export function isRecipeDietaryCompatible(recipe: AppRecipe, preferences: DietaryPreference[]): boolean {

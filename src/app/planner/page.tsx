@@ -10,15 +10,21 @@ import { getAllRecipesWithCloud } from "../../lib/recipes";
 import type { AppRecipe } from "../../lib/types";
 import {
   WEEK_DAYS,
+  MEAL_SLOTS,
   clearStoredMealPlan,
   createEmptyMealPlan,
+  createEmptyDayPlan,
   getStoredDailyCalorieTarget,
   getStoredMealPlan,
+  getStoredMealPlanWithCloud,
   saveDailyCalorieTarget,
   saveMealPlan,
   sanitizeMealPlan,
   smartAutoPlanWeek,
   smartSurpriseMeal,
+  smartShuffleDay,
+  formatWeekDay,
+  getStoredQuickSnacks,
   type MealPlan,
   type MealSlot,
   type WeekDay,
@@ -40,19 +46,16 @@ export default function PlannerPage() {
   const [activePicker, setActivePicker] = useState<{ day: WeekDay; slot: MealSlot } | null>(null);
   const [activeMealPrep, setActiveMealPrep] = useState<{ day: WeekDay; recipe: AppRecipe } | null>(null);
 
-  // Drag and drop state
-  const [draggedRecipe, setDraggedRecipe] = useState<{
-    recipeId: number;
-    fromDay?: WeekDay;
-    fromSlot?: MealSlot;
-  } | null>(null);
 
   useEffect(() => {
     getAllRecipesWithCloud().then((recipes) => {
-      setAllRecipes(recipes);
-      const stored = getStoredMealPlan();
-      const sanitized = sanitizeMealPlan(stored, recipes);
-      setMealPlan(sanitized);
+      const quickSnacks = getStoredQuickSnacks();
+      const combined = [...recipes, ...quickSnacks];
+      setAllRecipes(combined);
+      getStoredMealPlanWithCloud().then((stored) => {
+        const sanitized = sanitizeMealPlan(stored, combined);
+        setMealPlan(sanitized);
+      });
 
       // Preload & warm browser cache for all recipe images so scrolling is 100% instant
       if (typeof window !== "undefined") {
@@ -70,10 +73,13 @@ export default function PlannerPage() {
 
   const plannedMealsCount = useMemo(() => {
     return Object.values(mealPlan).reduce((acc, dayPlan) => {
-      const b = Boolean(dayPlan.breakfast && allRecipes.some((r) => r.id === dayPlan.breakfast));
-      const l = Boolean(dayPlan.lunch && allRecipes.some((r) => r.id === dayPlan.lunch));
-      const d = Boolean(dayPlan.dinner && allRecipes.some((r) => r.id === dayPlan.dinner));
-      return acc + (b ? 1 : 0) + (l ? 1 : 0) + (d ? 1 : 0);
+      let count = 0;
+      for (const slot of MEAL_SLOTS) {
+        if (dayPlan[slot] && allRecipes.some((r) => r.id === dayPlan[slot])) {
+          count++;
+        }
+      }
+      return acc + count;
     }, 0);
   }, [mealPlan, allRecipes]);
 
@@ -81,6 +87,14 @@ export default function PlannerPage() {
     const ids = new Set<number>();
     Object.values(mealPlan).forEach((dayPlan) => {
       if (dayPlan.dinner) ids.add(dayPlan.dinner);
+    });
+    return ids;
+  }, [mealPlan]);
+
+  const plannedLunchRecipeIds = useMemo(() => {
+    const ids = new Set<number>();
+    Object.values(mealPlan).forEach((dayPlan) => {
+      if (dayPlan.lunch) ids.add(dayPlan.lunch);
     });
     return ids;
   }, [mealPlan]);
@@ -94,7 +108,11 @@ export default function PlannerPage() {
     day: WeekDay,
     slot: MealSlot,
     recipeId: number | null,
+    createdRecipe?: AppRecipe,
   ) => {
+    if (createdRecipe) {
+      setAllRecipes((prev) => [createdRecipe, ...prev.filter((r) => r.id !== createdRecipe.id)]);
+    }
     setMealPlan((prev) => {
       const next = {
         ...prev,
@@ -116,11 +134,7 @@ export default function PlannerPage() {
     setMealPlan((prev) => {
       const next = {
         ...prev,
-        [day]: {
-          breakfast: null,
-          lunch: null,
-          dinner: null,
-        },
+        [day]: createEmptyDayPlan(),
       };
       saveMealPlan(next);
       return next;
@@ -138,23 +152,17 @@ export default function PlannerPage() {
 
   const handleShuffleDay = useCallback((day: WeekDay) => {
     if (allRecipes.length === 0) return;
-    const b = smartSurpriseMeal(day, "breakfast", mealPlan, allRecipes);
-    const l = smartSurpriseMeal(day, "lunch", mealPlan, allRecipes);
-    const d = smartSurpriseMeal(day, "dinner", mealPlan, allRecipes);
+    const newDayPlan = smartShuffleDay(day, mealPlan, allRecipes);
 
     setMealPlan((prev) => {
       const next = {
         ...prev,
-        [day]: {
-          breakfast: b?.id ?? null,
-          lunch: l?.id ?? null,
-          dinner: d?.id ?? null,
-        },
+        [day]: newDayPlan,
       };
       saveMealPlan(next);
       return next;
     });
-    success(`Shuffled meals for ${day}! 🎲`);
+    success(`Shuffled meals for ${formatWeekDay(day)}! 🎲`);
   }, [allRecipes, mealPlan, success]);
 
   const handleApplyMealPrep = useCallback((
@@ -176,49 +184,6 @@ export default function PlannerPage() {
     success(`Applied ${recipe.title} to ${targetDays.length} lunch slot${targetDays.length === 1 ? "" : "s"}! 🍱`);
   }, [success]);
 
-  const handleDayMealDragStart = useCallback((
-    day: WeekDay,
-    slot: MealSlot,
-    recipeId: number,
-  ) => {
-    setDraggedRecipe({ recipeId, fromDay: day, fromSlot: slot });
-  }, []);
-
-  const handleDeckDragStart = useCallback((recipeId: number) => {
-    setDraggedRecipe({ recipeId });
-  }, []);
-
-  const handleDropMeal = useCallback((targetDay: WeekDay, targetSlot: MealSlot) => {
-    if (!draggedRecipe) return;
-
-    const { recipeId, fromDay, fromSlot } = draggedRecipe;
-
-    if (fromDay && fromSlot) {
-      // Swapping two meals between slots
-      const currentTargetRecipeId = mealPlan[targetDay][targetSlot];
-
-      setMealPlan((prev) => {
-        const next = {
-          ...prev,
-          [targetDay]: {
-            ...prev[targetDay],
-            [targetSlot]: recipeId,
-          },
-          [fromDay]: {
-            ...prev[fromDay],
-            [fromSlot]: currentTargetRecipeId,
-          },
-        };
-        saveMealPlan(next);
-        return next;
-      });
-    } else {
-      // Direct drag from cookbook deck
-      handleSelectRecipe(targetDay, targetSlot, recipeId);
-    }
-
-    setDraggedRecipe(null);
-  }, [draggedRecipe, mealPlan, handleSelectRecipe]);
 
   const handleConfirmClearWeek = () => {
     const empty = createEmptyMealPlan();
@@ -242,18 +207,18 @@ export default function PlannerPage() {
 
   if (!hasHydrated) {
     return (
-      <main className="relative min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative min-h-screen px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-3xl border border-stone-200/90 bg-white dark:border-white/10 dark:bg-[#16120f] p-8 text-stone-400">
             Loading your weekly planner...
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="relative min-h-screen px-4 py-6 sm:px-6 xl:px-10 text-stone-950 dark:text-stone-100">
+    <div className="relative min-h-screen px-4 py-6 sm:px-6 xl:px-10 text-stone-950 dark:text-stone-100">
       <div className="relative mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* HEADER BAR */}
@@ -355,7 +320,7 @@ export default function PlannerPage() {
         </header>
 
         {/* 7-DAY TIMELINE */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {WEEK_DAYS.map((day, index) => {
             const dayPlan = mealPlan[day];
             const prevIndex = index === 0 ? WEEK_DAYS.length - 1 : index - 1;
@@ -371,6 +336,7 @@ export default function PlannerPage() {
                 dayPlan={dayPlan}
                 previousDayDinnerRecipe={prevDinner}
                 plannedDinnerRecipeIds={plannedDinnerRecipeIds}
+                plannedLunchRecipeIds={plannedLunchRecipeIds}
                 dailyCalorieTarget={dailyCalorieTarget}
                 onOpenPicker={(d, slot) => setActivePicker({ day: d, slot })}
                 onOpenMealPrep={(d, recipe) => setActiveMealPrep({ day: d, recipe })}
@@ -379,8 +345,6 @@ export default function PlannerPage() {
                 onSurpriseMeal={handleSurpriseMeal}
                 onShuffleDay={handleShuffleDay}
                 onSelectLeftovers={handleSelectRecipe}
-                onDragMealStart={handleDayMealDragStart}
-                onDropMeal={handleDropMeal}
               />
             );
           })}
@@ -410,8 +374,8 @@ export default function PlannerPage() {
           recipes={allRecipes}
           slot={activePicker.slot}
           selectedRecipeId={mealPlan[activePicker.day][activePicker.slot]}
-          onSelectRecipe={(recipeId) => {
-            handleSelectRecipe(activePicker.day, activePicker.slot, recipeId);
+          onSelectRecipe={(recipeId, createdRecipe) => {
+            handleSelectRecipe(activePicker.day, activePicker.slot, recipeId, createdRecipe);
             setActivePicker(null);
           }}
           onClearRecipe={() => {
@@ -440,7 +404,6 @@ export default function PlannerPage() {
         isOpen={isPantryOpen}
         onClose={() => setIsPantryOpen(false)}
         recipes={allRecipes}
-        onDragStart={handleDeckDragStart}
       />
 
       {/* CHOOSE DESTINATION GROCERY LIST MODAL */}
@@ -462,6 +425,6 @@ export default function PlannerPage() {
         onConfirm={handleConfirmClearWeek}
         onCancel={() => setIsClearWeekModalOpen(false)}
       />
-    </main>
+    </div>
   );
 }

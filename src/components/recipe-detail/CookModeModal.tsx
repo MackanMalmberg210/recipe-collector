@@ -212,7 +212,7 @@ export default function CookModeModal({
       {/* MAIN BODY */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* STEP CONTENT AREA */}
-        <main className="flex flex-1 flex-col justify-between p-6 sm:p-12 lg:p-16 max-w-4xl mx-auto overflow-y-auto">
+        <div className="flex flex-1 flex-col justify-between p-6 sm:p-12 lg:p-16 max-w-4xl mx-auto overflow-y-auto">
           <div className="space-y-6 my-auto">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-amber-300">
               Step {currentStepIndex + 1} of {steps.length}
@@ -313,7 +313,7 @@ export default function CookModeModal({
               {isLastStep ? "Finish Cooking ✓" : "Next Step →"}
             </button>
           </footer>
-        </main>
+        </div>
 
         {/* ELEVATED INGREDIENTS SIDE DRAWER */}
         {showIngredients && (

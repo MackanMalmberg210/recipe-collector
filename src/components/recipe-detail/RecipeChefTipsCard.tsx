@@ -13,6 +13,28 @@ export default function RecipeChefTipsCard({ recipe }: RecipeChefTipsCardProps) 
   // Dynamic culinary pro-tips based on category & recipe context
   const getProTips = () => {
     if (
+      mealType.includes("breakfast") ||
+      mealType.includes("brunch") ||
+      category.includes("breakfast") ||
+      category.includes("brunch") ||
+      recipe.title.toLowerCase().includes("toast") ||
+      recipe.title.toLowerCase().includes("egg") ||
+      recipe.title.toLowerCase().includes("pancake") ||
+      recipe.title.toLowerCase().includes("porridge")
+    ) {
+      return [
+        {
+          title: "Silky Yolks & Egg Temperature",
+          text: "Cook eggs on gentle medium-low heat. Lower heat preserves delicate proteins, preventing rubbery whites and keeping yolks velvety and rich.",
+        },
+        {
+          title: "Artisan Bread & Seasoning",
+          text: "Toast hearty rustic bread until deeply golden so it holds up under toppings. Always finish warm eggs and avocado with flaky sea salt and freshly cracked pepper immediately.",
+        },
+      ];
+    }
+
+    if (
       category.includes("seafood") ||
       category.includes("fish") ||
       recipe.title.toLowerCase().includes("salmon") ||
@@ -93,10 +115,31 @@ export default function RecipeChefTipsCard({ recipe }: RecipeChefTipsCardProps) 
 
   // Dynamic beverage pairings
   const getPairing = () => {
+    const isMorning =
+      mealType.includes("breakfast") ||
+      mealType.includes("brunch") ||
+      category.includes("breakfast") ||
+      category.includes("brunch") ||
+      recipe.title.toLowerCase().includes("toast") ||
+      recipe.title.toLowerCase().includes("egg") ||
+      recipe.title.toLowerCase().includes("pancake") ||
+      recipe.title.toLowerCase().includes("porridge");
+
+    if (isMorning) {
+      return {
+        isMorning: true,
+        primaryLabel: "Morning Coffee / Tea",
+        primary: "Freshly brewed coffee, cappuccino, or English breakfast tea",
+        nonAlcoholic: "Fresh orange juice, apple cider, or cold oat milk",
+      };
+    }
+
     if (category.includes("seafood") || category.includes("salad")) {
       return {
-        wine: "Crisp Sauvignon Blanc, Pinot Grigio, or Chablis",
-        nonAlcoholic: "Sparkling Lemon-Herb Infused Water or Cucumber Mint Tonic",
+        isMorning: false,
+        primaryLabel: "Crisp Wine & Refreshment",
+        primary: "Sauvignon Blanc, Pinot Grigio, or a chilled light beer",
+        nonAlcoholic: "Sparkling water with lemon or iced herbal tea",
       };
     }
     if (
@@ -105,8 +148,10 @@ export default function RecipeChefTipsCard({ recipe }: RecipeChefTipsCardProps) 
       category.includes("meat")
     ) {
       return {
-        wine: "Chianti Classico, Sangiovese, or Medium-Bodied Pinot Noir",
-        nonAlcoholic: "Pomegranate Spritz with Rosemary or Cold-Brewed Earl Grey",
+        isMorning: false,
+        primaryLabel: "Red Wine & Classic Beers",
+        primary: "Medium-bodied red wine (Chianti or Pinot Noir) or pale ale",
+        nonAlcoholic: "Iced tea with lemon or sparkling water with berries",
       };
     }
     if (
@@ -115,13 +160,17 @@ export default function RecipeChefTipsCard({ recipe }: RecipeChefTipsCardProps) 
       category.includes("ramen")
     ) {
       return {
-        wine: "Dry Riesling, Gewürztraminer, or Crisp Japanese Lager",
-        nonAlcoholic: "Iced Roasted Hojicha or Sparkling Ginger-Lime Soda",
+        isMorning: false,
+        primaryLabel: "Crisp Beer & Aromatic Wine",
+        primary: "Crisp lager, wheat beer, or dry Riesling",
+        nonAlcoholic: "Ginger beer, green tea, or sparkling water with lime",
       };
     }
     return {
-      wine: "Light Pinot Noir, Dry Rosé, or Unoaked Chardonnay",
-      nonAlcoholic: "Sparkling Mineral Water with Fresh Lime & Mint",
+      isMorning: false,
+      primaryLabel: "Wine & Refreshment",
+      primary: "A glass of your favorite red or white wine, or a cold beer",
+      nonAlcoholic: "Sparkling mineral water with a slice of fresh lemon",
     };
   };
 
@@ -169,31 +218,42 @@ export default function RecipeChefTipsCard({ recipe }: RecipeChefTipsCardProps) 
         ))}
       </div>
 
-      {/* BEVERAGE PAIRING ROW WITH CLEAN STANDALONE ICON */}
-      <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4.5 dark:border-amber-400/25 dark:bg-[#1f1b18] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <svg
-            className="h-6 w-6 text-amber-500 shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-            />
-          </svg>
-          <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
-              Recommended Pairings
-            </h4>
-            <p className="text-xs sm:text-sm font-semibold text-stone-900 dark:text-[#fafaf9] mt-0.5">
-              🍷 {pairing.wine}
+      {/* RECOMMENDED PAIRINGS (CLEAN TWO-COLUMN CARDS, NO EMOJIS, SITE-CONSISTENT SVGS) */}
+      <div className="space-y-3 pt-2 border-t border-stone-200/80 dark:border-[#2e2722]/80">
+        <h3 className="text-xs font-black uppercase tracking-[0.15em] text-amber-600 dark:text-amber-400">
+          Recommended Beverage Pairings
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* 1. Primary Pairing */}
+          <div className="rounded-2xl border border-stone-200/90 bg-stone-50/60 p-4 dark:border-[#2e2722] dark:bg-[#24201c] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-xs font-bold text-stone-900 dark:text-[#fafaf9]">
+              {pairing.isMorning ? (
+                <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v6m-4 0h8m-4-6a5 5 0 005-5V4H7v6a5 5 0 005 5z" />
+                </svg>
+              )}
+              <span>{pairing.primaryLabel}</span>
+            </div>
+            <p className="text-xs sm:text-sm text-stone-700 dark:text-[#d6d3d1] leading-relaxed">
+              {pairing.primary}
             </p>
-            <p className="text-xs text-stone-500 dark:text-[#a8a29e] mt-0.5">
-              🥤 {pairing.nonAlcoholic}
+          </div>
+
+          {/* 2. Non-Alcoholic Pairing */}
+          <div className="rounded-2xl border border-stone-200/90 bg-stone-50/60 p-4 dark:border-[#2e2722] dark:bg-[#24201c] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-xs font-bold text-stone-900 dark:text-[#fafaf9]">
+              <svg className="h-4 w-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span>Non-Alcoholic Refreshment</span>
+            </div>
+            <p className="text-xs sm:text-sm text-stone-700 dark:text-[#d6d3d1] leading-relaxed">
+              {pairing.nonAlcoholic}
             </p>
           </div>
         </div>

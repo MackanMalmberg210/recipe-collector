@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { generateRecipeMetadata } from "../../lib/recipeMetadata";
-import { saveRecipeToCloudOrLocal } from "../../lib/recipes";
+import { saveRecipeToCloudOrLocal, updateRecipeInCloudOrLocal, getAllRecipes } from "../../lib/recipes";
 import { parseIngredientString } from "../../lib/ingredientParser";
+import { sanitizeCulinaryText, capitalizeFirstLetter } from "../../lib/culinaryTextSanitizer";
 import { useToast } from "../../components/ui/ToastProvider";
-import type { MealType, RecipeCategory } from "../../lib/types";
+import { useAuth } from "../../contexts/AuthContext";
+import { compressImage } from "../../lib/imageCompressor";
+import type { AppRecipe, MealType, RecipeCategory } from "../../lib/types";
 
 const SUGGESTED_TAGS = [
   "quick",
@@ -37,9 +40,15 @@ const CATEGORIES: { label: string; value: RecipeCategory }[] = [
   { label: "Dessert", value: "dessert" },
 ];
 
-export default function CreateRecipePage() {
+function CreateRecipeForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
   const { success } = useToast();
+  const { user, isGuest, displayName } = useAuth();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalRecipe, setOriginalRecipe] = useState<AppRecipe | null>(null);
 
   // Basic info
   const [title, setTitle] = useState("");
@@ -57,9 +66,41 @@ export default function CreateRecipePage() {
   const [tagInput, setTagInput] = useState("");
   const [showOptionalDetails, setShowOptionalDetails] = useState(false);
 
+  // Visibility & Community Sharing
+  const [isPublic, setIsPublic] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
   // Smart Unified Editors for Ingredients & Instructions
   const [ingredientText, setIngredientText] = useState("");
   const [instructionText, setInstructionText] = useState("");
+
+  // Hydrate recipe to edit if editId exists
+  useEffect(() => {
+    if (!editId) return;
+    const idNum = Number(editId);
+    if (isNaN(idNum)) return;
+
+    const all = getAllRecipes();
+    const found = all.find((r) => r.id === idNum);
+    if (found) {
+      setIsEditing(true);
+      setOriginalRecipe(found);
+      setTitle(found.title || "");
+      setImage(found.image || "");
+      setCookTime(found.cookTime ? String(found.cookTime) : "");
+      setServings(found.servings ? String(found.servings) : "");
+      setCalories(found.calories ? String(found.calories) : "");
+      setMealType(found.mealType || null);
+      setCategory(found.category || null);
+      setTags(found.tags || []);
+      setIngredientText((found.ingredients || []).join("\n"));
+      setInstructionText((found.instructions || []).join("\n"));
+      setIsPublic(Boolean(found.isPublic));
+      if (found.category || found.mealType || (found.tags && found.tags.length > 0)) {
+        setShowOptionalDetails(true);
+      }
+    }
+  }, [editId]);
 
   // State & validation
   const [saveMessage, setSaveMessage] = useState("");
@@ -68,11 +109,11 @@ export default function CreateRecipePage() {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
-  // Raw full ingredient strings (preserved with amounts and units)
+  // Raw full ingredient strings (preserved with amounts and units, always capitalized)
   const rawIngredients = useMemo(() => {
     return ingredientText
       .split("\n")
-      .map((line) => line.trim())
+      .map((line) => capitalizeFirstLetter(sanitizeCulinaryText(line.trim())))
       .filter(Boolean);
   }, [ingredientText]);
 
@@ -111,7 +152,7 @@ export default function CreateRecipePage() {
     setTags((prev) => prev.filter((t) => t !== tagToRemove));
   };
 
-  const handleImageFile = (file: File | null) => {
+  const handleImageFile = async (file: File | null) => {
     setSaveMessage("");
     setError("");
     if (!file) return;
@@ -121,19 +162,19 @@ export default function CreateRecipePage() {
       return;
     }
 
-    const maxSizeInBytes = 3 * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-      setError("Image is too large. Please select an image under 3 MB.");
-      return;
+    try {
+      // Auto-compress mobile photos to lightweight, crisp image
+      const compressed = await compressImage(file, 1600, 1600, 0.85);
+      setImage(compressed);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setImage(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleApplyImageUrl = () => {
@@ -141,6 +182,72 @@ export default function CreateRecipePage() {
     setImage(imageUrlInput.trim());
     setImageUrlInput("");
   };
+
+  // Real-time Community Quality Standards Verification (Required for publishing to Explore)
+  const communityQuality = useMemo(() => {
+    const hasTitle = title.trim().length >= 5;
+    const hasPhoto = Boolean(image.trim());
+    const hasMinIngredients = rawIngredients.length >= 3;
+    const hasMinInstructions = cleanedInstructions.length >= 2;
+    const hasCookTime = Boolean(cookTime.trim() && Number(cookTime) > 0);
+    const hasServings = Boolean(servings.trim() && Number(servings) > 0);
+    const hasCategory = Boolean(category || autoMetadata.category);
+
+    const checks = [
+      {
+        id: "title",
+        label: "Descriptive title (min 5 characters)",
+        passed: hasTitle,
+        hint: title.trim().length < 5 ? "Give your dish a descriptive name" : "Title meets length standard",
+      },
+      {
+        id: "photo",
+        label: "Mouthwatering cover photo",
+        passed: hasPhoto,
+        hint: !hasPhoto ? "Upload a photo or paste a food image URL" : "Cover photo ready",
+      },
+      {
+        id: "ingredients",
+        label: "At least 3 ingredients with amounts",
+        passed: hasMinIngredients,
+        hint: rawIngredients.length < 3 ? `Add ${3 - rawIngredients.length} more ingredient${3 - rawIngredients.length === 1 ? "" : "s"}` : "Ingredients complete",
+      },
+      {
+        id: "instructions",
+        label: "At least 2 clear cooking steps",
+        passed: hasMinInstructions,
+        hint: cleanedInstructions.length < 2 ? `Add ${2 - cleanedInstructions.length} more step${2 - cleanedInstructions.length === 1 ? "" : "s"}` : "Cooking instructions complete",
+      },
+      {
+        id: "cookTime",
+        label: "Cooking duration specified",
+        passed: hasCookTime,
+        hint: !hasCookTime ? "Estimate cooking duration in minutes" : "Cook time specified",
+      },
+      {
+        id: "servings",
+        label: "Servings / portions specified",
+        passed: hasServings,
+        hint: !hasServings ? "Specify how many portions this recipe makes" : "Servings specified",
+      },
+      {
+        id: "category",
+        label: "Meal category assigned",
+        passed: hasCategory,
+        hint: !hasCategory ? "Select or let auto-tag classify your dish" : "Category assigned",
+      },
+    ];
+
+    const allPassed = checks.every((c) => c.passed);
+    const passedCount = checks.filter((c) => c.passed).length;
+
+    return {
+      checks,
+      allPassed,
+      passedCount,
+      totalCount: checks.length,
+    };
+  }, [title, image, rawIngredients, cleanedInstructions, cookTime, servings, category, autoMetadata.category]);
 
   const resetForm = () => {
     setTitle("");
@@ -152,6 +259,8 @@ export default function CreateRecipePage() {
     setMealType(null);
     setCategory(null);
     setTags([]);
+    setIsPublic(false);
+    setShowAuthPrompt(false);
     setIngredientText("");
     setInstructionText("");
     setHasAttemptedSave(false);
@@ -177,9 +286,25 @@ export default function CreateRecipePage() {
       return null;
     }
 
+    if (isPublic) {
+      if (isGuest) {
+        setError("Please sign in or create a free account to publish recipes to the Community Explore feed. You can save privately to your local cookbook anytime!");
+        setShowAuthPrompt(true);
+        return null;
+      }
+      if (!communityQuality.allPassed) {
+        setError("Please meet all Community Quality Standards before publishing to Explore.");
+        return null;
+      }
+    }
+
     const finalTags = tags.length > 0 ? tags : autoMetadata.tags;
     const finalCategory: RecipeCategory = category ?? autoMetadata.category;
     const finalMealType: MealType = mealType ?? autoMetadata.mealType;
+
+    const finalAuthorName = isPublic
+      ? user?.user_metadata?.display_name || user?.user_metadata?.full_name || displayName || "Community Chef"
+      : undefined;
 
     return {
       title: cleanedTitle,
@@ -193,6 +318,8 @@ export default function CreateRecipePage() {
       mealType: finalMealType,
       tags: finalTags,
       origin: "user" as const,
+      isPublic: isPublic,
+      authorName: finalAuthorName,
     };
   };
 
@@ -204,6 +331,26 @@ export default function CreateRecipePage() {
     const payload = validateAndBuildPayload();
     if (!payload) {
       setIsSaving(false);
+      return;
+    }
+
+    if (isEditing && originalRecipe) {
+      const updatedRecipe: AppRecipe = {
+        ...originalRecipe,
+        ...payload,
+        id: originalRecipe.id,
+      };
+
+      const result = await updateRecipeInCloudOrLocal(updatedRecipe);
+      if (!result.success || !result.recipe) {
+        setError(result.error || "Failed to update recipe.");
+        setIsSaving(false);
+        return;
+      }
+
+      setIsSaving(false);
+      success(`"${result.recipe.title}" updated successfully! ✨`);
+      router.push(`/recipes/${result.recipe.id}`);
       return;
     }
 
@@ -231,6 +378,26 @@ export default function CreateRecipePage() {
       return;
     }
 
+    if (isEditing && originalRecipe) {
+      const updatedRecipe: AppRecipe = {
+        ...originalRecipe,
+        ...payload,
+        id: originalRecipe.id,
+      };
+
+      const result = await updateRecipeInCloudOrLocal(updatedRecipe);
+      if (!result.success || !result.recipe) {
+        setError(result.error || "Failed to update recipe.");
+        setIsSaving(false);
+        return;
+      }
+
+      setIsSaving(false);
+      success(`"${result.recipe.title}" updated.`);
+      router.push(`/recipes/${result.recipe.id}?cook=true`);
+      return;
+    }
+
     const result = await saveRecipeToCloudOrLocal(payload);
 
     if (!result.success || !result.recipe) {
@@ -251,7 +418,7 @@ export default function CreateRecipePage() {
   const previewTags = tags.length > 0 ? tags : (hasContent ? autoMetadata.tags : []);
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] text-[#1c1917] transition-colors duration-300 dark:bg-[#12100e] dark:text-[#fafaf9] px-4 py-8 sm:px-6 xl:px-10">
+    <div className="min-h-screen bg-[#faf8f5] text-[#1c1917] transition-colors duration-300 dark:bg-[#12100e] dark:text-[#fafaf9] px-4 py-8 sm:px-6 xl:px-10">
       
       {/* AMBIENT BACKGROUND GLOW */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -269,11 +436,13 @@ export default function CreateRecipePage() {
             </div>
 
             <h1 className="text-3xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50 sm:text-4xl md:text-5xl">
-              Create new recipe
+              {isEditing ? "Edit recipe" : "Create new recipe"}
             </h1>
 
             <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400">
-              Build a recipe with ingredients, step-by-step instructions, and photos.
+              {isEditing
+                ? `Refine ingredients, steps, and metrics for "${originalRecipe?.title || title}".`
+                : "Build a recipe with ingredients, step-by-step instructions, and photos."}
             </p>
           </div>
 
@@ -422,12 +591,10 @@ export default function CreateRecipePage() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-2">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                          </div>
+                          <svg className="h-8 w-8 text-stone-400 dark:text-stone-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
                           <p className="text-xs font-bold text-stone-800 dark:text-stone-200">
                             Click to upload or drag and drop
                           </p>
@@ -884,6 +1051,250 @@ export default function CreateRecipePage() {
               )}
             </section>
 
+            {/* STEP 5: VISIBILITY & COMMUNITY SHARING */}
+            <section className="relative overflow-hidden rounded-4xl border border-stone-200/90 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] md:p-8">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent dark:via-amber-400/20" />
+
+              <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono">
+                    05.
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
+                      Visibility &amp; Community Sharing
+                    </h2>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
+                      Decide if this recipe stays strictly private in your cookbook or publishes to Explore.
+                    </p>
+                  </div>
+                </div>
+
+                <span className={`inline-flex items-center gap-1.5 self-start rounded-full px-3 py-1 text-xs font-bold ${
+                  isPublic
+                    ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                    : "bg-stone-100 border border-stone-200 text-stone-600 dark:bg-white/5 dark:border-white/10 dark:text-stone-300"
+                }`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${isPublic ? "bg-emerald-500 animate-pulse" : "bg-stone-400"}`} />
+                  <span>{isPublic ? "Explore & Community" : "Private in Cookbook"}</span>
+                </span>
+              </div>
+
+              {/* 2-Option Card Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                {/* Option 1: Private */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPublic(false);
+                    setShowAuthPrompt(false);
+                    if (error) setError("");
+                  }}
+                  className={`group relative flex flex-col justify-between rounded-3xl border p-5 text-left transition-all cursor-pointer ${
+                    !isPublic
+                      ? "border-amber-500 bg-amber-500/5 ring-2 ring-amber-500/20 shadow-sm dark:border-amber-400 dark:bg-amber-400/5"
+                      : "border-stone-200 bg-stone-50/60 hover:bg-stone-100/70 dark:border-white/10 dark:bg-[#181412] dark:hover:bg-[#1f1a16]"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <svg className="h-5 w-5 text-stone-700 dark:text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <span className="rounded-full bg-stone-200/70 dark:bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-stone-700 dark:text-stone-300">
+                        Default
+                      </span>
+                    </div>
+
+                    <h3 className="mt-3 text-base font-bold text-stone-900 dark:text-stone-100">
+                      Private (My Cookbook only)
+                    </h3>
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+                      Saved exclusively in your personal cookbook. Never visible or searchable to other users.
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+                    <span>{!isPublic ? "● Active choice" : "Select private"}</span>
+                  </div>
+                </button>
+
+                {/* Option 2: Public */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isGuest) {
+                      setShowAuthPrompt(true);
+                      setIsPublic(true);
+                    } else {
+                      setIsPublic(true);
+                      setShowAuthPrompt(false);
+                    }
+                    if (error) setError("");
+                  }}
+                  className={`group relative flex flex-col justify-between rounded-3xl border p-5 text-left transition-all cursor-pointer ${
+                    isPublic
+                      ? "border-emerald-500 bg-emerald-500/5 ring-2 ring-emerald-500/20 shadow-sm dark:border-emerald-400 dark:bg-emerald-400/5"
+                      : "border-stone-200 bg-stone-50/60 hover:bg-stone-100/70 dark:border-white/10 dark:bg-[#181412] dark:hover:bg-[#1f1a16]"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <svg className="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18" />
+                      </svg>
+                      <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
+                        Explore Feed
+                      </span>
+                    </div>
+
+                    <h3 className="mt-3 text-base font-bold text-stone-900 dark:text-stone-100">
+                      Public (Explore &amp; Community)
+                    </h3>
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+                      Publish to the Explore feed with your chef attribution. Inspires home cooks everywhere!
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                    <span>{isPublic ? "● Active choice" : "Select public sharing"}</span>
+                  </div>
+                </button>
+
+              </div>
+
+              {/* GUEST ACCOUNT NOTICE (If guest clicks Public) */}
+              {isPublic && isGuest && (
+                <div className="mt-6 rounded-3xl border border-amber-500/30 bg-amber-500/10 p-5 dark:border-amber-400/20 dark:bg-amber-400/5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+                        <svg className="h-4 w-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Free Chef Account Required</span>
+                      </div>
+                      <p className="text-xs text-stone-700 dark:text-stone-300">
+                        To protect recipe quality and give you author credit on Explore, community publishing requires an account. You can save privately right now or sign in to share with the community!
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Link
+                        href="/login?mode=signup"
+                        className="rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 px-4 py-2 text-xs font-bold text-stone-950 shadow-xs hover:from-amber-400 hover:to-amber-500 transition"
+                      >
+                        Sign Up Free
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setIsPublic(false)}
+                        className="rounded-2xl border border-stone-300 bg-white/80 px-3 py-2 text-xs font-semibold text-stone-700 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 cursor-pointer"
+                      >
+                        Keep Private
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* COMMUNITY QUALITY GUARDRAILS CHECKLIST (Active when Public) */}
+              {isPublic && !isGuest && (
+                <div className="mt-6 space-y-4 rounded-3xl border border-stone-200 bg-stone-50/80 p-5 dark:border-white/8 dark:bg-[#181412] animate-in fade-in duration-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200/80 pb-3 dark:border-white/8">
+                    <div>
+                      <h4 className="text-sm font-bold text-stone-950 dark:text-stone-100 flex items-center gap-2">
+                        <span>🛡️ Community Quality Standards</span>
+                        {communityQuality.allPassed ? (
+                          <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                            Ready to Publish! ✨
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-300">
+                            {communityQuality.passedCount} of {communityQuality.totalCount} standards met
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                        Guarantees every recipe appearing in Explore has clear instructions, accurate amounts, and appetizing photos.
+                      </p>
+                    </div>
+
+                    <div className="w-full sm:w-36">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-white/10">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            communityQuality.allPassed ? "bg-emerald-500" : "bg-amber-500"
+                          }`}
+                          style={{
+                            width: `${(communityQuality.passedCount / communityQuality.totalCount) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 7-Point Quality List */}
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    {communityQuality.checks.map((c) => (
+                      <li
+                        key={c.id}
+                        className={`flex items-start gap-2.5 rounded-2xl border p-2.5 text-xs transition ${
+                          c.passed
+                            ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-900 dark:text-emerald-200"
+                            : "border-stone-200 bg-white text-stone-600 dark:border-white/5 dark:bg-[#14110f] dark:text-stone-400"
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                            c.passed
+                              ? "bg-emerald-500 text-stone-950"
+                              : "border border-stone-300 text-transparent dark:border-white/20"
+                          }`}
+                        >
+                          {c.passed ? "✓" : ""}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-semibold ${c.passed ? "text-emerald-800 dark:text-emerald-300" : "text-stone-800 dark:text-stone-200"}`}>
+                            {c.label}
+                          </p>
+                          <p className="text-[11px] text-stone-400 dark:text-stone-500 truncate">
+                            {c.hint}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Notice depending on status */}
+                  {communityQuality.allPassed ? (
+                    <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                      <span className="text-base">🎉</span>
+                      <span>Your recipe fulfills all community requirements! When you save, it will be published to Explore with your author credit: <strong>Chef {displayName || user?.user_metadata?.display_name || "Community Chef"}</strong>.</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">💡</span>
+                        <span>Complete the remaining {communityQuality.totalCount - communityQuality.passedCount} items to publish to Explore, or switch to Private to save right away!</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsPublic(false)}
+                        className="rounded-xl border border-amber-500/40 bg-white/70 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-white dark:bg-black/30 dark:text-amber-200 cursor-pointer shrink-0"
+                      >
+                        Switch to Private Save
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </section>
+
           </div>
 
           {/* RIGHT COLUMN: STICKY LIVE PREVIEW & INSTANT SAVE ACTIONS */}
@@ -921,6 +1332,12 @@ export default function CreateRecipePage() {
                   <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-stone-950 shadow-md">
                     Live preview
                   </span>
+                  {isPublic && (
+                    <span className="rounded-full bg-emerald-950/80 border border-emerald-400/40 px-2.5 py-1 text-xs font-bold text-emerald-300 shadow-md flex items-center gap-1">
+                      <span>🌍</span>
+                      <span>Explore Feed</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -929,6 +1346,12 @@ export default function CreateRecipePage() {
                   <h3 className="line-clamp-2 text-xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
                     {title.trim() || "Untitled recipe"}
                   </h3>
+
+                  {isPublic && (
+                    <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      By Chef {displayName || user?.user_metadata?.display_name || "Community Chef"}
+                    </p>
+                  )}
 
                   <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-bold text-stone-600 dark:text-stone-300">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 dark:border-white/8 dark:bg-white/4">
@@ -984,12 +1407,27 @@ export default function CreateRecipePage() {
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent dark:via-amber-400/20" />
 
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
-                  Ready to save?
-                </p>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
+                    Ready to save?
+                  </p>
+                  <p className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">
+                    {isPublic ? "Destination: Explore Feed" : "Destination: My Cookbook"}
+                  </p>
+                </div>
 
-                <span className="text-xs font-bold text-stone-400">
-                  {rawIngredients.length} ingredients • {cleanedInstructions.length} steps
+                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                  isPublic
+                    ? communityQuality.allPassed
+                      ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300"
+                      : "bg-amber-500/15 text-amber-800 dark:text-amber-300"
+                    : "bg-stone-100 text-stone-600 dark:bg-white/10 dark:text-stone-300"
+                }`}>
+                  {isPublic
+                    ? communityQuality.allPassed
+                      ? "Ready for Public ✨"
+                      : `${communityQuality.passedCount}/${communityQuality.totalCount} Standards`
+                    : "Private"}
                 </span>
               </div>
 
@@ -997,48 +1435,84 @@ export default function CreateRecipePage() {
               <ul className="mb-5 space-y-2 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-xs font-semibold dark:border-white/6 dark:bg-[#1c1815]">
                 <li
                   className={`flex items-center gap-2 ${
-                    title.trim()
+                    title.trim().length >= (isPublic ? 5 : 1)
                       ? "text-emerald-700 dark:text-emerald-300"
                       : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
                   <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
-                    title.trim() ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
+                    title.trim().length >= (isPublic ? 5 : 1) ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
                   }`}>
-                    {title.trim() ? "✓" : ""}
+                    {title.trim().length >= (isPublic ? 5 : 1) ? "✓" : ""}
                   </span>
-                  <span>Recipe title added</span>
+                  <span>{isPublic ? "Descriptive title (min 5 chars)" : "Recipe title added"}</span>
                 </li>
 
                 <li
                   className={`flex items-center gap-2 ${
-                    rawIngredients.length > 0
+                    rawIngredients.length >= (isPublic ? 3 : 1)
                       ? "text-emerald-700 dark:text-emerald-300"
                       : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
                   <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
-                    rawIngredients.length > 0 ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
+                    rawIngredients.length >= (isPublic ? 3 : 1) ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
                   }`}>
-                    {rawIngredients.length > 0 ? "✓" : ""}
+                    {rawIngredients.length >= (isPublic ? 3 : 1) ? "✓" : ""}
                   </span>
-                  <span>At least 1 ingredient</span>
+                  <span>{isPublic ? `At least 3 ingredients (${rawIngredients.length}/3)` : "At least 1 ingredient"}</span>
                 </li>
 
                 <li
                   className={`flex items-center gap-2 ${
-                    cleanedInstructions.length > 0
+                    cleanedInstructions.length >= (isPublic ? 2 : 1)
                       ? "text-emerald-700 dark:text-emerald-300"
                       : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
                   <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
-                    cleanedInstructions.length > 0 ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
+                    cleanedInstructions.length >= (isPublic ? 2 : 1) ? "bg-emerald-500 text-stone-950" : "border border-stone-400 text-transparent"
                   }`}>
-                    {cleanedInstructions.length > 0 ? "✓" : ""}
+                    {cleanedInstructions.length >= (isPublic ? 2 : 1) ? "✓" : ""}
                   </span>
-                  <span>At least 1 instruction step</span>
+                  <span>{isPublic ? `At least 2 instruction steps (${cleanedInstructions.length}/2)` : "At least 1 instruction step"}</span>
                 </li>
+
+                {isPublic && (
+                  <>
+                    <li
+                      className={`flex items-center gap-2 ${
+                        image.trim()
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
+                        image.trim() ? "bg-emerald-500 text-stone-950" : "border border-amber-500 text-transparent"
+                      }`}>
+                        {image.trim() ? "✓" : ""}
+                      </span>
+                      <span>Food cover photo {image.trim() ? "included" : "(Required for Explore)"}</span>
+                    </li>
+
+                    <li
+                      className={`flex items-center gap-2 ${
+                        cookTime.trim() && Number(cookTime) > 0 && servings.trim() && Number(servings) > 0
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
+                        cookTime.trim() && Number(cookTime) > 0 && servings.trim() && Number(servings) > 0
+                          ? "bg-emerald-500 text-stone-950"
+                          : "border border-amber-500 text-transparent"
+                      }`}>
+                        {cookTime.trim() && Number(cookTime) > 0 && servings.trim() && Number(servings) > 0 ? "✓" : ""}
+                      </span>
+                      <span>Cook time &amp; servings specified</span>
+                    </li>
+                  </>
+                )}
               </ul>
 
               {/* Error or Success message */}
@@ -1063,7 +1537,11 @@ export default function CreateRecipePage() {
                   type="button"
                   onClick={handleSaveRecipe}
                   disabled={isSaving}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 py-3.5 text-xs sm:text-sm font-bold text-stone-950 border border-amber-600/60 shadow-md shadow-amber-500/20 transition disabled:opacity-60 cursor-pointer active:scale-98"
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-xs sm:text-sm font-bold border transition disabled:opacity-60 cursor-pointer active:scale-98 ${
+                    isPublic && communityQuality.allPassed
+                      ? "bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 border-emerald-600/60 shadow-md shadow-emerald-500/20"
+                      : "bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border-amber-600/60 shadow-md shadow-amber-500/20"
+                  }`}
                 >
                   {isSaving ? (
                     <>
@@ -1071,17 +1549,36 @@ export default function CreateRecipePage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                       </svg>
-                      Saving recipe...
+                      {isEditing ? "Saving changes..." : "Saving recipe..."}
                     </>
                   ) : (
                     <>
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      Save Recipe
+                      {isPublic
+                        ? isEditing
+                          ? "Update & Publish to Explore 🌍"
+                          : "Publish to Explore & Community 🌍"
+                        : isEditing
+                          ? "Save Changes (Private)"
+                          : "Save Recipe (Private)"}
                     </>
                   )}
                 </button>
+
+                {isPublic && !communityQuality.allPassed && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPublic(false);
+                      setError("");
+                    }}
+                    className="w-full text-center text-xs font-semibold text-amber-700 hover:underline dark:text-amber-400 py-1 transition cursor-pointer"
+                  >
+                    Switch to Private Save (bypass community standards)
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -1093,7 +1590,7 @@ export default function CreateRecipePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Save &amp; Open in Cook Mode →</span>
+                  <span>{isEditing ? "Save & View Recipe →" : "Save & Open in Cook Mode →"}</span>
                 </button>
               </div>
             </section>
@@ -1103,6 +1600,20 @@ export default function CreateRecipePage() {
         </div>
 
       </div>
-    </main>
+    </div>
+  );
+}
+
+export default function CreateRecipePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#faf8f5] dark:bg-[#12100e] flex items-center justify-center text-stone-400">
+          Loading recipe studio...
+        </div>
+      }
+    >
+      <CreateRecipeForm />
+    </Suspense>
   );
 }

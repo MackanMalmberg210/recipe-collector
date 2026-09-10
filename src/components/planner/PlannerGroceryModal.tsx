@@ -13,6 +13,7 @@ import {
   type PantryItem,
 } from "../../lib/groceries";
 import { useToast } from "../ui/ToastProvider";
+import { ShoppingCartIcon, ClipboardIcon } from "./PlannerIcons";
 
 type PlannerGroceryModalProps = {
   isOpen: boolean;
@@ -180,10 +181,10 @@ export default function PlannerGroceryModal({
     );
 
     if (addedCount === 0) {
-      info(`All selected ingredients are already in "${listName}". 🛒`);
+      info(`All selected ingredients are already in "${listName}".`);
     } else {
       success(
-        `Added ${addedCount} ingredients to "${listName}"! 🛒`,
+        `Added ${addedCount} ingredients to "${listName}"!`,
       );
     }
 
@@ -330,7 +331,9 @@ export default function PlannerGroceryModal({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">🛒</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <ShoppingCartIcon className="h-5 w-5" />
+                  </div>
                   <div>
                     <p className="text-sm font-bold">Main Shopping List</p>
                     <p className="text-[11px] text-stone-500 dark:text-stone-400">
@@ -366,7 +369,9 @@ export default function PlannerGroceryModal({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">📋</span>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <ClipboardIcon className="h-5 w-5" />
+                      </div>
                       <div>
                         <p className="text-sm font-bold">{list.name}</p>
                         <p className="text-[11px] text-stone-500 dark:text-stone-400">
@@ -440,9 +445,10 @@ export default function PlannerGroceryModal({
             type="button"
             onClick={handleAdd}
             disabled={selectedIngredientNames.size === 0}
-            className="rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer disabled:opacity-40"
           >
-            Send {selectedIngredientNames.size} Ingredients 🛒
+            <ShoppingCartIcon className="h-4 w-4 text-stone-950" />
+            <span>Send {selectedIngredientNames.size} Ingredients</span>
           </button>
         </div>
 

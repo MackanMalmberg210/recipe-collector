@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { AppRecipe } from "../../lib/types";
 import { WEEK_DAYS, formatWeekDay, type WeekDay } from "../../lib/planner";
+import { ClockIcon, FlameIcon, PlateIcon, MealPrepIcon } from "./PlannerIcons";
 
 type MealPrepModalProps = {
   isOpen: boolean;
@@ -98,7 +99,9 @@ export default function MealPrepModal({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl">🍲</div>
+              <div className="flex h-full w-full items-center justify-center text-stone-400">
+                <PlateIcon className="h-8 w-8 text-stone-400" />
+              </div>
             )}
           </div>
           <div className="min-w-0 flex-1 space-y-1">
@@ -106,8 +109,18 @@ export default function MealPrepModal({
               {recipe.title}
             </h4>
             <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 font-mono">
-              {recipe.cookTime && <span>⏱ {recipe.cookTime}m</span>}
-              {recipe.calories && <span>• 🔥 {recipe.calories} kcal</span>}
+              {recipe.cookTime && (
+                <span className="inline-flex items-center gap-1">
+                  <ClockIcon className="h-3 w-3 text-stone-400" />
+                  <span>{recipe.cookTime}m</span>
+                </span>
+              )}
+              {recipe.calories && (
+                <span className="inline-flex items-center gap-1">
+                  • <FlameIcon className="h-3 w-3 text-amber-500" />
+                  <span>{recipe.calories} kcal</span>
+                </span>
+              )}
               <span>• {recipe.ingredients.length} ingredients</span>
             </div>
           </div>
@@ -192,9 +205,10 @@ export default function MealPrepModal({
             type="button"
             onClick={handleApply}
             disabled={selectedDays.length === 0}
-            className="rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer disabled:opacity-40"
           >
-            Fill {selectedDays.length} Lunch{selectedDays.length === 1 ? "" : "es"} 📦
+            <MealPrepIcon className="h-4 w-4 text-stone-950" />
+            <span>Fill {selectedDays.length} Lunch{selectedDays.length === 1 ? "" : "es"}</span>
           </button>
         </div>
       </div>

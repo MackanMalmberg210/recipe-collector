@@ -53,3 +53,15 @@ export function sanitizeCulinaryText(raw: string): string {
 
   return text;
 }
+
+/**
+ * Ensures the first letter of a string (such as an ingredient or instruction) is capitalized.
+ * Preserves unicode characters and leading non-alphabetic characters if any.
+ */
+export function capitalizeFirstLetter(str: string): string {
+  if (!str || typeof str !== "string") return "";
+  const trimmed = str.trim();
+  if (!trimmed) return "";
+  return trimmed.charAt(0).toLocaleUpperCase() + trimmed.slice(1);
+}
+

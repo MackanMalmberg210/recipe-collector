@@ -62,20 +62,20 @@ export default function CookbookGridCard({
         containIntrinsicSize: "0 400px",
         contain: "paint",
       }}
-      className="group/card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-stone-200/90 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-xl dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] dark:hover:border-amber-400/30"
+      className="group/card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] dark:hover:border-amber-400/30"
     >
       
       {/* 🖼️ MEDIA HEADER */}
-      <div className="group/media relative h-52 w-full overflow-hidden bg-stone-100 dark:bg-stone-950">
+      <div className="group/media relative h-52 w-full overflow-hidden bg-slate-100 dark:bg-stone-950">
         <Link href={isTrashMode ? "#" : `/recipes/${recipe.id}`} className="block h-full w-full">
           {recipe.image ? (
             <img
               src={recipe.image}
               alt={recipe.title}
-              className="h-full w-full object-cover block transition-opacity duration-200 group-hover/media:opacity-95"
+              className="h-full w-full object-cover object-center block transition-opacity duration-200 group-hover/media:opacity-95"
             />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center text-stone-400 dark:text-stone-500">
+            <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center text-slate-400 dark:text-stone-500">
               <span className="text-3xl">🍲</span>
               <span className="mt-1 text-xs font-semibold">No photo</span>
             </div>
@@ -87,13 +87,19 @@ export default function CookbookGridCard({
 
         {/* TOP BADGES */}
         <div className="absolute left-3 top-3 right-3 flex items-center justify-between pointer-events-none z-10">
-          {sourceLabel ? (
-            <span className="rounded-full bg-black/75 border border-white/20 px-2.5 py-0.5 text-[10px] font-bold text-stone-100 shadow-sm">
-              {sourceLabel}
-            </span>
-          ) : (
-            <div />
-          )}
+          <div className="flex items-center gap-1.5">
+            {sourceLabel && (
+              <span className="rounded-full bg-black/75 border border-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                {sourceLabel}
+              </span>
+            )}
+            {recipe.isPublic && (
+              <span className="rounded-full bg-emerald-950/85 border border-emerald-400/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300 shadow-sm flex items-center gap-1">
+                <span>🌍</span>
+                <span>Public</span>
+              </span>
+            )}
+          </div>
 
           {/* Favorite Star (Quick Toggle) */}
           {!isTrashMode && onToggleSave && (
@@ -149,7 +155,7 @@ export default function CookbookGridCard({
       <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
         <div className="space-y-2">
           {/* Title */}
-          <h3 className="line-clamp-2 text-base sm:text-lg font-bold tracking-tight text-stone-950 dark:text-stone-100 group-hover/card:text-amber-600 dark:group-hover/card:text-amber-400 transition-colors">
+          <h3 className="line-clamp-2 text-base sm:text-lg font-bold tracking-tight text-slate-950 dark:text-stone-100 group-hover/card:text-slate-700 dark:group-hover/card:text-amber-400 transition-colors">
             <Link href={isTrashMode ? "#" : `/recipes/${recipe.id}`}>
               {recipe.title}
             </Link>
@@ -158,13 +164,13 @@ export default function CookbookGridCard({
           {/* Tags / Categories */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             {formattedCategory && (
-              <span className="rounded-full bg-stone-100 dark:bg-white/8 px-2.5 py-0.5 text-[11px] font-bold text-stone-700 dark:text-stone-300">
+              <span className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-0.5 text-[11px] font-bold text-slate-700 dark:text-stone-300">
                 {formattedCategory}
               </span>
             )}
 
             {recipe.mealType && (
-              <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold capitalize text-amber-800 dark:text-amber-300">
+              <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold capitalize text-slate-800 dark:bg-amber-500/10 dark:text-amber-300 dark:border-transparent">
                 {recipe.mealType}
               </span>
             )}
@@ -172,7 +178,7 @@ export default function CookbookGridCard({
         </div>
 
         {/* Card Footer Actions */}
-        <div className="mt-5 flex items-center justify-between gap-2 border-t border-stone-100 pt-3.5 dark:border-white/6">
+        <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-100 pt-3.5 dark:border-white/6">
           {isTrashMode ? (
             <>
               {onRestoreRecipe && (
@@ -196,13 +202,13 @@ export default function CookbookGridCard({
             </>
           ) : (
             <>
-              {/* Primary Action: View Recipe (Brand Amber Gradient) */}
+              {/* Primary Action: View Recipe (Obsidian CTA) */}
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="flex-1 flex h-9.5 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-3.5 text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-[0.98] whitespace-nowrap"
+                className="flex-1 flex h-9.5 items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 font-bold shadow-xs dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-3.5 text-xs transition active:scale-[0.98] whitespace-nowrap"
               >
                 <span>View recipe</span>
-                <span className="text-sm font-black">→</span>
+                <span className="text-sm font-black text-white dark:text-stone-950">→</span>
               </Link>
 
               {/* Large, Clear Grocery Button: Shopping Cart + Plus SVG */}
@@ -213,7 +219,7 @@ export default function CookbookGridCard({
                   e.stopPropagation();
                   onAddToGrocery(recipe);
                 }}
-                className="flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 text-xs font-bold text-emerald-800 transition hover:bg-emerald-500/20 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer shrink-0 active:scale-[0.98]"
+                className="flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/90 bg-emerald-50 px-3 text-xs font-bold text-emerald-950 transition hover:bg-emerald-100 hover:border-emerald-400 dark:border-emerald-500/30 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer shrink-0 active:scale-[0.98]"
                 title="Add ingredients to grocery list"
                 aria-label="Add ingredients to grocery list"
               >
@@ -227,7 +233,7 @@ export default function CookbookGridCard({
               <button
                 type="button"
                 onClick={() => onDeleteRecipe(recipe)}
-                className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl text-stone-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 cursor-pointer"
+                className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 cursor-pointer"
                 title="Move to Trash"
                 aria-label="Move to Trash"
               >

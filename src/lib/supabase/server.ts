@@ -14,7 +14,7 @@ export async function createClient() {
                     return cookieStore.getAll();
                 },
                 // Sets cookies (when user logs in, or when token needs to be refreshed)
-                setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+                setAll(cookiesToSet: { name: string; value: string; options?: Parameters<typeof cookieStore.set>[2] }[]) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)

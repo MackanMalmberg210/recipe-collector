@@ -32,6 +32,12 @@ import {
 import type { AppRecipe } from "../../lib/types";
 import { sanitizeCulinaryText } from "../../lib/culinaryTextSanitizer";
 import { canonicalizeIngredients } from "../../lib/format";
+import {
+  fetchCloudGroceries,
+  syncCloudGroceries,
+  fetchCloudPantry,
+  syncCloudPantry,
+} from "../../lib/sync/cloudSync";
 
 export default function GroceriesPage() {
   const { success, info } = useToast();
@@ -94,6 +100,31 @@ export default function GroceriesPage() {
       setPantryItems(getPantryInventory());
       setRecipes(getAllRecipes());
 
+      // Background cloud sync for groceries & pantry
+      fetchCloudGroceries("main").then((cloudItems) => {
+        if (cloudItems && cloudItems.length > 0) {
+          setMainListItems((prev) => {
+            const existingNames = new Set(prev.map((i) => i.name.toLowerCase().trim()));
+            const toAdd = cloudItems.filter((c) => !existingNames.has(c.name.toLowerCase().trim()));
+            const merged = [...prev, ...toAdd];
+            localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(merged));
+            return merged;
+          });
+        }
+      }).catch(() => {});
+
+      fetchCloudPantry().then((cloudPantry) => {
+        if (cloudPantry && cloudPantry.length > 0) {
+          setPantryItems((prev) => {
+            const map = new Map(prev.map((p) => [p.name.toLowerCase().trim(), p]));
+            cloudPantry.forEach((cp) => map.set(cp.name.toLowerCase().trim(), cp));
+            const merged = Array.from(map.values());
+            savePantryInventory(merged);
+            return merged;
+          });
+        }
+      }).catch(() => {});
+
       getAllRecipesWithCloud().then((cloudRecs) => {
         if (cloudRecs && cloudRecs.length > 0) {
           setRecipes(cloudRecs);
@@ -137,11 +168,12 @@ export default function GroceriesPage() {
     };
   }, []);
 
-  // Sync to local storage
+  // Sync to local storage & cloud
   const saveMainList = (items: StoredGroceryItem[]) => {
     setMainListItems(items);
     localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("grocery_list_updated"));
+    syncCloudGroceries(items, "main").catch(() => {});
   };
 
   const saveCustomLists = (lists: GroceryListCollection[]) => {
@@ -165,6 +197,7 @@ export default function GroceriesPage() {
         l.id === activeListId ? { ...l, items: newItems } : l
       );
       saveCustomLists(updatedLists);
+      syncCloudGroceries(newItems, activeListId).catch(() => {});
     }
   };
 
@@ -542,17 +575,17 @@ export default function GroceriesPage() {
 
   if (!hasHydrated) {
     return (
-      <main className="min-h-screen bg-[#110d0b] px-4 py-8 text-stone-100 flex items-center justify-center">
-        <div className="flex items-center gap-3 rounded-2xl bg-[#16120f] border border-white/10 p-6 shadow-xl">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+      <div className="min-h-screen bg-[#f8fafc] px-4 py-8 text-slate-900 dark:bg-[#110d0b] dark:text-stone-100 flex items-center justify-center">
+        <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-[#16120f] border border-slate-200/90 dark:border-white/10 p-6 shadow-md dark:shadow-xl">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900 dark:border-amber-500 border-t-transparent" />
           <span className="text-sm font-semibold">Opening Kitchen Hub...</span>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="relative min-h-screen bg-[#110d0b] px-4 sm:px-6 xl:px-10 py-6 text-stone-100 pb-28">
+    <div className="relative min-h-screen bg-[#f8fafc] px-4 sm:px-6 xl:px-10 py-6 text-slate-900 dark:bg-[#110d0b] dark:text-stone-100 pb-28 transition-colors duration-300">
       <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* HEADER BAR */}
@@ -590,16 +623,20 @@ export default function GroceriesPage() {
 
             {/* EMPTY STATE */}
             {currentItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-[#16120f]/50 py-20 text-center space-y-3">
-                <span className="text-5xl">🧺</span>
-                <h3 className="text-xl font-bold text-[#fff8ef]">Your shopping list is empty</h3>
-                <p className="max-w-md text-xs sm:text-sm text-stone-400 leading-relaxed">
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300/80 bg-white py-20 text-center space-y-3 dark:border-white/10 dark:bg-[#16120f]/50 shadow-xs dark:shadow-none">
+                <div className="text-slate-400 dark:text-stone-500">
+                  <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-[#fff8ef]">Your shopping list is empty</h3>
+                <p className="max-w-md text-xs sm:text-sm text-slate-500 dark:text-stone-400 leading-relaxed">
                   Add groceries using the input bar above, or click below to match your pantry staples against your recipes.
                 </p>
                 <button
                   type="button"
                   onClick={() => setIsCookWhatIHaveOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-6 py-3 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition-all duration-150 active:scale-95 cursor-pointer mt-2"
+                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 cursor-pointer mt-2"
                 >
                   <svg className="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -667,10 +704,10 @@ export default function GroceriesPage() {
                       key={item.id || `${originalIndex}-${item.name}`}
                       className={`flex items-center justify-between gap-3 rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${
                         isRecentlyAdded
-                          ? "ring-2 ring-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.35)] bg-gradient-to-r from-emerald-950/60 via-emerald-900/25 to-[#1f1915] border-emerald-400/60 scale-[1.01]"
+                          ? "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-emerald-50/60 border-emerald-400 dark:bg-gradient-to-r dark:from-emerald-950/60 dark:via-emerald-900/25 dark:to-[#1f1915] dark:border-emerald-400/60 scale-[1.01]"
                           : item.bought
-                          ? "border-white/5 bg-black/30 opacity-60"
-                          : "border-white/8 bg-[#1f1915] hover:border-amber-400/30"
+                          ? "border-stone-200/60 bg-stone-100/70 opacity-60 dark:border-white/5 dark:bg-black/30"
+                          : "border-stone-200/90 bg-white hover:border-amber-400/50 shadow-2xs dark:border-white/8 dark:bg-[#1f1915] dark:hover:border-amber-400/30"
                       }`}
                     >
                       <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer select-none">
@@ -685,42 +722,45 @@ export default function GroceriesPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span
                               className={`text-sm sm:text-[15px] font-bold leading-snug break-words ${
-                                item.bought ? "text-stone-400 line-through" : "text-stone-100"
+                                item.bought ? "text-stone-400 line-through" : "text-stone-900 dark:text-stone-100"
                               }`}
                             >
                               {displayName}
                             </span>
                             {isRecentlyAdded && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400 text-stone-950 font-black text-[10px] px-2 py-0.5 shadow-sm shadow-emerald-400/50 animate-bounce">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white dark:bg-emerald-400 dark:text-stone-950 font-black text-[10px] px-2 py-0.5 shadow-sm shadow-emerald-400/50 animate-bounce">
                                 ✓ Added
                               </span>
                             )}
                           </div>
                           {item.sourceRecipeTitle && (
-                            <div className="text-xs font-semibold text-amber-400 mt-0.5 truncate">
-                              📌 For: {item.sourceRecipeTitle}
+                            <div className="flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 mt-0.5 truncate">
+                              <svg className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a5.927 5.927 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707-.195-.195.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a5.922 5.922 0 0 1 1.013.16l3.134-3.133a2.772 2.772 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146z"/>
+                              </svg>
+                              <span className="truncate">For: {item.sourceRecipeTitle}</span>
                             </div>
                           )}
                         </div>
                       </label>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center rounded-xl border border-white/10 bg-black/40 p-0.5">
+                        <div className="flex items-center rounded-xl border border-stone-200 bg-stone-100 dark:border-white/10 dark:bg-black/40 p-0.5 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(originalIndex, -1)}
-                            className="h-7 w-7 flex items-center justify-center text-stone-400 hover:text-white text-xs font-black cursor-pointer"
+                            className="h-7 w-7 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-white dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 rounded-lg text-xs font-black transition cursor-pointer"
                             title="Decrease quantity"
                           >
                             −
                           </button>
-                          <span className="px-2 text-xs font-mono font-bold text-amber-300 min-w-[22px] text-center">
+                          <span className="px-2 text-xs font-mono font-bold text-stone-800 dark:text-amber-300 min-w-[22px] text-center">
                             {item.quantity || 1}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(originalIndex, 1)}
-                            className="h-7 w-7 flex items-center justify-center text-stone-400 hover:text-white text-xs font-black cursor-pointer"
+                            className="h-7 w-7 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-white dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 rounded-lg text-xs font-black transition cursor-pointer"
                             title="Increase quantity"
                           >
                             +
@@ -883,6 +923,6 @@ export default function GroceriesPage() {
         />
       )}
 
-    </main>
+    </div>
   );
 }

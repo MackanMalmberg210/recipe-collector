@@ -1,4 +1,4 @@
-import { sanitizeCulinaryText } from "./culinaryTextSanitizer";
+import { sanitizeCulinaryText, capitalizeFirstLetter } from "./culinaryTextSanitizer";
 
 /**
  * Comprehensive culinary unit definitions and normalizations.
@@ -287,9 +287,7 @@ export function splitAmountAndIngredient(
         // Extract what matched
         const match = trimmedRemaining.match(regex);
         if (match) {
-          const matchedToken = match[0].trim().toLowerCase().replace(/\.$/, "");
           const afterUnitText = trimmedRemaining.slice(match[0].length).trim();
-          const firstWordAfter = afterUnitText.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, "");
 
           // Guard against single letter or short units falsely matching adjectives
           const isShortOrLetter = testUnit.length <= 2;
@@ -306,7 +304,7 @@ export function splitAmountAndIngredient(
           return {
             amount: formattedAmount,
             unit: canonicalUnit,
-            name: cleanedName,
+            name: capitalizeFirstLetter(cleanedName),
           };
         }
       }
@@ -316,7 +314,7 @@ export function splitAmountAndIngredient(
     return {
       amount: formattedAmount,
       unit: "",
-      name: cleanAuthorNotes(trimmedRemaining),
+      name: capitalizeFirstLetter(cleanAuthorNotes(trimmedRemaining)),
     };
   }
 
@@ -324,7 +322,7 @@ export function splitAmountAndIngredient(
   return {
     amount: "",
     unit: "",
-    name: cleanAuthorNotes(cleanedRaw),
+    name: capitalizeFirstLetter(cleanAuthorNotes(cleanedRaw)),
   };
 }
 
@@ -336,12 +334,12 @@ export function scaleIngredientText(
   scaleRatio: number,
 ): string {
   if (scaleRatio === 1 || scaleRatio <= 0 || !Number.isFinite(scaleRatio)) {
-    return cleanAuthorNotes(originalText);
+    return capitalizeFirstLetter(cleanAuthorNotes(originalText));
   }
 
   const { amount, unit, name } = splitAmountAndIngredient(originalText, scaleRatio);
   if (amount) {
-    return `${amount}${unit ? ` ${unit}` : ""} ${name}`.trim();
+    return `${amount}${unit ? ` ${unit}` : ""} ${capitalizeFirstLetter(name)}`.trim();
   }
-  return cleanAuthorNotes(originalText);
+  return capitalizeFirstLetter(cleanAuthorNotes(originalText));
 }

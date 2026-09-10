@@ -26,6 +26,7 @@ const CATEGORY_KEYWORDS: Record<RecipeCategory, string[]> = {
    "stir-fry": ["stir fry", "stir-fry", "noodles", "wok", "chow mein", "pad thai"],
    breakfast: ["breakfast", "omelette", "oatmeal", "porridge", "pancake", "waffles", "granola", "scrambled eggs", "french toast"],
    dessert: ["cake", "cookie", "brownie", "dessert", "ice cream", "muffin", "sweet", "pie", "tart", "cheesecake"],
+   snack: ["snack", "mellanmål", "smoothie", "bar", "fruit", "frukt", "nuts", "nötter", "dip"],
 };
 
 const MEAL_TYPE_KEYWORDS: Record<MealType, string[]> = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getRecipeRating, saveRecipeRating, type RecipeRating } from "../../lib/ratings";
 
 export type RecipeNoteItem = {
   id: string;
@@ -37,14 +38,19 @@ export default function RecipeJournalPanel({
   const [editingText, setEditingText] = useState<string>("");
   const [isSavedToast, setIsSavedToast] = useState<boolean>(false);
 
-  // Sync state from props or localStorage
+  // Sync state from props or ratings storage
   useEffect(() => {
     try {
-      const storedRating = localStorage.getItem(`recipe_rating_${recipeId}`);
-      if (storedRating !== null) {
-        setRating(Number(storedRating));
-      } else if (initialRating) {
-        setRating(initialRating);
+      const centralRating = getRecipeRating(recipeId);
+      if (centralRating !== null) {
+        setRating(centralRating);
+      } else {
+        const storedRating = localStorage.getItem(`recipe_rating_${recipeId}`);
+        if (storedRating !== null) {
+          setRating(Number(storedRating));
+        } else if (initialRating) {
+          setRating(initialRating);
+        }
       }
 
       const storedNotes = localStorage.getItem(`recipe_notes_${recipeId}`);
@@ -68,7 +74,7 @@ export default function RecipeJournalPanel({
     }
   }, [recipeId, initialRating, initialNote, notesList]);
 
-  // Real-time synchronization event listeners from Cook Mode
+  // Real-time synchronization event listeners from Cook Mode & other components
   useEffect(() => {
     const handleRatingSync = (e: CustomEvent<{ recipeId: number; rating: number }>) => {
       if (e.detail.recipeId === recipeId) {
@@ -95,12 +101,8 @@ export default function RecipeJournalPanel({
     const finalRating = rating === newRating ? 0 : newRating;
     setRating(finalRating);
     try {
+      saveRecipeRating(recipeId, finalRating > 0 ? (finalRating as RecipeRating) : null);
       localStorage.setItem(`recipe_rating_${recipeId}`, String(finalRating));
-      window.dispatchEvent(
-        new CustomEvent("recipe_rating_updated", {
-          detail: { recipeId, rating: finalRating },
-        })
-      );
     } catch {
       // Ignore
     }

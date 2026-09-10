@@ -30,11 +30,13 @@ export default function CookbookListRow({
   onRestoreRecipe,
   onAddToGrocery,
 }: CookbookListRowProps) {
-  const [rating, setRating] = useState<RecipeRating | null>(null);
+  const [prevRecipeId, setPrevRecipeId] = useState(recipe.id);
+  const [rating, setRating] = useState<RecipeRating | null>(() => getRecipeRating(recipe.id));
 
-  useEffect(() => {
+  if (prevRecipeId !== recipe.id) {
+    setPrevRecipeId(recipe.id);
     setRating(getRecipeRating(recipe.id));
-  }, [recipe.id]);
+  }
 
   useEffect(() => {
     const refreshRating = () => setRating(getRecipeRating(recipe.id));
@@ -57,14 +59,14 @@ export default function CookbookListRow({
         containIntrinsicSize: "0 120px",
         contain: "paint",
       }}
-      className="group/row relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 rounded-3xl border border-stone-200/90 bg-white p-4 sm:p-5 shadow-xs transition-colors duration-150 hover:border-amber-500/40 dark:border-white/[0.08] dark:bg-[#151210] dark:hover:border-amber-400/30 dark:hover:bg-[#191411]"
+      className="group/row relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs transition-colors duration-150 hover:border-slate-300 dark:border-white/[0.08] dark:bg-[#151210] dark:hover:border-amber-400/30 dark:hover:bg-[#191411]"
     >
       {/* LEFT: Photo + Main Info */}
       <div className="flex items-start sm:items-center gap-4 sm:gap-5 min-w-0 flex-1">
         {/* Large Cinematic Photo Thumbnail */}
         <Link
           href={isTrashMode ? "#" : `/recipes/${recipe.id}`}
-          className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-2xl bg-stone-100 dark:bg-stone-950 block shadow-xs group-hover/row:opacity-95"
+          className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-stone-950 block shadow-xs group-hover/row:opacity-95"
           title="View recipe"
         >
           {recipe.image ? (
@@ -74,7 +76,7 @@ export default function CookbookListRow({
               className="h-full w-full object-cover block"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-3xl text-stone-400 dark:text-stone-600">
+            <div className="flex h-full w-full items-center justify-center text-3xl text-slate-400 dark:text-stone-600">
               🍲
             </div>
           )}
@@ -85,13 +87,19 @@ export default function CookbookListRow({
           {/* Top Badges (Category & Meal Type) */}
           <div className="flex flex-wrap items-center gap-2">
             {formattedCategory && (
-              <span className="rounded-full bg-stone-100 dark:bg-white/8 px-2.5 py-0.5 text-[11px] font-bold text-stone-700 dark:text-stone-300">
+              <span className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-0.5 text-[11px] font-bold text-slate-700 dark:text-stone-300">
                 {formattedCategory}
               </span>
             )}
             {recipe.mealType && (
-              <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold capitalize text-amber-800 dark:text-amber-300">
+              <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold capitalize text-slate-800 dark:bg-amber-500/10 dark:text-amber-300 dark:border-transparent">
                 {recipe.mealType}
+              </span>
+            )}
+            {recipe.isPublic && (
+              <span className="rounded-full bg-emerald-50 border border-emerald-300/90 px-2 py-0.5 text-[11px] font-bold text-emerald-950 dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:text-emerald-300 flex items-center gap-1">
+                <span>🌍</span>
+                <span>Public</span>
               </span>
             )}
             {Boolean(rating && rating > 0) && (
@@ -103,14 +111,14 @@ export default function CookbookListRow({
           </div>
 
           {/* Title */}
-          <h3 className="text-base sm:text-lg font-bold tracking-tight text-stone-950 dark:text-stone-50 transition-colors group-hover/row:text-amber-600 dark:group-hover/row:text-amber-400 line-clamp-1">
+          <h3 className="text-base sm:text-lg font-bold tracking-tight text-slate-950 dark:text-stone-50 transition-colors group-hover/row:text-slate-700 dark:group-hover/row:text-amber-400 line-clamp-1">
             <Link href={isTrashMode ? "#" : `/recipes/${recipe.id}`}>
               {recipe.title}
             </Link>
           </h3>
 
           {/* Metrics & Key Ingredients preview */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400 font-medium">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-stone-400 font-medium">
             {recipe.cookTime && (
               <span className="flex items-center gap-1">
                 <span>⏱</span>
@@ -124,7 +132,7 @@ export default function CookbookListRow({
               </span>
             )}
             {recipe.ingredients.length > 0 && (
-              <span className="hidden md:inline-flex items-center gap-1 text-stone-400 dark:text-stone-500 truncate max-w-xs">
+              <span className="hidden md:inline-flex items-center gap-1 text-slate-400 dark:text-stone-500 truncate max-w-xs">
                 <span>•</span>
                 <span className="truncate">{recipe.ingredients.slice(0, 3).map(cleanIngredientName).join(", ")}</span>
                 {recipe.ingredients.length > 3 && <span className="shrink-0">+{recipe.ingredients.length - 3}</span>}
@@ -135,7 +143,7 @@ export default function CookbookListRow({
       </div>
 
       {/* RIGHT: Actions Toolbar */}
-      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-100 dark:border-white/6 w-full sm:w-auto justify-end">
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/6 w-full sm:w-auto justify-end">
         {isTrashMode ? (
           <>
             {onRestoreRecipe && (
@@ -166,34 +174,34 @@ export default function CookbookListRow({
                 onClick={() => onToggleSave(recipe.id)}
                 title={isSaved ? "Remove from favorites" : "Save to favorites"}
                 aria-label={isSaved ? "Remove from favorites" : "Save to favorites"}
-                className="flex h-9.5 w-9.5 items-center justify-center rounded-xl text-stone-400 hover:text-amber-500 hover:bg-stone-100 dark:hover:bg-white/5 transition-transform duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+                className="flex h-9.5 w-9.5 items-center justify-center rounded-xl text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-transform duration-200 hover:scale-110 active:scale-95 cursor-pointer"
               >
                 {isSaved ? (
                   <svg className="h-5 w-5 text-amber-500 fill-amber-500 stroke-amber-500" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                   </svg>
                 ) : (
-                  <svg className="h-5 w-5 text-stone-400 hover:text-amber-500 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
+                  <svg className="h-5 w-5 text-slate-400 hover:text-amber-500 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                   </svg>
                 )}
               </button>
             )}
 
-            {/* Primary Action: View Recipe (Brand Amber Gradient) */}
+            {/* Primary Action: View Recipe (Obsidian CTA) */}
             <Link
               href={`/recipes/${recipe.id}`}
-              className="flex h-9.5 items-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-4 text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-[0.98] whitespace-nowrap"
+              className="flex h-9.5 items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 font-bold shadow-xs dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-4 text-xs transition active:scale-[0.98] whitespace-nowrap"
             >
               <span>View recipe</span>
-              <span className="text-sm font-black">→</span>
+              <span className="text-sm font-black text-white dark:text-stone-950">→</span>
             </Link>
 
             {/* Secondary Action: Grocery Button with SVG */}
             <button
               type="button"
               onClick={() => onAddToGrocery(recipe)}
-              className="flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 text-xs font-bold text-emerald-800 transition hover:bg-emerald-500/20 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer shrink-0 active:scale-[0.98]"
+              className="flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/90 bg-emerald-50 px-3 text-xs font-bold text-emerald-950 transition hover:bg-emerald-100 hover:border-emerald-400 dark:border-emerald-500/30 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer shrink-0 active:scale-[0.98]"
               title="Add ingredients to grocery list"
               aria-label="Add ingredients to grocery list"
             >
@@ -207,7 +215,7 @@ export default function CookbookListRow({
             <button
               type="button"
               onClick={() => onDeleteRecipe(recipe)}
-              className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl text-stone-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 cursor-pointer"
+              className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 cursor-pointer"
               title="Move to Trash"
               aria-label="Move to Trash"
             >

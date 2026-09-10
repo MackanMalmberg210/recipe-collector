@@ -20,7 +20,6 @@ export default function AddRecipeModal({
   const options = [
     {
       id: "scratch" as const,
-      icon: "✍️",
       title: "Write from Scratch",
       description: "Enter your title, ingredients, and step-by-step cooking instructions manually.",
       badge: "Manual",
@@ -31,7 +30,6 @@ export default function AddRecipeModal({
     },
     {
       id: "scan_cookbook" as const,
-      icon: "📷",
       title: "Scan Cookbook or Recipe Card",
       description: "Take a photo of a cookbook page or handwritten family recipe card with AI OCR.",
       badge: "AI Vision",
@@ -42,7 +40,6 @@ export default function AddRecipeModal({
     },
     {
       id: "import_url" as const,
-      icon: "🔗",
       title: "Import from Web URL",
       description: "Paste a recipe link from any food blog or website to extract clean ingredients and steps.",
       badge: "Web Link",
@@ -53,7 +50,6 @@ export default function AddRecipeModal({
     },
     {
       id: "snap_plate" as const,
-      icon: "🍽️",
       title: "Snap My Plate (Reverse Recipe)",
       description: "Photograph a plated dish to estimate calories, macros, and generate a full home-cook recipe.",
       badge: "Culinary AI",
@@ -158,9 +154,33 @@ export default function AddRecipeModal({
                 }`}
               >
                 {/* Standalone Icon */}
-                <span className={`text-2xl sm:text-3xl shrink-0 mt-0.5 transition-transform duration-200 ${isSelected ? "scale-110" : "group-hover:scale-105"}`}>
-                  {opt.icon}
-                </span>
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 mt-0.5 ${
+                  isSelected
+                    ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 scale-105"
+                    : "bg-stone-200/60 text-stone-600 dark:bg-white/5 dark:text-stone-300 group-hover:scale-105"
+                }`}>
+                  {opt.id === "scratch" && (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  )}
+                  {opt.id === "scan_cookbook" && (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  )}
+                  {opt.id === "import_url" && (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  )}
+                  {opt.id === "snap_plate" && (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="12" cy="12" r="9" />
+                      <circle cx="12" cy="12" r="4.5" />
+                    </svg>
+                  )}
+                </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">

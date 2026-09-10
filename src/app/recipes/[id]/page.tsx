@@ -61,18 +61,18 @@ export default function RecipePage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f5f0] p-8 text-stone-700 dark:bg-[#0e0c0a] dark:text-stone-300 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f7f5f0] p-8 text-stone-700 dark:bg-[#0e0c0a] dark:text-stone-300 flex items-center justify-center">
         <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-[#151210] border border-stone-200 dark:border-white/10 p-6 shadow-sm">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
           <span className="text-sm font-semibold">Opening recipe...</span>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!recipe) {
     return (
-      <main className="min-h-screen bg-[#f7f5f0] p-8 text-stone-900 dark:bg-[#0e0c0a] dark:text-stone-100 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f7f5f0] p-8 text-stone-900 dark:bg-[#0e0c0a] dark:text-stone-100 flex items-center justify-center">
         <div className="max-w-md w-full text-center space-y-4 rounded-3xl bg-white dark:bg-[#151210] border border-stone-200 dark:border-white/10 p-8 shadow-sm">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -92,7 +92,7 @@ export default function RecipePage({ params }: Props) {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 

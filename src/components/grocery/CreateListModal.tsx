@@ -45,14 +45,14 @@ export default function CreateListModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-3xl border border-white/12 bg-[#16120f] p-6 shadow-2xl space-y-4 cursor-default animate-in zoom-in-95 duration-150"
+        className="w-full max-w-md rounded-3xl border border-stone-200/90 bg-white p-6 shadow-2xl space-y-4 cursor-default animate-in zoom-in-95 duration-150 dark:border-white/12 dark:bg-[#16120f]"
       >
-        <div className="flex items-center justify-between border-b border-white/8 pb-3">
-          <h3 className="text-lg font-bold text-[#fff8ef]">Create New Grocery List</h3>
+        <div className="flex items-center justify-between border-b border-stone-200/80 pb-3 dark:border-white/8">
+          <h3 className="text-lg font-bold text-stone-900 dark:text-[#fff8ef]">Create New Grocery List</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-stone-400 hover:text-white transition cursor-pointer text-sm"
+            className="text-stone-400 hover:text-stone-700 dark:hover:text-white transition cursor-pointer text-sm"
           >
             ✕
           </button>
@@ -67,14 +67,14 @@ export default function CreateListModal({
             placeholder="e.g. Costco Run, Weekly BBQ, Dinner Party..."
             autoFocus
             required
-            className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3.5 text-sm text-stone-100 placeholder-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 focus:outline-none transition"
+            className="w-full rounded-2xl border border-stone-200 bg-stone-50/60 px-4 py-3.5 text-sm text-stone-900 placeholder-stone-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition dark:border-white/10 dark:bg-black/50 dark:text-stone-100 dark:placeholder-stone-500 dark:focus:border-amber-400"
           />
 
           <div className="flex items-center justify-end gap-2 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-4 py-2 text-xs font-semibold text-stone-400 hover:text-white cursor-pointer"
+              className="rounded-xl px-4 py-2 text-xs font-semibold text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white cursor-pointer"
             >
               Cancel
             </button>

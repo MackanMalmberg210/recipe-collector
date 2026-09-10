@@ -230,14 +230,90 @@ export const COMMON_SUBSTITUTIONS: Substitution[] = [
   },
 ];
 
+export type SubstitutionContext = {
+  recipeTitle?: string;
+  category?: string;
+  mealType?: string;
+};
+
 /**
- * Finds substitution options for a given ingredient name.
+ * Finds substitution options for a given ingredient name with contextual awareness.
  */
-export function findSubstitutionsForIngredient(ingredientText: string): Substitution | null {
+export function findSubstitutionsForIngredient(
+  ingredientText: string,
+  context?: SubstitutionContext
+): Substitution | null {
+  const text = ingredientText.toLowerCase().trim();
+  const title = (context?.recipeTitle || "").toLowerCase();
+  const cat = (context?.category || "").toLowerCase();
+  const combinedContext = `${title} ${cat} ${context?.mealType || ""}`.toLowerCase();
+
+  // Special handling for Eggs: baking vs savory dishes
+  if (/\b(egg|eggs)\b/i.test(text)) {
+    const isBaking = /bake|baking|cake|cookie|muffin|pancake|waffle|bread|brownie|dessert|sweet|pastry/i.test(combinedContext);
+    const isSavoryEggDish = /toast|fried egg|scramble|omelet|shakshuka|benedict|poached|ramen|carbonara|burger/i.test(combinedContext);
+
+    // In a savory breakfast or egg-centered dish (like Avocado Toast with Egg),
+    // sweet baking substitutes (applesauce/banana) are completely unsuitable.
+    if (isSavoryEggDish && !isBaking) {
+      return {
+        ingredientPattern: /\b(egg|eggs)\b/i,
+        ingredientName: "Eggs (Savory)",
+        substitutes: [
+          {
+            name: "Seasoned Firm Tofu",
+            ratio: "1 slice firm tofu pan-seared with pinch of turmeric & black salt (kala namak)",
+            dietaryTag: "vegan",
+            notes: "Pan-sear until golden for a protein-rich plant alternative with eggy aroma.",
+          },
+        ],
+      };
+    }
+
+    if (isBaking) {
+      return {
+        ingredientPattern: /\b(egg|eggs)\b/i,
+        ingredientName: "Eggs (Baking)",
+        substitutes: [
+          {
+            name: "Applesauce (Unsweetened)",
+            ratio: "¼ cup applesauce per 1 egg",
+            dietaryTag: "vegan",
+            notes: "Keeps quick breads, muffins, and brownies moist.",
+          },
+          {
+            name: "Flax Egg",
+            ratio: "1 tbsp ground flaxseed + 3 tbsp water (rest 5 min)",
+            dietaryTag: "vegan",
+            notes: "Ideal binding agent for cookies and whole grain baking.",
+          },
+        ],
+      };
+    }
+
+    // Default savory fallback
+    return {
+      ingredientPattern: /\b(egg|eggs)\b/i,
+      ingredientName: "Eggs (Savory)",
+      substitutes: [
+        {
+          name: "Crumbled Tofu",
+          ratio: "100g crumbled firm tofu with turmeric and salt",
+          dietaryTag: "vegan",
+          notes: "Savory plant-based scramble option.",
+        },
+      ],
+    };
+  }
+
+  // Iterate other substitutions
   for (const item of COMMON_SUBSTITUTIONS) {
+    if (item.ingredientName.includes("Eggs (Baking)")) continue;
     if (item.ingredientPattern.test(ingredientText)) {
       return item;
     }
   }
+
   return null;
 }
+

@@ -160,7 +160,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0a0908] px-4 py-8 lg:px-8">
+    <div className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0a0908] px-4 py-8 lg:px-8">
       {/* Background ambient lighting */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-emerald-600/15 blur-[120px]" />
@@ -218,14 +218,14 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-start gap-4 rounded-2xl border border-white/5 bg-stone-900/40 p-3.5 backdrop-blur-md transition hover:border-white/10 hover:bg-stone-900/60">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-stone-100">Secure Cloud Synchronization</h3>
-                <p className="text-xs text-stone-400 mt-0.5">Your private recipes, meal plans, and ratings are securely backed up and synced across all devices.</p>
+                <h3 className="text-sm font-bold text-stone-100">Your Personal Cookbook Everywhere</h3>
+                <p className="text-xs text-stone-400 mt-0.5">Save, organize, and access all your favorite recipes seamlessly across your phone, tablet, and laptop — never losing a recipe again.</p>
               </div>
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function LoginPage() {
                   }}
                   className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "login"
-                      ? "bg-amber-500 text-stone-950 shadow-md font-black"
+                      ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_rgba(0,0,0,0.25)] font-black"
                       : "text-stone-400 hover:text-stone-200"
                   }`}
                 >
@@ -289,7 +289,7 @@ export default function LoginPage() {
                   }}
                   className={`relative rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     mode === "signup"
-                      ? "bg-amber-500 text-stone-950 shadow-md font-black"
+                      ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_rgba(0,0,0,0.25)] font-black"
                       : "text-stone-400 hover:text-stone-200"
                   }`}
                 >
@@ -544,7 +544,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="group relative mt-4 flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-400/25 transition duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                    className="group relative mt-4 flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 py-3.5 text-sm font-extrabold text-stone-950 border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_16px_rgba(245,158,11,0.25)] transition duration-200 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -555,7 +555,7 @@ export default function LoginPage() {
                         <span>Processing...</span>
                       </span>
                     ) : mode === "login" ? (
-                      <span>Sign In to Kitchen</span>
+                      <span>Sign In</span>
                     ) : mode === "signup" ? (
                       <span>Create Free Account ✨</span>
                     ) : (
@@ -602,6 +602,6 @@ export default function LoginPage() {
         </div>
 
       </div>
-    </main>
+    </div>
   );
 }

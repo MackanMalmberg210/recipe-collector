@@ -1,6 +1,6 @@
 import { generateRecipeMetadata } from "./recipeMetadata";
 import { parseIngredientList } from "./ingredientParser";
-import { sanitizeCulinaryText, decodeHtmlEntities } from "./culinaryTextSanitizer";
+import { sanitizeCulinaryText, capitalizeFirstLetter } from "./culinaryTextSanitizer";
 import type { AppRecipe, IngredientGroup, NutritionInfo } from "./types";
 
 type NormalizerOrigin = AppRecipe["origin"];
@@ -24,6 +24,8 @@ export type RawRecipeInput = {
    videoUrl?: string | null;
    videoEmbedUrl?: string | null;
    origin?: NormalizerOrigin;
+   isPublic?: boolean | null;
+   authorName?: string | null;
 };
 
 export type SpoonacularRecipeInput = {
@@ -83,6 +85,14 @@ function normalizeStringArray(values: string[] | null | undefined) {
 
    return values
       .map((val) => (val ? sanitizeCulinaryText(val) : ""))
+      .filter((value, index, array) => value && array.indexOf(value) === index);
+}
+
+export function normalizeIngredientsArray(values: string[] | null | undefined): string[] {
+   if (!Array.isArray(values)) return [];
+
+   return values
+      .map((val) => (val ? capitalizeFirstLetter(sanitizeCulinaryText(val)) : ""))
       .filter((value, index, array) => value && array.indexOf(value) === index);
 }
 
@@ -201,16 +211,16 @@ function normalizeSpoonacularIngredients(
    return ingredients
       .map((ingredient) => {
          const original = normalizeString(ingredient.original);
-         if (original) return original;
+         if (original) return capitalizeFirstLetter(original);
 
          const amount = normalizeNumber(ingredient.amount);
          const unit = normalizeString(ingredient.unit);
          const name =
             normalizeString(ingredient.originalName) || normalizeString(ingredient.name);
 
-         return cleanText(
+         return capitalizeFirstLetter(cleanText(
             [amount, unit, name].filter((value) => value !== undefined && value).join(" "),
-         );
+         ));
       })
       .filter(Boolean);
 }
@@ -229,7 +239,7 @@ function normalizeSpoonacularInstructions(
 
 export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
    const title = normalizeString(input.title) || "Untitled recipe";
-   const ingredients = normalizeStringArray(input.ingredients);
+   const ingredients = normalizeIngredientsArray(input.ingredients);
    const structuredIngredients = parseIngredientList(ingredients);
    const instructions = normalizeStringArray(input.instructions);
    const image = upgradeToHighResImageUrl(normalizeString(input.image) || FALLBACK_IMAGE);
@@ -247,9 +257,11 @@ export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
    const rawGroups = input.ingredientGroups;
    const cleanIngredientGroups = Array.isArray(rawGroups) && rawGroups.length > 0
      ? rawGroups.map((g) => {
-         const cleanItems = (g.ingredients || []).map(sanitizeCulinaryText).filter(Boolean);
+         const cleanItems = (g.ingredients || [])
+           .map((item) => capitalizeFirstLetter(sanitizeCulinaryText(item)))
+           .filter(Boolean);
          return {
-           heading: g.heading ? sanitizeCulinaryText(g.heading) : undefined,
+           heading: g.heading ? capitalizeFirstLetter(sanitizeCulinaryText(g.heading)) : undefined,
            ingredients: cleanItems,
            structuredIngredients: parseIngredientList(cleanItems),
          };
@@ -278,6 +290,8 @@ export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
       mealType: metadata.mealType,
       tags: metadata.tags,
       origin: input.origin ?? "imported",
+      isPublic: Boolean(input.isPublic),
+      authorName: normalizeString(input.authorName) || undefined,
    };
 }
 

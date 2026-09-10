@@ -4,6 +4,7 @@
  */
 
 import { formatAmountToFraction, splitAmountAndIngredient } from "./fractionScaler";
+import { capitalizeFirstLetter } from "./culinaryTextSanitizer";
 import type { MeasurementUnitSystem } from "./settings";
 
 // Helper to round to nearest 5 or 10 for clean metric weights/volumes
@@ -83,14 +84,15 @@ export function convertIngredient(
   scaleRatio: number = 1,
 ): ConvertedQuantity {
   const parsed = splitAmountAndIngredient(rawIngredient, scaleRatio);
-  const { unit, name } = parsed;
+  const { unit } = parsed;
+  const name = capitalizeFirstLetter(parsed.name || rawIngredient);
   const numAmount = parseNumericAmount(parsed.amount);
 
   if (!numAmount || !unit) {
     return {
       amount: parsed.amount,
       unit: parsed.unit,
-      name: parsed.name || rawIngredient,
+      name,
     };
   }
 

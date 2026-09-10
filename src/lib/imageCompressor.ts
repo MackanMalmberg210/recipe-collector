@@ -4,7 +4,7 @@
  * while maintaining crystal-clear quality for Gemini OCR text recognition.
  */
 
-export async function compressImageForOcr(
+export async function compressImage(
   fileOrDataUrl: File | string,
   maxWidth = 1600,
   maxHeight = 1600,
@@ -72,3 +72,5 @@ export async function compressImageForOcr(
     }
   });
 }
+
+export const compressImageForOcr = compressImage;

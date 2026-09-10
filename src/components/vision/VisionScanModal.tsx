@@ -73,10 +73,19 @@ export default function VisionScanModal({
               </button>
             )}
 
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">
-                {isPlateMode ? "🍽️" : "📖"}
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="text-amber-500">
+                {isPlateMode ? (
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="4.5" />
+                  </svg>
+                ) : (
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                )}
+              </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50">
                   {isPlateMode
@@ -105,37 +114,50 @@ export default function VisionScanModal({
         {/* DISTINCT CREATIVE HERO BANNER */}
         {isPlateMode ? (
           /* SNAP MY PLATE RETICLE ACCENT */
-          <div className="relative overflow-hidden rounded-3xl border border-emerald-500/25 bg-gradient-to-r from-emerald-500/10 via-amber-500/5 to-transparent p-4 sm:p-5">
+          <div className="relative overflow-hidden rounded-3xl border border-stone-200/90 bg-stone-50/80 dark:border-white/10 dark:bg-white/[0.03] p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                  🍽️ Plate Analyzer
-                </span>
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="4" />
+                  </svg>
+                  <span>Plate Analyzer</span>
+                </div>
                 <p className="text-xs sm:text-sm font-semibold text-stone-800 dark:text-stone-200">
                   Capture your plated dish. The scanner estimates calories, protein &amp; reconstructs the complete recipe.
                 </p>
               </div>
 
-              <div className="shrink-0 flex items-center gap-2 text-xs font-bold text-stone-700 dark:text-stone-300 bg-white/70 dark:bg-black/40 border border-stone-200/90 dark:border-white/10 rounded-2xl px-3.5 py-2">
-                <span>🎯 Top-down photo recommended</span>
+              <div className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-stone-600 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-white/10 rounded-xl px-3 py-1.5 shadow-xs">
+                <svg className="h-3.5 w-3.5 text-stone-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Top-down photo recommended</span>
               </div>
             </div>
           </div>
         ) : (
           /* COOKBOOK OCR PAGE VIEWFINDER ACCENT */
-          <div className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent p-4 sm:p-5">
+          <div className="relative overflow-hidden rounded-3xl border border-stone-200/90 bg-stone-50/80 dark:border-white/10 dark:bg-white/[0.03] p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                  📖 Page Scanner
-                </span>
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  <span>Page Scanner</span>
+                </div>
                 <p className="text-xs sm:text-sm font-semibold text-stone-800 dark:text-stone-200">
                   Lay your cookbook flat under bright light. Ingredients and steps will be extracted into your library.
                 </p>
               </div>
 
-              <div className="shrink-0 flex items-center gap-2 text-xs font-bold text-stone-700 dark:text-stone-300 bg-white/70 dark:bg-black/40 border border-stone-200/90 dark:border-white/10 rounded-2xl px-3.5 py-2">
-                <span>💡 Flat page &amp; good lighting</span>
+              <div className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-stone-600 dark:text-stone-400 bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-white/10 rounded-xl px-3 py-1.5 shadow-xs">
+                <svg className="h-3.5 w-3.5 text-stone-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Flat page &amp; good lighting recommended</span>
               </div>
             </div>
           </div>

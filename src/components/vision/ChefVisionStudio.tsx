@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { saveRecipeToCloudOrLocal } from "../../lib/recipes";
 import { addItemsToGroceryList } from "../../lib/home";
 import { compressImageForOcr } from "../../lib/imageCompressor";
+import { capitalizeFirstLetter } from "../../lib/culinaryTextSanitizer";
 import { useToast } from "../ui/ToastProvider";
+import ChefProModal from "../subscription/ChefProModal";
+import {
+  getStoredUserSettings,
+  getAiScanUsage,
+  recordAiScanUsage,
+} from "../../lib/settings";
 
 export type VisionMode = "recipe" | "grocery" | "meal_analyzer";
 
@@ -33,9 +40,10 @@ export default function ChefVisionStudio({
   initialMode = "recipe",
   lockMode = false,
   onRecipeExtracted,
-  onCloseModal,
+  onCloseModal: _onCloseModal,
 }: ChefVisionStudioProps) {
-  const { success, error, info } = useToast();
+  void _onCloseModal;
+  const { success, error } = useToast();
 
   const [activeMode, setActiveMode] = useState<VisionMode>(initialMode);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -52,9 +60,105 @@ export default function ChefVisionStudio({
   const [dishDescription, setDishDescription] = useState<string>("");
   const [savedRecipeId, setSavedRecipeId] = useState<number | null>(null);
   const [savedGrocerySuccess, setSavedGrocerySuccess] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [userSettings, setUserSettings] = useState(getStoredUserSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => setUserSettings(getStoredUserSettings());
+    window.addEventListener("storage", handleUpdate);
+    window.addEventListener("user_settings_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("storage", handleUpdate);
+      window.removeEventListener("user_settings_updated", handleUpdate);
+    };
+  }, []);
+
+  const scanUsage = getAiScanUsage(userSettings);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const stopCameraStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCameraStream();
+    };
+  }, []);
+
+  const startWebcam = async () => {
+    setCameraError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Fallback directly to file input capture for very old browsers
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setIsCameraActive(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 100);
+    } catch (err: unknown) {
+      const e = err as Error;
+      // If environment camera fails, try user/front camera or fallback to input capture
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+        streamRef.current = fallbackStream;
+        setIsCameraActive(true);
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = fallbackStream;
+            videoRef.current.play().catch(() => {});
+          }
+        }, 100);
+      } catch {
+        cameraInputRef.current?.click();
+      }
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    setSelectedImage(dataUrl);
+    setExtractedRecipe(null);
+    setExtractedGroceryItems([]);
+    setExtractedNutrition(null);
+    setSavedRecipeId(null);
+    setSavedGrocerySuccess(false);
+    setScanError(null);
+    stopCameraStream();
+  };
 
   const handleImageFile = async (file: File) => {
     if (!file) return;
@@ -74,6 +178,7 @@ export default function ChefVisionStudio({
       setExtractedNutrition(null);
       setSavedRecipeId(null);
       setSavedGrocerySuccess(false);
+      setScanError(null);
     } catch {
       const reader = new FileReader();
       reader.onload = () => {
@@ -84,6 +189,7 @@ export default function ChefVisionStudio({
         setExtractedNutrition(null);
         setSavedRecipeId(null);
         setSavedGrocerySuccess(false);
+        setScanError(null);
       };
       reader.readAsDataURL(file);
     }
@@ -102,6 +208,13 @@ export default function ChefVisionStudio({
       return;
     }
 
+    if (!scanUsage.canScan) {
+      setIsProModalOpen(true);
+      error("You have reached your monthly free scan limit (3/3). Upgrade to Pro for unlimited scans!");
+      return;
+    }
+
+    setScanError(null);
     setLoading(true);
     setScanStep("Scanning image with AI Vision...");
 
@@ -135,7 +248,15 @@ export default function ChefVisionStudio({
       });
 
       const responseText = await res.text();
-      let data: any;
+      let data: {
+        error?: string;
+        recipe?: AppRecipe;
+        items?: GroceryItem[];
+        dishName?: string;
+        description?: string;
+        nutrition?: NutritionData | null;
+        detectedIngredients?: string[];
+      } | null = null;
 
       try {
         data = JSON.parse(responseText);
@@ -150,35 +271,62 @@ export default function ChefVisionStudio({
         throw new Error(data?.error || "Failed to analyze image.");
       }
 
-      if (activeMode === "recipe") {
+      if (!data) {
+        throw new Error("No data returned from vision scanner.");
+      }
+
+      if (activeMode === "recipe" && data.recipe) {
         const recipe: AppRecipe = {
           ...data.recipe,
-          image: selectedImage,
+          id: data.recipe.id || Date.now(),
+          title: data.recipe.title || "Scanned Recipe",
+          origin: data.recipe.origin || "imported",
+          ingredients: data.recipe.ingredients || [],
+          instructions: data.recipe.instructions || [],
+          image: selectedImage || data.recipe.image || "",
         };
         setExtractedRecipe(recipe);
         if (onRecipeExtracted) {
           onRecipeExtracted(recipe);
         }
-        success("Recipe extracted with high precision! 📖✨");
+        recordAiScanUsage();
+        setUserSettings(getStoredUserSettings());
+        success("Recipe successfully extracted from image.");
       } else if (activeMode === "grocery") {
         setExtractedGroceryItems(data.items || []);
-        success(`Extracted ${data.items?.length || 0} grocery items! 🛒`);
+        recordAiScanUsage();
+        setUserSettings(getStoredUserSettings());
+        success(`Extracted ${data.items?.length || 0} grocery items.`);
       } else if (activeMode === "meal_analyzer") {
         setDishName(data.dishName || "Analyzed Dish");
         setDishDescription(data.description || "");
         setExtractedNutrition(data.nutrition || null);
         setDetectedIngredients(data.detectedIngredients || []);
-        if (data.recipe) {
-          setExtractedRecipe({
-            ...data.recipe,
-            image: selectedImage,
-          });
+        const recipeSource = data.recipe || (data as any).reverseRecipe;
+        if (recipeSource) {
+          const recipe: AppRecipe = {
+            ...recipeSource,
+            id: recipeSource.id || Date.now(),
+            title: recipeSource.title || data.dishName || "Analyzed Meal",
+            origin: recipeSource.origin || "imported",
+            ingredients: recipeSource.ingredients || [],
+            instructions: recipeSource.instructions || [],
+            image: selectedImage || recipeSource.image || "",
+          };
+          setExtractedRecipe(recipe);
+          if (onRecipeExtracted) {
+            onRecipeExtracted(recipe);
+          }
         }
-        success("Meal identified with nutrition & reverse recipe! 🍽️✨");
+        recordAiScanUsage();
+        setUserSettings(getStoredUserSettings());
+        success("Meal analyzed with nutrition and recipe.");
       }
     } catch (err: unknown) {
       const e = err as { message?: string };
-      error(e.message || "Vision scan failed. Please try again.");
+      const errMsg = e.message || "Vision scan failed. Please try again.";
+      setScanError(errMsg);
+      error(errMsg);
     } finally {
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
@@ -225,6 +373,7 @@ export default function ChefVisionStudio({
               setExtractedRecipe(null);
               setExtractedGroceryItems([]);
               setExtractedNutrition(null);
+              setScanError(null);
             }}
             className={`flex flex-col items-start rounded-2xl p-4 border text-left transition cursor-pointer ${
               activeMode === "recipe"
@@ -250,6 +399,7 @@ export default function ChefVisionStudio({
               setExtractedRecipe(null);
               setExtractedGroceryItems([]);
               setExtractedNutrition(null);
+              setScanError(null);
             }}
             className={`flex flex-col items-start rounded-2xl p-4 border text-left transition cursor-pointer ${
               activeMode === "grocery"
@@ -275,6 +425,7 @@ export default function ChefVisionStudio({
               setExtractedRecipe(null);
               setExtractedGroceryItems([]);
               setExtractedNutrition(null);
+              setScanError(null);
             }}
             className={`flex flex-col items-start rounded-2xl p-4 border text-left transition cursor-pointer ${
               activeMode === "meal_analyzer"
@@ -320,24 +471,24 @@ export default function ChefVisionStudio({
           }}
         />
 
-        {!selectedImage ? (
+        {!selectedImage && !isCameraActive ? (
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-stone-300/80 bg-stone-50/50 p-10 text-center transition hover:border-amber-500 hover:bg-amber-500/5 dark:border-white/15 dark:bg-[#181310]/60 dark:hover:border-amber-400/40"
           >
-            <div className="mb-3.5 flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+            <div className="mb-4 text-amber-500 dark:text-amber-400">
               {activeMode === "grocery" ? (
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9 2 2 4-4" />
                 </svg>
               ) : activeMode === "meal_analyzer" ? (
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <circle cx="12" cy="12" r="9" />
-                  <circle cx="12" cy="12" r="5" />
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               ) : (
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               )}
@@ -358,7 +509,7 @@ export default function ChefVisionStudio({
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => cameraInputRef.current?.click()}
+                onClick={startWebcam}
                 className="flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 px-5 py-3 text-xs shadow-sm transition active:scale-95 cursor-pointer"
               >
                 <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -379,13 +530,59 @@ export default function ChefVisionStudio({
                 <span>Upload Image</span>
               </button>
             </div>
+
+            {/* UPFRONT QUOTA BADGE FOR FREE USERS */}
+            {!scanUsage.isUnlimited && (
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-stone-200/90 bg-white/80 dark:border-white/10 dark:bg-stone-900/60 px-3 py-1 text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                <span className={`h-1.5 w-1.5 rounded-full ${scanUsage.remaining === 0 ? "bg-rose-500" : "bg-amber-500"}`} />
+                <span>
+                  {scanUsage.remaining} of {scanUsage.max} monthly free scans remaining
+                </span>
+              </div>
+            )}
+          </div>
+        ) : isCameraActive ? (
+          /* LIVE DESKTOP/MOBILE WEBCAM VIEWFINDER */
+          <div className="relative overflow-hidden rounded-3xl border border-stone-800 bg-black shadow-2xl space-y-3 p-4">
+            <div className="relative aspect-16/9 sm:aspect-21/9 w-full overflow-hidden rounded-2xl bg-stone-950 flex items-center justify-center">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="h-full w-full object-cover"
+              />
+              <div className="pointer-events-none absolute inset-4 border border-white/20 rounded-xl" />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 px-1 pt-1">
+              <button
+                type="button"
+                onClick={stopCameraStream}
+                className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-stone-200 hover:bg-white/20 transition cursor-pointer"
+              >
+                <span>Cancel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={capturePhoto}
+                className="flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black border border-amber-600/60 px-6 py-2.5 text-xs sm:text-sm shadow-md transition active:scale-95 cursor-pointer"
+              >
+                <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Take Photo</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
             {/* IMAGE PREVIEW & ACTIONS */}
             <div className="relative aspect-16/9 sm:aspect-21/9 w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-950 dark:border-white/10">
               <img
-                src={selectedImage}
+                src={selectedImage || ""}
                 alt="Selected vision scan"
                 className="h-full w-full object-cover"
               />
@@ -407,15 +604,16 @@ export default function ChefVisionStudio({
                   <button
                     type="button"
                     onClick={() => setSelectedImage(null)}
-                    className="flex items-center gap-1.5 rounded-xl bg-stone-950/80 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md hover:bg-stone-900 transition cursor-pointer"
+                    className="flex items-center gap-2 rounded-xl bg-stone-950/90 hover:bg-stone-900 text-stone-100 border border-white/20 px-3.5 py-2 text-xs font-bold shadow-lg backdrop-blur-md transition active:scale-95 cursor-pointer"
                   >
-                    <span>✕</span>
+                    <svg className="h-3.5 w-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                     <span>Retake / Change Photo</span>
                   </button>
                 </div>
               )}
             </div>
-
             {/* CUSTOM NOTES / DIETARY INSTRUCTIONS */}
             <div className="flex flex-col sm:flex-row gap-3 items-end">
               <div className="w-full flex-1">
@@ -438,15 +636,95 @@ export default function ChefVisionStudio({
               <button
                 type="button"
                 onClick={startVisionAnalysis}
-                disabled={loading}
+                disabled={loading || !scanUsage.canScan}
                 className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-6 py-3 text-xs sm:text-sm font-bold text-stone-950 border border-amber-600/60 shadow-md shadow-amber-400/25 transition cursor-pointer disabled:opacity-50"
               >
                 <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3Z" />
                 </svg>
-                <span>{loading ? "Analyzing..." : "Run AI Vision Scan"}</span>
+                <span>{loading ? "Analyzing..." : !scanUsage.canScan ? "Upgrade to Pro to Scan" : "Run AI Vision Scan"}</span>
               </button>
             </div>
+
+            {/* QUOTA STATUS & PRO UPGRADE ACCESS */}
+            {scanUsage.isUnlimited ? (
+              <div className="flex items-center justify-between px-1 text-xs">
+                <span className="text-stone-500 dark:text-stone-400 font-medium">Subscription status</span>
+                <span className="rounded-md bg-amber-400 text-stone-950 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  PRO Unlimited
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between px-1 text-xs">
+                <span className="text-stone-500 dark:text-stone-400 font-medium">Free plan monthly scans</span>
+                <span className={`font-bold ${scanUsage.remaining === 0 ? "text-rose-500" : "text-amber-500"}`}>
+                  {scanUsage.remaining} of {scanUsage.max} scans remaining
+                </span>
+              </div>
+            )}
+
+            {/* SOFT PAYWALL WHEN FREE SCANS ARE EXHAUSTED */}
+            {!scanUsage.canScan && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs sm:text-sm text-stone-800 dark:text-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                <div className="space-y-0.5">
+                  <p className="font-bold text-amber-900 dark:text-amber-200">
+                    Monthly Free Scan Limit Reached
+                  </p>
+                  <p className="text-xs text-stone-600 dark:text-stone-400">
+                    Upgrade to Pro for unlimited AI scans, reverse recipes, and nutritional macro tracking.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsProModalOpen(true)}
+                  className="shrink-0 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 px-4 py-2 text-xs font-bold text-stone-950 shadow-xs hover:from-amber-400 hover:to-amber-500 transition cursor-pointer"
+                >
+                  Upgrade to Pro
+                </button>
+              </div>
+            )}
+
+            {/* HIGH-CONTRAST SCAN ERROR CARD WITH CRISP SVG (NO EMOJIS, NO MUDDY MAROON) */}
+            {scanError && (
+              <div className="rounded-2xl border border-rose-400/40 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-950/40 p-4 sm:p-5 text-stone-900 dark:text-rose-100 flex items-start gap-3.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1 space-y-1.5 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-sm text-rose-950 dark:text-rose-200">
+                      Scan Notice
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setScanError(null)}
+                      className="rounded-lg p-1 text-rose-700 hover:bg-rose-200/60 dark:text-rose-300 dark:hover:bg-rose-800/40 transition cursor-pointer"
+                      title="Dismiss alert"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-xs sm:text-[13px] leading-relaxed text-rose-900 dark:text-rose-200/90 font-medium">
+                    {scanError}
+                  </p>
+                  <div className="flex items-center gap-1.5 pt-1 text-xs text-rose-800/90 dark:text-rose-300 font-medium">
+                    <svg className="h-3.5 w-3.5 shrink-0 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                      Tip: Ensure bright lighting, sharp focus, and that the photo clearly shows{" "}
+                      {activeMode === "recipe"
+                        ? "readable recipe text or cookbook ingredients."
+                        : activeMode === "grocery"
+                        ? "handwritten items or a shopping list."
+                        : "a plated meal or edible food."}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -459,10 +737,13 @@ export default function ChefVisionStudio({
           
           {/* Snap My Plate Nutrition Card if available */}
           {extractedNutrition && (
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-3">
+            <div className="rounded-2xl border border-stone-200/90 bg-stone-50/70 p-5 space-y-3 dark:border-white/10 dark:bg-white/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                  <span>🍽️</span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="4.5" />
+                  </svg>
                   <span>Identified Meal: {dishName}</span>
                 </span>
                 <span className="text-xs font-bold text-stone-500 dark:text-stone-400">
@@ -476,40 +757,40 @@ export default function ChefVisionStudio({
                 </p>
               )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-                <div className="rounded-xl border border-amber-500/20 bg-white p-3 text-center dark:bg-[#201813]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+                <div className="rounded-xl border border-stone-200 bg-white p-3 text-center dark:border-white/10 dark:bg-[#1c1815]">
                   <span className="block text-[10px] font-bold uppercase text-stone-500 dark:text-stone-400">
                     Calories
                   </span>
                   <span className="text-lg font-black text-amber-600 dark:text-amber-400">
-                    🔥 {extractedNutrition.calories} kcal
+                    {extractedNutrition.calories} kcal
                   </span>
                 </div>
 
-                <div className="rounded-xl border border-amber-500/20 bg-white p-3 text-center dark:bg-[#201813]">
+                <div className="rounded-xl border border-stone-200 bg-white p-3 text-center dark:border-white/10 dark:bg-[#1c1815]">
                   <span className="block text-[10px] font-bold uppercase text-stone-500 dark:text-stone-400">
                     Protein
                   </span>
                   <span className="text-lg font-black text-stone-900 dark:text-[#fff8ef]">
-                    🥩 {extractedNutrition.proteinGrams}g
+                    {extractedNutrition.proteinGrams}g
                   </span>
                 </div>
 
-                <div className="rounded-xl border border-amber-500/20 bg-white p-3 text-center dark:bg-[#201813]">
+                <div className="rounded-xl border border-stone-200 bg-white p-3 text-center dark:border-white/10 dark:bg-[#1c1815]">
                   <span className="block text-[10px] font-bold uppercase text-stone-500 dark:text-stone-400">
                     Carbohydrates
                   </span>
                   <span className="text-lg font-black text-stone-900 dark:text-[#fff8ef]">
-                    🌾 {extractedNutrition.carbsGrams}g
+                    {extractedNutrition.carbsGrams}g
                   </span>
                 </div>
 
-                <div className="rounded-xl border border-amber-500/20 bg-white p-3 text-center dark:bg-[#201813]">
+                <div className="rounded-xl border border-stone-200 bg-white p-3 text-center dark:border-white/10 dark:bg-[#1c1815]">
                   <span className="block text-[10px] font-bold uppercase text-stone-500 dark:text-stone-400">
                     Healthy Fat
                   </span>
                   <span className="text-lg font-black text-stone-900 dark:text-[#fff8ef]">
-                    🥑 {extractedNutrition.fatGrams}g
+                    {extractedNutrition.fatGrams}g
                   </span>
                 </div>
               </div>
@@ -549,7 +830,7 @@ export default function ChefVisionStudio({
                 {extractedRecipe.title}
               </h2>
               <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                ⏱ {extractedRecipe.cookTime} min • 👥 {extractedRecipe.servings} servings • 🏷️ {extractedRecipe.category}
+                {extractedRecipe.cookTime} min • {extractedRecipe.servings} servings • {extractedRecipe.category}
               </p>
             </div>
 
@@ -567,7 +848,7 @@ export default function ChefVisionStudio({
                   onClick={handleSaveRecipeToCookbook}
                   className="rounded-2xl bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-black text-stone-950 shadow-md shadow-amber-400/20 transition cursor-pointer"
                 >
-                  Save to Cookbook ✨
+                  Save to Cookbook
                 </button>
               )}
             </div>
@@ -577,14 +858,17 @@ export default function ChefVisionStudio({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Ingredients */}
             <div className="rounded-2xl border border-stone-200 bg-[#faf7f2] p-4 dark:border-white/8 dark:bg-[#1d1713] space-y-2">
-              <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-400">
-                🥕 Ingredients ({extractedRecipe.ingredients.length})
+              <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+                <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9 2 2 4-4" />
+                </svg>
+                <span>Ingredients ({extractedRecipe.ingredients.length})</span>
               </h4>
               <ul className="space-y-1.5 text-xs text-stone-800 dark:text-stone-200">
                 {extractedRecipe.ingredients.map((ing, i) => (
                   <li key={i} className="flex items-center gap-2">
                     <span className="text-amber-600 font-bold">•</span>
-                    <span>{ing}</span>
+                    <span>{capitalizeFirstLetter(ing)}</span>
                   </li>
                 ))}
               </ul>
@@ -592,8 +876,11 @@ export default function ChefVisionStudio({
 
             {/* Instructions */}
             <div className="rounded-2xl border border-stone-200 bg-[#faf7f2] p-4 dark:border-white/8 dark:bg-[#1d1713] space-y-2">
-              <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-400">
-                📝 Cooking Instructions ({(extractedRecipe.instructions || []).length} steps)
+              <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+                <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Cooking Instructions ({(extractedRecipe.instructions || []).length} steps)</span>
               </h4>
               <ol className="space-y-2 text-xs text-stone-800 dark:text-stone-200">
                 {(extractedRecipe.instructions || []).map((step, i) => (
@@ -666,6 +953,11 @@ export default function ChefVisionStudio({
         </section>
       )}
 
+      {/* PRO UPGRADE MODAL */}
+      <ChefProModal
+        isOpen={isProModalOpen}
+        onClose={() => setIsProModalOpen(false)}
+      />
     </div>
   );
 }

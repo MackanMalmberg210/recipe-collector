@@ -43,10 +43,29 @@ export default function SavedToolbar({
   resultCount,
   counts,
 }: SavedToolbarProps) {
-  const tabs: { id: CulinaryFilter; label: string; count: number; icon?: string }[] = [
+  const tabs: { id: CulinaryFilter; label: string; count: number; icon?: React.ReactNode }[] = [
     { id: "all" as CulinaryFilter, label: "All Recipes", count: counts.total },
-    { id: "favorites" as CulinaryFilter, label: "Favorites", count: counts.favorites, icon: "⭐" },
-    { id: "quick" as CulinaryFilter, label: "Quick (<30m)", count: counts.quick, icon: "⏱" },
+    {
+      id: "favorites" as CulinaryFilter,
+      label: "Favorites",
+      count: counts.favorites,
+      icon: (
+        <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      ),
+    },
+    {
+      id: "quick" as CulinaryFilter,
+      label: "Quick (<30m)",
+      count: counts.quick,
+      icon: (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <circle cx="12" cy="12" r="9" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 3" />
+        </svg>
+      ),
+    },
     { id: "dinner" as CulinaryFilter, label: "Dinner", count: counts.dinner },
     { id: "lunch" as CulinaryFilter, label: "Lunch", count: counts.lunch },
     { id: "breakfast" as CulinaryFilter, label: "Breakfast", count: counts.breakfast },

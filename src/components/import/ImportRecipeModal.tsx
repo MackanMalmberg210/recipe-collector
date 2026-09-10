@@ -567,25 +567,6 @@ export default function ImportRecipeModal({
                       )}
                     </button>
                   </div>
-
-                  {/* Example Links Quick Helper */}
-                  {!loading && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <span className="text-[11px] font-semibold text-stone-400 dark:text-[#78716c]">
-                        Try a sample:
-                      </span>
-                      {SAMPLE_RECIPES.map((sample, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleUseSampleUrl(sample.url)}
-                          className="rounded-lg border border-stone-200 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-stone-600 hover:border-amber-500/40 hover:text-amber-700 dark:border-[#2e2722] dark:bg-[#221e1b] dark:text-[#d6d3d1] dark:hover:border-amber-400/40 dark:hover:text-amber-300 transition cursor-pointer"
-                        >
-                          {sample.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -619,15 +600,7 @@ export default function ImportRecipeModal({
                       className="w-full bg-transparent text-xs sm:text-sm font-medium text-stone-950 placeholder:font-normal placeholder:text-stone-400 outline-none resize-y min-h-[120px] dark:text-[#fafaf9] dark:placeholder-[#78716c]"
                     />
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 dark:border-[#2e2722]/80">
-                      <button
-                        type="button"
-                        onClick={handleUseSampleText}
-                        className="rounded-lg border border-stone-200 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-stone-600 hover:border-amber-500/40 hover:text-amber-700 dark:border-[#2e2722] dark:bg-[#181513] dark:text-[#d6d3d1] dark:hover:text-amber-300 transition cursor-pointer"
-                      >
-                        Try sample notes
-                      </button>
-
+                    <div className="flex items-center justify-end pt-2 border-t border-stone-100 dark:border-[#2e2722]/80">
                       <button
                         type="button"
                         onClick={() => handleExtractText()}
@@ -697,15 +670,23 @@ export default function ImportRecipeModal({
               {/* EDITORIAL RECIPE BENTO PREVIEW CARD */}
               {extractedRecipe && !loading && (
                 <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-md dark:border-[#2e2722] dark:bg-[#221e1b] animate-in fade-in duration-200">
-                  <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)]">
+                  <div className="grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)]">
                     {/* Left: Recipe Hero Image or Icon Badge */}
-                    <div className="relative min-h-[160px] md:min-h-full bg-stone-200 dark:bg-stone-900 overflow-hidden">
+                    <div className="relative min-h-[220px] md:min-h-full bg-stone-200 dark:bg-stone-900 overflow-hidden flex items-center justify-center">
                       {extractedRecipe.image ? (
-                        <img
-                          src={extractedRecipe.image}
-                          alt={extractedRecipe.title}
-                          className="h-full w-full object-cover"
-                        />
+                        <>
+                          <img
+                            src={extractedRecipe.image}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 h-full w-full object-cover filter blur-xl opacity-30 scale-110 pointer-events-none"
+                          />
+                          <img
+                            src={extractedRecipe.image}
+                            alt={extractedRecipe.title}
+                            className="relative h-full w-full object-cover object-center"
+                          />
+                        </>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center p-6 text-stone-400 dark:text-stone-600">
                           <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -787,7 +768,6 @@ export default function ImportRecipeModal({
                       <div className="space-y-1.5 pt-2 border-t border-stone-100 dark:border-[#2e2722]">
                         <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                           <span>Ingredients ({extractedRecipe.ingredients.length})</span>
-                          <span className="text-[10px] lowercase font-normal text-stone-400">clean structured</span>
                         </div>
 
                         <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
@@ -836,69 +816,12 @@ export default function ImportRecipeModal({
                 </div>
               )}
 
-              {/* THREE FEATURE HIGHLIGHTS (When in Empty State) */}
+              {/* MINIMALIST SCANDINAVIAN COMPATIBILITY FOOTER */}
               {!extractedRecipe && !loading && (
-                <div className="pt-4 border-t border-stone-200/80 dark:border-[#2e2722]/80 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Feature 1 */}
-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 dark:border-[#2e2722] dark:bg-[#221e1b]/70 space-y-1">
-                      <div className="text-amber-500">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      <h4 className="text-xs font-bold text-stone-950 dark:text-[#fafaf9]">
-                        Instant Recipe Parsing
-                      </h4>
-                      <p className="text-[11px] text-stone-500 dark:text-[#a8a29e] leading-snug">
-                        Directly extracts ingredients, timings, and cooking instructions.
-                      </p>
-                    </div>
-
-                    {/* Feature 2 */}
-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 dark:border-[#2e2722] dark:bg-[#221e1b]/70 space-y-1">
-                      <div className="text-amber-500">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                      </div>
-                      <h4 className="text-xs font-bold text-stone-950 dark:text-[#fafaf9]">
-                        Pure Recipe, Zero Ads
-                      </h4>
-                      <p className="text-[11px] text-stone-500 dark:text-[#a8a29e] leading-snug">
-                        Strips 4,000 words of blog stories and popup banners automatically.
-                      </p>
-                    </div>
-
-                    {/* Feature 3 */}
-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 dark:border-[#2e2722] dark:bg-[#221e1b]/70 space-y-1">
-                      <div className="text-amber-500">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
-                      </div>
-                      <h4 className="text-xs font-bold text-stone-950 dark:text-[#fafaf9]">
-                        Structured Grocery Data
-                      </h4>
-                      <p className="text-[11px] text-stone-500 dark:text-[#a8a29e] leading-snug">
-                        Isolates quantities and units so you can add items straight to your cart.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Channel support pills */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-[#78716c] mr-1">
-                      Supports:
-                    </span>
-                    {POPULAR_CHANNELS.map((ch, i) => (
-                      <span
-                        key={i}
-                        className="rounded-lg border border-stone-200 bg-stone-100/70 px-2 py-0.5 text-[11px] font-semibold text-stone-600 dark:border-[#2e2722] dark:bg-[#221e1b] dark:text-[#d6d3d1]"
-                      >
-                        {ch}
-                      </span>
-                    ))}
+                <div className="pt-3.5 border-t border-stone-200/70 dark:border-[#2e2722]/80 flex items-center justify-between text-xs text-stone-400 dark:text-[#78716c]">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span>Works seamlessly with Allrecipes, BBC Good Food, Arla, ICA, and 1,000+ recipe blogs</span>
                   </div>
                 </div>
               )}

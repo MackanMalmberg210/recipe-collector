@@ -1,4 +1,3 @@
-import { capitalize } from "./format";
 import { sanitizeCulinaryText } from "./culinaryTextSanitizer";
 
 export type StructuredIngredient = {

@@ -3,17 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "../lib/supabase/client";
 import ChefProModal from "./subscription/ChefProModal";
 import ThemeToggle from "./ThemeToggle";
 import { getStoredUserSettings, DEFAULT_USER_SETTINGS, type UserSettings } from "../lib/settings";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Navbar() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isLoading: loading, signOut, displayName, userInitial } = useAuth();
   const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
   const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -21,43 +19,23 @@ export default function Navbar() {
 
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     setMounted(true);
-    const getUser = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-      } catch {}
-      setLoading(false);
-    };
-
-    getUser();
     setUserSettings(getStoredUserSettings());
 
     const handleSettingsUpdate = () => {
       setUserSettings(getStoredUserSettings());
     };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     window.addEventListener("storage", handleSettingsUpdate);
     window.addEventListener("user_settings_updated", handleSettingsUpdate);
 
     return () => {
-      subscription.unsubscribe();
       window.removeEventListener("storage", handleSettingsUpdate);
       window.removeEventListener("user_settings_updated", handleSettingsUpdate);
     };
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -88,14 +66,11 @@ export default function Navbar() {
   }, [isMobileMenuOpen]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
     window.location.href = "/";
   };
-
-  const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Chef";
-  const userInitial = displayName.charAt(0).toUpperCase();
 
   const navLinks = [
     {
@@ -190,7 +165,7 @@ export default function Navbar() {
   return (
     <>
       {/* TOP DESKTOP & MOBILE HEADER */}
-      <nav className="sticky top-0 z-40 w-full border-b border-stone-200 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-[#2e2722] dark:bg-[#12100e]/95 px-4 sm:px-6 xl:px-10">
+      <nav className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-[#2e2722] dark:bg-[#12100e]/95 px-4 sm:px-6 xl:px-10">
         <div className="relative mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between">
           
           {/* LOGO & BRAND (LEFT) */}
@@ -205,27 +180,27 @@ export default function Navbar() {
                   <line x1="6" y1="17" x2="18" y2="17" />
                 </svg>
               </div>
-              <span className="text-sm sm:text-base font-bold tracking-tight text-stone-900 dark:text-stone-100">
+              <span className="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-stone-100">
                 Recipe Collector
               </span>
             </Link>
           </div>
 
           {/* DESKTOP NAV LINKS (CENTERED IN MIDDLE OF NAVBAR) */}
-          <div className="hidden md:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition-all duration-150 cursor-pointer ${
+                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm transition-all duration-150 cursor-pointer ${
                     isActive
-                      ? "bg-stone-100 text-stone-950 border border-stone-300/80 dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27] font-bold shadow-xs"
-                      : "text-stone-600 hover:bg-stone-100 hover:text-stone-950 dark:text-stone-400 dark:hover:bg-white/5 dark:hover:text-stone-100 border border-transparent font-medium"
+                      ? "bg-slate-900 text-white font-bold shadow-xs dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27]"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-stone-400 dark:hover:bg-white/5 dark:hover:text-stone-100 border border-transparent font-medium"
                   }`}
                 >
-                  <span className={isActive ? "text-amber-500" : "text-stone-400 group-hover:text-stone-600 dark:text-stone-500 dark:group-hover:text-stone-300"}>{link.icon}</span>
+                  <span className={isActive ? "text-amber-400 dark:text-amber-400" : "text-slate-400 group-hover:text-slate-600 dark:text-stone-500 dark:group-hover:text-stone-300"}>{link.icon}</span>
                   <span>{link.label}</span>
                 </Link>
               );
@@ -233,101 +208,140 @@ export default function Navbar() {
           </div>
 
           {/* RIGHT UTILITIES & USER MENU */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {/* THEME TOGGLE */}
             <ThemeToggle />
 
-            {/* CHEF PRO NAV BADGE (Only for logged-in Pro users) */}
+            {/* PRO NAV BADGE (Only for logged-in Pro users) */}
             {mounted && user && userSettings.subscriptionTier === "pro" && (
-              <span className="inline-flex items-center gap-1 rounded-xl bg-amber-400/20 px-2 py-1 text-[10px] sm:text-[11px] font-black uppercase text-amber-400 border border-amber-400/30">
-                👑 PRO
+              <span className="inline-flex items-center rounded-lg bg-amber-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-stone-950 shadow-xs">
+                PRO
               </span>
             )}
 
+            {/* UPGRADE PILL (Visible on xl+ screens where there's plenty of space, keeping navbar clean) */}
+            {mounted && userSettings.subscriptionTier !== "pro" && (
+              <button
+                type="button"
+                onClick={() => setIsProModalOpen(true)}
+                className="hidden xl:inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300 px-3 py-1 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                <svg className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Upgrade</span>
+              </button>
+            )}
+
             {/* USER PROFILE DROPDOWN (DESKTOP) */}
-            {!loading && user ? (
-              <div className="relative hidden md:block" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 p-1.5 pr-2.5 transition hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer group"
-                >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-amber-400 font-bold text-xs text-stone-950 shadow-xs">
-                    {userInitial}
-                  </div>
-                  <span className="max-w-[110px] truncate text-xs font-bold text-stone-900 dark:text-stone-200 transition-colors group-hover:text-amber-700 dark:group-hover:text-amber-300">
-                    {displayName}
-                  </span>
-                  <svg
-                    className={`h-3 w-3 text-stone-500 transition-transform duration-200 ${
-                      isDropdownOpen ? "rotate-180 text-amber-600 dark:text-amber-400" : "group-hover:text-stone-800 dark:group-hover:text-stone-200"
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
+            {!loading && (
+              user ? (
+                <div className="relative hidden md:block" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 pr-2.5 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer group"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-60 origin-top-right rounded-2xl border border-stone-200 bg-white p-1.5 shadow-2xl ring-1 ring-black/5 transition-all z-50 dark:border-white/12 dark:bg-[#171412] dark:ring-black/50">
-                    <div className="px-3 py-2.5 border-b border-stone-100 dark:border-white/5">
-                      <p className="text-xs font-black text-stone-900 dark:text-stone-100 truncate">
-                        {displayName}
-                      </p>
-                      <p className="text-[10px] text-stone-500 dark:text-stone-400 truncate mt-0.5">
-                        {user.email}
-                      </p>
+                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-amber-400 font-bold text-xs text-slate-950 shadow-xs">
+                      {userInitial}
                     </div>
+                    <span className="max-w-[110px] truncate text-xs font-bold text-slate-900 dark:text-stone-200 transition-colors group-hover:text-slate-950 dark:group-hover:text-amber-300">
+                      {displayName}
+                    </span>
+                    <svg
+                      className={`h-3 w-3 text-slate-500 transition-transform duration-200 ${
+                        isDropdownOpen ? "rotate-180 text-amber-600 dark:text-amber-400" : "group-hover:text-slate-800 dark:group-hover:text-stone-200"
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                    <div className="py-1">
-                      <Link
-                        href="/settings"
-                        onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-stone-700 hover:bg-stone-100 hover:text-stone-950 dark:text-stone-300 dark:hover:bg-white/5 dark:hover:text-white transition"
-                      >
-                        <svg className="h-4 w-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span>Account & Settings</span>
-                      </Link>
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-60 origin-top-right rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl ring-1 ring-black/5 transition-all z-50 dark:border-white/12 dark:bg-[#171412] dark:ring-black/50">
+                      <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/5">
+                        <p className="text-xs font-black text-slate-900 dark:text-stone-100 truncate">
+                          {displayName}
+                        </p>
+                        <p className="text-[10px] text-slate-500 dark:text-stone-400 truncate mt-0.5">
+                          {user.email}
+                        </p>
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={handleSignOut}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
-                      >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>Sign Out</span>
-                      </button>
+                      <div className="py-1 space-y-0.5">
+                        <Link
+                          href="/settings"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-stone-300 dark:hover:bg-white/5 dark:hover:text-white transition"
+                        >
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center text-slate-400">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </span>
+                          <span className="flex-1 truncate">Account & Settings</span>
+                        </Link>
+
+                        {userSettings.subscriptionTier !== "pro" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              setIsProModalOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-bold text-amber-900 bg-amber-50/70 dark:bg-transparent dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/10 transition cursor-pointer text-left"
+                          >
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center text-amber-600 dark:text-amber-500">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                            </span>
+                            <span className="flex-1 truncate">Upgrade to Pro</span>
+                            <span className="rounded-md bg-amber-400 text-slate-950 px-1.5 py-0.5 text-[9px] font-black leading-none shrink-0">
+                              PRO
+                            </span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer text-left"
+                        >
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center text-rose-600 dark:text-rose-400">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            </svg>
+                          </span>
+                          <span className="flex-1 truncate">Sign Out</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-4 py-2 text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition-all duration-150 active:scale-95 cursor-pointer"
-                >
-                  <svg className="h-4 w-4 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  <span>Sign In</span>
-                </Link>
-              </div>
+                  )}
+                </div>
+              ) : (
+                <div className="hidden md:flex items-center">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold border border-slate-900 shadow-sm transition-all duration-150 active:scale-95 cursor-pointer dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 dark:border-amber-500 px-4.5 py-2 text-xs sm:text-sm"
+                  >
+                    <span>Sign In</span>
+                    <span className="text-white/70 dark:text-stone-950/70 font-black text-xs">→</span>
+                  </Link>
+                </div>
+              )
             )}
 
             {/* MOBILE HAMBURGER BUTTON (md:hidden) */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-900 hover:bg-stone-200 dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 transition cursor-pointer"
+              className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 transition cursor-pointer"
               aria-label="Toggle navigation menu"
             >
               {isMobileMenuOpen ? (
@@ -356,20 +370,26 @@ export default function Navbar() {
           />
 
           {/* Drawer panel */}
-          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-[#16120f] border-l border-stone-200 dark:border-white/10 p-5 shadow-2xl flex flex-col justify-between overflow-y-auto">
+          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-[#16120f] border-l border-slate-200 dark:border-white/10 p-5 shadow-2xl flex flex-col justify-between overflow-y-auto">
             <div className="space-y-6">
               
               {/* Drawer Top / User info */}
-              <div className="flex items-center justify-between pb-4 border-b border-stone-200 dark:border-white/10">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-stone-950 font-black text-sm shadow-md shadow-amber-500/25">
-                    {user ? userInitial : "🍳"}
+                    {user ? (
+                      userInitial
+                    ) : (
+                      <svg className="h-5 w-5 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-stone-900 dark:text-stone-100 truncate">
-                      {user ? displayName : "Guest Chef"}
+                    <p className="text-sm font-bold text-slate-900 dark:text-stone-100 truncate">
+                      {user ? displayName : "Guest"}
                     </p>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 truncate">
+                    <p className="text-xs text-slate-500 dark:text-stone-400 truncate">
                       {user ? user.email : "Local session"}
                     </p>
                   </div>
@@ -378,7 +398,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 dark:bg-white/5 text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:text-stone-400 dark:hover:text-white"
                 >
                   ✕
                 </button>
@@ -386,7 +406,7 @@ export default function Navbar() {
 
               {/* Navigation Links */}
               <div className="space-y-1.5">
-                <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 dark:text-stone-500 px-3 py-1">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-stone-500 px-3 py-1">
                   Menu Navigation
                 </p>
 
@@ -398,11 +418,11 @@ export default function Navbar() {
                       href={link.href}
                       className={`flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold transition ${
                         isActive
-                          ? "bg-stone-100 text-stone-950 border border-stone-300/80 dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27] font-extrabold shadow-2xs"
-                          : "text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-white/5"
+                          ? "bg-slate-900 text-white font-extrabold shadow-xs dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27]"
+                          : "text-slate-700 hover:bg-slate-100 dark:text-stone-300 dark:hover:bg-white/5"
                       }`}
                     >
-                      <span className={isActive ? "text-amber-500" : "text-stone-400 dark:text-stone-500"}>
+                      <span className={isActive ? "text-amber-400 dark:text-amber-500" : "text-slate-400 dark:text-stone-500"}>
                         {link.icon}
                       </span>
                       <span>{link.label}</span>
@@ -412,12 +432,12 @@ export default function Navbar() {
               </div>
 
               {/* Special Shortcuts */}
-              <div className="pt-2 space-y-2 border-t border-stone-200 dark:border-white/10">
+              <div className="pt-2 space-y-2 border-t border-slate-200 dark:border-white/10">
                 <Link
                   href="/settings"
-                  className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-white/5 transition"
+                  className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:text-stone-200 dark:hover:bg-white/5 transition"
                 >
-                  <svg className="h-5 w-5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -430,13 +450,12 @@ export default function Navbar() {
                     setIsMobileMenuOpen(false);
                     setIsProModalOpen(true);
                   }}
-                  className="flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 text-sm font-black text-stone-950 shadow-md shadow-amber-500/20 cursor-pointer"
+                  className="flex w-full items-center justify-between rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-r dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 px-4 py-3 text-sm font-bold shadow-md cursor-pointer transition"
                 >
                   <span className="flex items-center gap-2">
-                    <span>👑</span>
-                    <span>Chef Pro</span>
+                    <span>Pro Membership</span>
                   </span>
-                  <span className="text-xs uppercase tracking-wider bg-stone-950 text-amber-300 px-2 py-0.5 rounded-md">
+                  <span className="text-xs uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md font-black">
                     {userSettings.subscriptionTier === "pro" ? "Active" : "Upgrade"}
                   </span>
                 </button>
@@ -445,7 +464,7 @@ export default function Navbar() {
             </div>
 
             {/* Bottom Sign In / Sign Out */}
-            <div className="pt-4 border-t border-stone-200 dark:border-white/10">
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10">
               {user ? (
                 <button
                   type="button"
@@ -458,15 +477,16 @@ export default function Navbar() {
                   <span>Sign Out</span>
                 </button>
               ) : (
-                <Link
-                  href="/login"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 py-3 text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)]"
-                >
-                  <svg className="h-4 w-4 shrink-0 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  <span>Sign In to Account</span>
-                </Link>
+                <div className="w-full">
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 font-bold py-3 text-xs sm:text-sm border border-slate-900 dark:border-amber-600/60 shadow-md transition active:scale-95 cursor-pointer"
+                  >
+                    <span>Sign In</span>
+                    <span className="text-white/70 dark:text-stone-950/70 font-black text-xs">→</span>
+                  </Link>
+                </div>
               )}
             </div>
 

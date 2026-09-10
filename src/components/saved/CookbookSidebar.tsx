@@ -82,15 +82,15 @@ export default function CookbookSidebar({
           onClick={() => handleFilterClick({ type: "all" })}
           className={`shrink-0 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer ${
             isSelected({ type: "all" })
-              ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 shadow-sm font-black border border-amber-600/60"
-              : "bg-white text-stone-700 border border-stone-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
+              ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/60"
+              : "bg-white text-slate-700 border border-slate-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
           }`}
         >
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
           <span>All</span>
-          <span suppressHydrationWarning className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[10px]">{totalCount}</span>
+          <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "all" }) ? "bg-white/20 text-white dark:bg-stone-900/20 dark:text-stone-950" : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-stone-300"}`}>{totalCount}</span>
         </button>
 
         <button
@@ -98,15 +98,15 @@ export default function CookbookSidebar({
           onClick={() => handleFilterClick({ type: "my_recipes" })}
           className={`shrink-0 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer ${
             isSelected({ type: "my_recipes" })
-              ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 shadow-sm font-black border border-amber-600/60"
-              : "bg-white text-stone-700 border border-stone-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
+              ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/60"
+              : "bg-white text-slate-700 border border-slate-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
           }`}
         >
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           <span>My Recipes</span>
-          <span suppressHydrationWarning className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[10px]">{myRecipesCount}</span>
+          <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "my_recipes" }) ? "bg-white/20 text-white dark:bg-stone-900/20 dark:text-stone-950" : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-stone-300"}`}>{myRecipesCount}</span>
         </button>
 
         <button
@@ -114,15 +114,15 @@ export default function CookbookSidebar({
           onClick={() => handleFilterClick({ type: "favorites" })}
           className={`shrink-0 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer ${
             isSelected({ type: "favorites" })
-              ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 shadow-sm font-black border border-amber-600/60"
-              : "bg-white text-stone-700 border border-stone-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
+              ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/60"
+              : "bg-white text-slate-700 border border-slate-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
           }`}
         >
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
           </svg>
           <span>Favorites</span>
-          <span suppressHydrationWarning className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[10px]">{favoritesCount}</span>
+          <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "favorites" }) ? "bg-white/20 text-white dark:bg-stone-900/20 dark:text-stone-950" : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-stone-300"}`}>{favoritesCount}</span>
         </button>
 
         <button
@@ -130,33 +130,33 @@ export default function CookbookSidebar({
           onClick={() => handleFilterClick({ type: "quick" })}
           className={`shrink-0 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer ${
             isSelected({ type: "quick" })
-              ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 shadow-sm font-black border border-amber-600/60"
-              : "bg-white text-stone-700 border border-stone-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
+              ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/60"
+              : "bg-white text-slate-700 border border-slate-200/90 dark:bg-[#181412] dark:border-white/10 dark:text-stone-300"
           }`}
         >
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <span>Quick</span>
-          <span suppressHydrationWarning className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[10px]">{quickCount}</span>
+          <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "quick" }) ? "bg-white/20 text-white dark:bg-stone-900/20 dark:text-stone-950" : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-stone-300"}`}>{quickCount}</span>
         </button>
       </div>
 
       {/* DESKTOP SIDEBAR CONTAINER */}
-      <div className="hidden lg:block relative overflow-hidden rounded-3xl border border-stone-200/90 bg-white p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+      <div className="hidden lg:block relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
         
         {/* Sidebar Header & Action Button */}
         <div className="mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <svg className="h-5 w-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-5 w-5 text-slate-900 dark:text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              <h2 className="text-base font-bold tracking-tight text-stone-950 dark:text-stone-50">
+              <h2 className="text-base font-bold tracking-tight text-slate-950 dark:text-stone-50">
                 My Cookbook
               </h2>
             </div>
-            <span suppressHydrationWarning className="rounded-full border border-stone-200 bg-stone-100 px-2.5 py-0.5 text-xs font-bold text-stone-600 dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#a8a29e]">
+            <span suppressHydrationWarning className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#a8a29e]">
               {totalCount}
             </span>
           </div>
@@ -166,7 +166,7 @@ export default function CookbookSidebar({
             <button
               type="button"
               onClick={onOpenAddRecipeModal}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 py-3 px-4 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 shadow-sm dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 dark:border-amber-500 py-3 px-4 text-xs sm:text-sm font-bold transition-all duration-200 active:scale-[0.98] cursor-pointer"
             >
               <span className="text-base font-black transition-transform duration-200 group-hover:scale-110">+</span>
               <span>Add Recipe</span>
@@ -175,14 +175,14 @@ export default function CookbookSidebar({
         </div>
 
         {/* DIVIDER */}
-        <div className="h-px bg-stone-100 dark:bg-white/6 my-5" />
+        <div className="h-px bg-slate-100 dark:bg-white/6 my-5" />
 
         {/* NAVIGATION GROUPS */}
         <div className="space-y-6">
           
           {/* Main Collections */}
           <div>
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500 px-2">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-stone-500 px-2">
               Collections
             </p>
             <nav className="space-y-1">
@@ -191,19 +191,19 @@ export default function CookbookSidebar({
                 onClick={() => handleFilterClick({ type: "all" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "all" })
-                    ? "bg-stone-100 text-stone-950 dark:bg-[#221e1b] dark:text-[#fafaf9] border border-stone-300/80 dark:border-[#382f28] font-bold shadow-2xs"
-                    : "text-stone-600 hover:bg-stone-100/70 hover:text-stone-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
+                    ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-[#221e1b] dark:text-[#fafaf9] dark:border-[#382f28]"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "all" }) ? "text-amber-500" : "text-stone-400 dark:text-stone-500"}`}>
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "all" }) ? "text-white dark:text-amber-500" : "text-slate-400 dark:text-stone-500"}`}>
                     <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                   </div>
                   <span className="truncate text-left font-semibold">All Recipes</span>
                 </div>
-                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "all" }) ? "rounded-full bg-stone-200/80 px-2 py-0.5 text-[11px] text-stone-800 dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-stone-400 dark:text-stone-500"}`}>
+                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "all" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-slate-400 dark:text-stone-500"}`}>
                   {totalCount}
                 </span>
               </button>
@@ -213,19 +213,19 @@ export default function CookbookSidebar({
                 onClick={() => handleFilterClick({ type: "my_recipes" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "my_recipes" })
-                    ? "bg-stone-100 text-stone-950 dark:bg-[#221e1b] dark:text-[#fafaf9] border border-stone-300/80 dark:border-[#382f28] font-bold shadow-2xs"
-                    : "text-stone-600 hover:bg-stone-100/70 hover:text-stone-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
+                    ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-[#221e1b] dark:text-[#fafaf9] dark:border-[#382f28]"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "my_recipes" }) ? "text-amber-500" : "text-stone-400 dark:text-stone-500"}`}>
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "my_recipes" }) ? "text-white dark:text-amber-500" : "text-slate-400 dark:text-stone-500"}`}>
                     <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <span className="truncate text-left font-semibold">My Recipes</span>
                 </div>
-                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "my_recipes" }) ? "rounded-full bg-stone-200/80 px-2 py-0.5 text-[11px] text-stone-800 dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-stone-400 dark:text-stone-500"}`}>
+                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "my_recipes" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-slate-400 dark:text-stone-500"}`}>
                   {myRecipesCount}
                 </span>
               </button>
@@ -235,19 +235,19 @@ export default function CookbookSidebar({
                 onClick={() => handleFilterClick({ type: "favorites" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "favorites" })
-                    ? "bg-stone-100 text-stone-950 dark:bg-[#221e1b] dark:text-[#fafaf9] border border-stone-300/80 dark:border-[#382f28] font-bold shadow-2xs"
-                    : "text-stone-600 hover:bg-stone-100/70 hover:text-stone-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
+                    ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-[#221e1b] dark:text-[#fafaf9] dark:border-[#382f28]"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "favorites" }) ? "text-amber-500" : "text-stone-400 dark:text-stone-500"}`}>
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "favorites" }) ? "text-white dark:text-amber-500" : "text-slate-400 dark:text-stone-500"}`}>
                     <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
                   </div>
                   <span className="truncate text-left font-semibold">Favorites</span>
                 </div>
-                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "favorites" }) ? "rounded-full bg-stone-200/80 px-2 py-0.5 text-[11px] text-stone-800 dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-stone-400 dark:text-stone-500"}`}>
+                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "favorites" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-slate-400 dark:text-stone-500"}`}>
                   {favoritesCount}
                 </span>
               </button>
@@ -257,19 +257,19 @@ export default function CookbookSidebar({
                 onClick={() => handleFilterClick({ type: "quick" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "quick" })
-                    ? "bg-stone-100 text-stone-950 dark:bg-[#221e1b] dark:text-[#fafaf9] border border-stone-300/80 dark:border-[#382f28] font-bold shadow-2xs"
-                    : "text-stone-600 hover:bg-stone-100/70 hover:text-stone-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
+                    ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-[#221e1b] dark:text-[#fafaf9] dark:border-[#382f28]"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "quick" }) ? "text-amber-500" : "text-stone-400 dark:text-stone-500"}`}>
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "quick" }) ? "text-white dark:text-amber-500" : "text-slate-400 dark:text-stone-500"}`}>
                     <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
                   <span className="truncate text-left font-semibold">Quick (&lt;25 min)</span>
                 </div>
-                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "quick" }) ? "rounded-full bg-stone-200/80 px-2 py-0.5 text-[11px] text-stone-800 dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-stone-400 dark:text-stone-500"}`}>
+                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "quick" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-slate-400 dark:text-stone-500"}`}>
                   {quickCount}
                 </span>
               </button>
@@ -278,7 +278,7 @@ export default function CookbookSidebar({
 
           {/* Meal Types */}
           <div>
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500 px-2">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-stone-500 px-2">
               Meal Types
             </p>
             <nav className="space-y-1">
@@ -291,16 +291,16 @@ export default function CookbookSidebar({
                     onClick={() => handleFilterClick({ type: "mealType", value: meal.mealType })}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2 text-sm font-semibold transition cursor-pointer ${
                       isItemActive
-                        ? "bg-stone-100 text-stone-950 dark:bg-[#221e1b] dark:text-[#fafaf9] border border-stone-300/80 dark:border-[#382f28] font-bold shadow-2xs"
-                        : "text-stone-600 hover:bg-stone-100/70 hover:text-stone-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
+                        ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-[#221e1b] dark:text-[#fafaf9] dark:border-[#382f28]"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <svg
                         className={`h-4 w-4 shrink-0 transition-colors ${
                           isItemActive
-                            ? "text-amber-500"
-                            : "text-stone-400 dark:text-stone-500"
+                            ? "text-white dark:text-amber-500"
+                            : "text-slate-400 dark:text-stone-500"
                         }`}
                         fill="none"
                         viewBox="0 0 24 24"
@@ -311,7 +311,7 @@ export default function CookbookSidebar({
                       </svg>
                       <span className="truncate text-left font-semibold">{meal.label}</span>
                     </div>
-                    <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isItemActive ? "rounded-full bg-stone-200/80 px-2 py-0.5 text-[11px] text-stone-800 dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-stone-400 dark:text-stone-500"}`}>
+                    <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isItemActive ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-slate-400 dark:text-stone-500"}`}>
                       {meal.count}
                     </span>
                   </button>
@@ -322,7 +322,7 @@ export default function CookbookSidebar({
 
           {/* Categories */}
           <div>
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500 px-2">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-stone-500 px-2">
               Categories
             </p>
             <nav className="space-y-1">
@@ -335,16 +335,16 @@ export default function CookbookSidebar({
                     onClick={() => handleFilterClick({ type: "category", value: cat.category })}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2 text-sm font-semibold transition cursor-pointer ${
                       isCatActive
-                        ? "bg-stone-100 text-stone-950 dark:bg-[#221e1b] dark:text-[#fafaf9] border border-stone-300/80 dark:border-[#382f28] font-bold shadow-2xs"
-                        : "text-stone-600 hover:bg-stone-100/70 hover:text-stone-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
+                        ? "bg-slate-900 text-white shadow-xs font-bold border border-slate-900 dark:bg-[#221e1b] dark:text-[#fafaf9] dark:border-[#382f28]"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-[#a8a29e] dark:hover:bg-white/5 dark:hover:text-[#fafaf9]"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <svg
                         className={`h-4 w-4 shrink-0 transition-colors ${
                           isCatActive
-                            ? "text-amber-500"
-                            : "text-stone-400 dark:text-stone-500"
+                            ? "text-white dark:text-amber-500"
+                            : "text-slate-400 dark:text-stone-500"
                         }`}
                         fill="none"
                         viewBox="0 0 24 24"
@@ -355,7 +355,7 @@ export default function CookbookSidebar({
                       </svg>
                       <span className="truncate text-left font-semibold">{cat.label}</span>
                     </div>
-                    <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isCatActive ? "rounded-full bg-stone-200/80 px-2 py-0.5 text-[11px] text-stone-800 dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-stone-400 dark:text-stone-500"}`}>
+                    <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isCatActive ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white dark:bg-[#2e2722] dark:text-[#d6d3d1]" : "text-slate-400 dark:text-stone-500"}`}>
                       {cat.count}
                     </span>
                   </button>
@@ -367,7 +367,7 @@ export default function CookbookSidebar({
               <button
                 type="button"
                 onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-                className="mt-2.5 flex w-full items-center justify-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline py-1 cursor-pointer"
+                className="mt-2.5 flex w-full items-center justify-center gap-1 text-xs font-bold text-slate-900 dark:text-amber-400 hover:underline py-1 cursor-pointer"
               >
                 <span>{isCategoriesExpanded ? "Show fewer categories" : `View all (${categoryCounts.length})`}</span>
                 <span className="text-[10px]">{isCategoriesExpanded ? "▲" : "▼"}</span>
@@ -377,14 +377,14 @@ export default function CookbookSidebar({
 
           {/* Trash */}
           {trashCount > 0 && (
-            <div className="pt-2 border-t border-stone-100 dark:border-white/6">
+            <div className="pt-2 border-t border-slate-100 dark:border-white/6">
               <button
                 type="button"
                 onClick={() => handleFilterClick({ type: "trash" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "trash" })
-                    ? "bg-rose-500/15 text-rose-800 dark:text-rose-300 border border-rose-500/40 font-bold shadow-xs"
-                    : "text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-white/5"
+                    ? "bg-rose-50 text-rose-950 border border-rose-300 font-bold shadow-xs dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/40"
+                    : "text-slate-500 hover:bg-slate-100 dark:text-stone-400 dark:hover:bg-white/5"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -395,7 +395,7 @@ export default function CookbookSidebar({
                   </div>
                   <span className="truncate text-left font-semibold">Trash</span>
                 </div>
-                <span suppressHydrationWarning className="text-xs font-bold shrink-0 text-stone-400 dark:text-stone-500">
+                <span suppressHydrationWarning className="text-xs font-bold shrink-0 text-slate-400 dark:text-stone-500">
                   {trashCount}
                 </span>
               </button>

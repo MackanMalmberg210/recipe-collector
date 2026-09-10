@@ -25,7 +25,15 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const [secondsLeft, setSecondsLeft] = useState(countdownSeconds);
+
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setSecondsLeft(countdownSeconds);
+    }
+  }
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -38,22 +46,19 @@ export default function ConfirmModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setSecondsLeft(countdownSeconds);
+    if (!isOpen || countdownSeconds <= 0) return;
 
-    if (countdownSeconds > 0) {
-      const interval = setInterval(() => {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-      return () => clearInterval(interval);
-    }
+    return () => clearInterval(interval);
   }, [isOpen, countdownSeconds]);
 
   if (!isOpen) return null;
@@ -71,9 +76,22 @@ export default function ConfirmModal({
       {/* Dialog Box */}
       <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-stone-200/90 bg-white p-6 text-stone-900 shadow-2xl dark:border-white/10 dark:bg-[#181412] dark:text-stone-100 animate-in zoom-in-95 fade-in duration-200">
         <div className="flex items-start gap-4">
-          <span className="text-2xl shrink-0 mt-0.5">
-            {isDestructive ? "⚠️" : "❓"}
-          </span>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl mt-0.5 ${
+            isDestructive
+              ? "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"
+              : "bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
+          }`}>
+            {isDestructive ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01" />
+              </svg>
+            )}
+          </div>
 
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-stone-950 dark:text-stone-50">

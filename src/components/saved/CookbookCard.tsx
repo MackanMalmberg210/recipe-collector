@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { capitalize } from "../../lib/format";
+import { capitalizeFirstLetter } from "../../lib/culinaryTextSanitizer";
 import { getRecipeRating, type RecipeRating } from "../../lib/ratings";
 import StarRating from "../StarRating";
 
@@ -104,7 +105,7 @@ export default function CookbookCard({
             <img
               src={recipe.image}
               alt={recipe.title}
-              className="h-full min-h-72 w-full object-cover transition duration-500 group-hover:scale-105"
+              className="h-full min-h-72 w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
             />
           ) : (
             <div className="flex h-full min-h-72 items-center justify-center bg-stone-100 text-sm text-stone-400 dark:bg-[#211915]">
@@ -196,7 +197,7 @@ export default function CookbookCard({
                     key={`${recipe.id}-ingredient-${index}`}
                     className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-800 shadow-sm dark:border-white/10 dark:bg-[#2a211b] dark:text-stone-100"
                   >
-                    {ingredient}
+                    {capitalizeFirstLetter(ingredient)}
                   </li>
                 ))}
               </ul>

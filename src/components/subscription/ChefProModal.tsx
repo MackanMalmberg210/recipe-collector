@@ -42,7 +42,7 @@ export default function ChefProModal({ isOpen, onClose }: ChefProModalProps) {
       const current = getStoredUserSettings();
       saveUserSettings({ ...current, subscriptionTier: "pro" });
       setLoading(false);
-      success("Welcome to Chef Pro! 👑 All premium features unlocked.");
+      success("Welcome to Chef Pro! All premium features unlocked.");
       onClose();
     }, 600);
   };
@@ -75,16 +75,15 @@ export default function ChefProModal({ isOpen, onClose }: ChefProModalProps) {
 
         {/* Header */}
         <div className="text-left">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-300 mb-3">
-            <span>👑</span>
-            <span>Chef Pro Membership</span>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-300 mb-3">
+            <span>PRO Membership</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#fff8ef]">
-            Elevate Your Culinary Experience
+            Unlock the Full Experience
           </h2>
           <p className="mt-1.5 text-xs sm:text-sm text-stone-300 leading-relaxed">
-            Unlock infinite cloud storage, AI vision scanning, multi-aisle grocery hub, and automated nutritional tracking.
+            Unlimited AI vision scans, complete nutritional macros, multi-device cloud sync, and an ad-free kitchen.
           </p>
         </div>
 
@@ -112,28 +111,42 @@ export default function ChefProModal({ isOpen, onClose }: ChefProModalProps) {
               }`}
             >
               <span>Annual ($3.99/mo)</span>
-              <span className="rounded-full bg-emerald-500/30 text-emerald-300 px-1.5 py-0.2 text-[9px]">Save 20%</span>
+              <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 text-[9px] font-bold">Save 20%</span>
             </button>
           </div>
         </div>
 
-        {/* Features Checklist */}
+        {/* Features Checklist - Clean SVGs without heavy background shapes */}
         <div className="mt-6 space-y-3 rounded-3xl border border-white/8 bg-black/30 p-5 text-xs text-stone-200">
-          <div className="flex items-center gap-3">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 font-bold shrink-0">✓</span>
-            <span><strong>Unlimited Cloud Recipes</strong> – Store and sync thousands of recipes across all devices</span>
+          <div className="flex items-start gap-3">
+            <svg className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span><strong>100% Ad-Free Experience</strong> – Clean, uninterrupted cooking without sponsor ads or banners</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 font-bold shrink-0">✓</span>
-            <span><strong>Camera &amp; Vision Scanner</strong> – Snap photos of receipts, fridge contents, or dish menus</span>
+          <div className="flex items-start gap-3">
+            <svg className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span><strong>Unlimited AI Vision Scans</strong> – Snap cookbook pages, handwritten shopping notes &amp; plates</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 font-bold shrink-0">✓</span>
-            <span><strong>Smart Ingredient Substitutions</strong> – Instant chef-approved alternatives for missing items</span>
+          <div className="flex items-start gap-3">
+            <svg className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span><strong>Full Macro &amp; Nutritional Breakdown</strong> – Protein, carbs, fat and calorie analysis per serving</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 font-bold shrink-0">✓</span>
-            <span><strong>Multi-List Grocery Aisle Hub</strong> – Organize separate lists by store, brand, or occasion</span>
+          <div className="flex items-start gap-3">
+            <svg className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span><strong>Unlimited Cloud Storage</strong> – Store thousands of recipes synced in real-time across all your devices</span>
+          </div>
+          <div className="flex items-start gap-3">
+            <svg className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span><strong>Smart Meal Planner &amp; Grocery Sync</strong> – Plan weeks ahead and consolidate grocery items in 1 click</span>
           </div>
         </div>
 
@@ -143,9 +156,9 @@ export default function ChefProModal({ isOpen, onClose }: ChefProModalProps) {
             type="button"
             onClick={handleActivatePro}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 py-3.5 text-sm font-black text-stone-950 shadow-xl shadow-amber-400/25 transition hover:from-amber-300 hover:to-amber-200 cursor-pointer disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 py-3.5 text-sm font-bold text-stone-950 border border-amber-600/60 shadow-md shadow-amber-400/25 transition cursor-pointer disabled:opacity-50 active:scale-[0.99]"
           >
-            <span>{loading ? "Activating..." : "Start 14-Day Free Trial 👑"}</span>
+            <span>{loading ? "Activating..." : "Start 14-Day Free Trial"}</span>
           </button>
 
           <p className="text-center text-[11px] text-stone-400">

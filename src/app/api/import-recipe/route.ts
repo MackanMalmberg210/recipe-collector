@@ -1,9 +1,45 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import type { ImportedRecipe, IngredientGroup, NutritionInfo, RecipeCategory, MealType } from "../../../lib/types";
 import { normalizeRecipe } from "../../../lib/recipeNormalizer";
 import { parseIngredientList } from "../../../lib/ingredientParser";
 import { sanitizeCulinaryText } from "../../../lib/culinaryTextSanitizer";
+import { validatePublicRecipeUrl } from "../../../lib/security/urlValidator";
+import { checkRateLimit, getClientIp } from "../../../lib/security/rateLimiter";
+
+const execFileAsync = promisify(execFile);
+
+async function fetchWithCurl(url: string): Promise<string | null> {
+  try {
+    const curlCmd = process.platform === "win32" ? "curl.exe" : "curl";
+    const { stdout } = await execFileAsync(
+      curlCmd,
+      [
+        "-s",
+        "-L",
+        "--compressed",
+        "--max-time",
+        "15",
+        "-A",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "-H",
+        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "-H",
+        "Accept-Language: en-US,en;q=0.9",
+        url,
+      ],
+      { maxBuffer: 15 * 1024 * 1024 }
+    );
+    if (stdout && stdout.length > 500) {
+      return stdout;
+    }
+  } catch (err) {
+    console.warn("Resilient curl fetch fallback failed:", err);
+  }
+  return null;
+}
 
 type JsonLdNode = {
   "@type"?: string | string[];
@@ -105,7 +141,49 @@ function upgradeToHighResImageUrl(imageUrl: string): string {
     upgraded = upgraded.replace(/\/c_fill,w_\d+,h_\d+\//, "/c_limit,w_1600/");
   }
 
+  // 4. Dotdash / Allrecipes thmb dimension upgrade to /1500x0/ for crystal clear full-res photos
+  if (upgraded.includes("/thmb/")) {
+    upgraded = upgraded.replace(/\/thmb\/([^/]+)\/\d+x\d+\//, "/thmb/$1/1500x0/");
+  }
+
   return upgraded;
+}
+
+function findBetterAspectCounterpart(imageUrl: string, html: string): string {
+  if (!imageUrl || !html) return imageUrl;
+
+  // If the image is a 2x1 or 16x9 banner (common on Allrecipes, Dotdash Meredith, Food Network, etc.)
+  if (/2x1|16x9|16-9|1200x630|facebook|twitter|og-image/i.test(imageUrl)) {
+    // 1. Try to find the same base filename with 4x3
+    const filename = imageUrl.split("/").pop()?.split("?")[0] || "";
+    const baseName = filename.replace(/(?:2x1|16x9|16-9|1200x630).*$/i, "");
+    if (baseName && baseName.length > 3) {
+      const escapedBase = baseName.replace(/[-_]$/, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const counterpartRegex = new RegExp(
+        `https?://[^\\s"'<>]+${escapedBase}[^\\s"'<>]*4x3[^\\s"'<>]+\\.(?:jpg|jpeg|png|webp)`,
+        "i"
+      );
+      const counterpartMatch = html.match(counterpartRegex);
+      if (counterpartMatch && counterpartMatch[0]) {
+        return counterpartMatch[0];
+      }
+    }
+
+    // 2. Try to find any high-res 4x3 image candidate in the HTML from the same host
+    try {
+      const host = new URL(imageUrl).hostname;
+      const hostRegex = new RegExp(
+        `https?://${host.replace(/\./g, "\\.")}/[^\\s"'<>]*4x3[^\\s"'<>]+\\.(?:jpg|jpeg|png|webp)`,
+        "i"
+      );
+      const host4x3Match = html.match(hostRegex);
+      if (host4x3Match && host4x3Match[0]) {
+        return host4x3Match[0];
+      }
+    } catch {}
+  }
+
+  return imageUrl;
 }
 
 function extractImage(image: JsonLdNode["image"]): string {
@@ -116,14 +194,23 @@ function extractImage(image: JsonLdNode["image"]): string {
   }
 
   if (Array.isArray(image)) {
-    // In Schema.org, 16x9 (or highest aspect ratio/dimension) is usually at the end of the array or largest
     const candidates = image.map((item) => {
       if (typeof item === "string") return item;
       return item.url ?? item.contentUrl ?? item.thumbnailUrl ?? "";
     }).filter(Boolean);
 
-    // Prefer images that don't have downscale parameters, or mention 16x9, 1200, large
-    const highRes = candidates.find((url) => !/[?&](?:fit|resize|w)=\d+/i.test(url) && !/-\d+x\d+\./.test(url)) || candidates[candidates.length - 1] || candidates[0];
+    // Prefer standard photographic aspect ratios (4:3, 3:2) which capture the full dish without extreme panoramic crop
+    const fourByThree = candidates.find((url) => /4x3|4-3|4:3|3x2|3:2|3-2/i.test(url));
+    const square = candidates.find((url) => /1x1|1-1|1:1|square/i.test(url));
+    const nonBanner = candidates.find((url) => !/2x1|16x9|16-9|1200x630/i.test(url));
+
+    const highRes =
+      fourByThree ||
+      nonBanner ||
+      square ||
+      candidates.find((url) => !/[?&](?:fit|resize|w)=\d+/i.test(url) && !/-\d+x\d+\./.test(url)) ||
+      candidates[0];
+
     return upgradeToHighResImageUrl(highRes || "");
   }
 
@@ -426,14 +513,17 @@ function extractRecipeFromJsonLd(
       // High resolution image extraction
       let image = toAbsoluteUrl(extractImage(recipeNode.image), url);
       const ogImage = $("meta[property='og:image']").attr("content") || $("meta[name='twitter:image']").attr("content");
-      if (ogImage) {
+      if (!image && ogImage) {
         const upgradedOg = upgradeToHighResImageUrl(toAbsoluteUrl(ogImage, url));
-        if (!image || isUsefulImageUrl(upgradedOg)) {
+        if (isUsefulImageUrl(upgradedOg)) {
           image = upgradedOg;
         }
       }
       if (!image) {
         image = extractBestHtmlImage(html, url);
+      }
+      if (image) {
+        image = findBetterAspectCounterpart(image, html);
       }
 
       const cookTime =
@@ -495,7 +585,9 @@ function extractRecipeFromJsonLd(
         ingredientGroups: ingredientGroups.length > 1 ? ingredientGroups : undefined,
         instructions,
         sourceUrl: url,
-        sourceName: recipeNode.publisher?.name || authorName || undefined,
+        sourceName: authorName
+          ? (recipeNode.publisher?.name ? `${authorName} (${recipeNode.publisher.name})` : authorName)
+          : (recipeNode.publisher?.name || undefined),
         videoUrl,
         videoEmbedUrl,
         nutrition: extractNutrition(recipeNode.nutrition),
@@ -569,8 +661,11 @@ function extractBestHtmlImage(html: string, pageUrl: string) {
   ];
 
   for (const candidate of metaCandidates) {
-    const absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
-    if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
+    let absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
+    if (isUsefulImageUrl(absoluteUrl)) {
+      absoluteUrl = findBetterAspectCounterpart(absoluteUrl, html);
+      return absoluteUrl;
+    }
   }
 
   const imageCandidates: string[] = [];
@@ -595,9 +690,21 @@ function extractBestHtmlImage(html: string, pageUrl: string) {
     }
   });
 
+  // First check for candidates with 4x3 or standard photographic aspect ratios
   for (const candidate of imageCandidates) {
-    const absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
-    if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
+    if (/4x3|4-3|4:3|3x2|3:2/i.test(candidate)) {
+      const absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
+      if (isUsefulImageUrl(absoluteUrl)) return absoluteUrl;
+    }
+  }
+
+  // Then general candidates
+  for (const candidate of imageCandidates) {
+    let absoluteUrl = upgradeToHighResImageUrl(toAbsoluteUrl(candidate, pageUrl));
+    if (isUsefulImageUrl(absoluteUrl)) {
+      absoluteUrl = findBetterAspectCounterpart(absoluteUrl, html);
+      return absoluteUrl;
+    }
   }
 
   return "";
@@ -746,7 +853,7 @@ async function extractRecipeFromTextWithAi(
   const prompt = `Convert this raw recipe text into a clean standardized recipe with ingredients, amounts, and step-by-step instructions:\n\n${rawText}`;
   
   // Parallel race: launch top fast models simultaneously. The first valid response wins and aborts the others!
-  const candidateModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"];
+  const candidateModels = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -784,8 +891,110 @@ async function extractRecipeFromTextWithAi(
   return null;
 }
 
+async function fetchRecipeImageFallback(title: string, originalUrl?: string): Promise<string> {
+  // 1. Check Wayback Machine snapshot for the original page's high-res photo
+  if (originalUrl) {
+    try {
+      const wbRes = await fetch(`https://archive.org/wayback/available?url=${encodeURIComponent(originalUrl)}`, {
+        signal: AbortSignal.timeout(3500),
+      });
+      if (wbRes.ok) {
+        const wbData = await wbRes.json();
+        const snapUrl = wbData?.archived_snapshots?.closest?.url;
+        if (snapUrl) {
+          const rawUrl = snapUrl.replace(/\/web\/(\d+)\//, "/web/$1id_/");
+          const snapRes = await fetch(rawUrl, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+            signal: AbortSignal.timeout(4500),
+          });
+          if (snapRes.ok) {
+            const html = await snapRes.text();
+            const ogMatch =
+              html.match(/property="og:image"\s+content="([^"]+)"/i) ||
+              html.match(/content="([^"]+)"\s+property="og:image"/i);
+            if (ogMatch && ogMatch[1] && isUsefulImageUrl(ogMatch[1])) {
+              const better = findBetterAspectCounterpart(ogMatch[1], html);
+              return upgradeToHighResImageUrl(better);
+            }
+
+            // Fallback: look for 4x3 images in the HTML
+            const fourByThreeMatch =
+              html.match(/https:\/\/(?:www\.)?allrecipes\.com\/thmb\/[^\s"'<>]+\/1500x0\/[^\s"'<>]*4x3[^\s"'<>]+\.(?:jpg|jpeg|png|webp)/i) ||
+              html.match(/https?:\/\/[^\s"'<>]+4x3[^\s"'<>]+\.(?:jpg|jpeg|png|webp)/i);
+            if (fourByThreeMatch && fourByThreeMatch[0] && isUsefulImageUrl(fourByThreeMatch[0])) {
+              return upgradeToHighResImageUrl(fourByThreeMatch[0]);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Wayback image lookup failed:", err);
+    }
+  }
+
+  // 2. Spoonacular recipe image search
+  const spoonKey = process.env.SPOONACULAR_API_KEY;
+  if (spoonKey && title) {
+    try {
+      const cleanTitle = title
+        .replace(/\b(with|and|&|easy|quick|best|classic)\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      const spoonRes = await fetch(
+        `https://api.spoonacular.com/recipes/complexSearch?query=${encodeURIComponent(cleanTitle)}&number=1&apiKey=${spoonKey}`,
+        { signal: AbortSignal.timeout(3500) },
+      );
+      if (spoonRes.ok) {
+        const data = await spoonRes.json();
+        const img = data.results?.[0]?.image;
+        if (img) {
+          return img.replace(/-\d+x\d+\.(jpg|jpeg|png)$/i, "-636x393.$1");
+        }
+      }
+    } catch (err) {
+      console.warn("Spoonacular image search failed:", err);
+    }
+  }
+
+  // 3. Wikipedia / Wikimedia Commons food photography
+  if (title) {
+    try {
+      const wikiQuery = title.split(" with ")[0].split(" and ")[0].trim();
+      const wikiRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(wikiQuery)}&prop=pageimages&format=json&pithumbsize=1000`,
+        { signal: AbortSignal.timeout(3000) },
+      );
+      if (wikiRes.ok) {
+        const wikiData = await wikiRes.json();
+        const pages = wikiData.query?.pages;
+        const firstPage: any = pages ? Object.values(pages)[0] : null;
+        if (firstPage?.thumbnail?.source) {
+          return firstPage.thumbnail.source;
+        }
+      }
+    } catch (err) {
+      console.warn("Wikipedia image lookup failed:", err);
+    }
+  }
+
+  return "";
+}
+
 export async function POST(request: Request) {
   try {
+    // Rate limit: max 20 recipe imports per minute per IP
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(`import:${clientIp}`, 20, 60_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: `Too many recipe import requests. Please wait ${rateLimit.retryAfterSeconds} seconds before trying again.` },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     const body = await request.json();
     const targetUrl = typeof body?.url === "string" ? body.url.trim() : "";
     const rawText = typeof body?.text === "string" ? body.text.trim() : "";
@@ -827,18 +1036,29 @@ export async function POST(request: Request) {
       });
     }
 
+    // SSRF & URL VALIDATION
+    const urlValidation = validatePublicRecipeUrl(targetUrl);
+    if (!urlValidation.isValid) {
+      return NextResponse.json(
+        { error: urlValidation.error || "The provided URL is not allowed." },
+        { status: 400 }
+      );
+    }
+    const safeUrl = urlValidation.sanitizedUrl || targetUrl;
+
     // 1. TIKTOK SPECIALIZED HANDLER (oEmbed + AI Recipe Reconstruction)
-    if (targetUrl.includes("tiktok.com")) {
+    if (safeUrl.includes("tiktok.com")) {
       try {
-        const oembedRes = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(targetUrl)}`);
+        const oembedRes = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(safeUrl)}`, {
+          signal: AbortSignal.timeout(8000),
+        });
         if (oembedRes.ok) {
           const oembedData = await oembedRes.json();
           const caption = oembedData.title || "";
           const author = oembedData.author_name || "";
-          const thumbnail = oembedData.thumbnail_url || "";
 
           if (geminiKey && caption) {
-            const aiRecipe = await extractRecipeFromTextWithAi(caption, geminiKey, targetUrl, author);
+            const aiRecipe = await extractRecipeFromTextWithAi(caption, geminiKey, safeUrl, author);
             if (aiRecipe && aiRecipe.ingredients.length > 0) {
               const normalized = normalizeRecipe({
                 ...aiRecipe,
@@ -856,25 +1076,100 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. STANDARD WEB & RECIPE BLOG SCRAPING
-    const response = await fetch(targetUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      },
-      next: { revalidate: 0 },
-    });
+    // 2. STANDARD WEB & RECIPE BLOG SCRAPING (With 10s strict timeout)
+    let html = "";
 
-    if (!response.ok) {
+    try {
+      const response = await fetch(safeUrl, {
+        signal: AbortSignal.timeout(10000),
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        next: { revalidate: 0 },
+      });
+
+      if (response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        if (
+          contentType.includes("video/") ||
+          contentType.includes("audio/") ||
+          contentType.includes("application/octet-stream") ||
+          contentType.includes("application/pdf")
+        ) {
+          return NextResponse.json(
+            { error: "The provided URL points to a binary or media file, not a readable recipe web page." },
+            { status: 422 }
+          );
+        }
+
+        const contentLength = Number(response.headers.get("content-length") || 0);
+        if (contentLength > 8 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: "The web page exceeds the maximum allowed size (8 MB)." },
+            { status: 413 }
+          );
+        }
+
+        html = await response.text();
+      } else {
+        console.warn(`Standard fetch returned HTTP ${response.status} (${response.statusText}). Trying resilient curl fallback...`);
+      }
+    } catch (fetchErr) {
+      console.warn("Standard fetch failed, attempting resilient curl fallback:", fetchErr);
+    }
+
+    // 3. RESILIENT FALLBACK: If blocked by Cloudflare / anti-bot (e.g. 402/403 on Allrecipes, Dotdash Meredith)
+    if (!html || html.length < 500) {
+      const curlHtml = await fetchWithCurl(safeUrl);
+      if (curlHtml && curlHtml.length >= 500) {
+        html = curlHtml;
+      }
+    }
+
+    // 4. If all automated HTTP attempts failed to retrieve page HTML
+    if (!html) {
+      if (geminiKey) {
+        try {
+          const parsedUrl = new URL(safeUrl);
+          const slug = parsedUrl.pathname.split("/").filter(Boolean).pop()?.replace(/[-_]/g, " ") || "";
+          const hostname = parsedUrl.hostname.replace(/^www\./, "");
+
+          if (slug.length >= 3) {
+            const rescuePrompt = `A user attempted to import a recipe from "${safeUrl}" (${hostname}), but the site blocked automated fetch requests.
+Based on the recipe title from the URL: "${slug}", reconstruct the full authentic recipe with complete ingredients with measurements, step-by-step instructions, prep and cook times, servings, and category.`;
+
+            const aiRecipe = await extractRecipeFromTextWithAi(rescuePrompt, geminiKey, safeUrl, hostname);
+            if (aiRecipe && aiRecipe.ingredients.length > 0) {
+              if (!aiRecipe.image) {
+                aiRecipe.image = await fetchRecipeImageFallback(aiRecipe.title, safeUrl);
+              }
+              const normalized = normalizeRecipe({
+                ...aiRecipe,
+                origin: "imported",
+              } as any);
+              return NextResponse.json({
+                success: true,
+                recipe: normalized,
+              });
+            }
+          }
+        } catch (rescueErr) {
+          console.error("AI rescue for blocked URL failed:", rescueErr);
+        }
+      }
+
       return NextResponse.json(
-        { error: `Failed to fetch recipe from URL: ${response.statusText}` },
+        {
+          error: "This website blocks automated recipe importing with an anti-bot paywall. You can easily import it by copying the recipe text into the 'Paste Text / Notes' tab above!",
+        },
         { status: 502 },
       );
     }
 
-    const html = await response.text();
     let imported = extractRecipeFromJsonLd(html, targetUrl);
 
     if (!imported) {
@@ -905,6 +1200,10 @@ export async function POST(request: Request) {
         { error: "Failed to extract recipe from this web page. Please check the URL or paste the recipe text." },
         { status: 422 },
       );
+    }
+
+    if (imported && !imported.image) {
+      imported.image = await fetchRecipeImageFallback(imported.title, targetUrl);
     }
 
     const normalized = normalizeRecipe({

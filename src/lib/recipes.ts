@@ -5,22 +5,35 @@ import type {
   AppRecipe,
   SavedImportedRecipe,
   SavedUserRecipe,
+  RecipeCategory,
+  MealType,
+  IngredientGroup,
 } from "./types";
 
-const IMPORTED_RECIPES_KEY = "importedRecipes";
-const USER_RECIPES_KEY = "userRecipes";
-const SAVED_RECIPES_KEY = "savedRecipes";
-const TRASH_RECIPES_KEY = "trashedRecipes";
+export type { AppRecipe } from "./types";
+
+export const IMPORTED_RECIPES_KEY = "importedRecipes";
+export const USER_RECIPES_KEY = "userRecipes";
+export const SAVED_RECIPES_KEY = "savedRecipes";
+export const TRASH_RECIPES_KEY = "trashedRecipes";
 
 export type TrashedRecipe = AppRecipe & {
   deletedAt: number;
 };
 
+interface RecipeExtraMetadata {
+  description?: string;
+  servingsText?: string;
+  ingredientGroups?: IngredientGroup[];
+  videoUrl?: string;
+  videoEmbedUrl?: string;
+}
+
 export type RecipeDbRow = {
   id: number;
-  user_id: string;
+  user_id?: string;
   title: string;
-  image?: string;
+  image?: string | null;
   cook_time?: number | null;
   calories?: number | null;
   servings?: number | null;
@@ -29,16 +42,18 @@ export type RecipeDbRow = {
   origin: "mock" | "imported" | "user";
   ingredients: string[];
   instructions: string[];
-  nutrition?: any;
+  nutrition?: Record<string, unknown>;
   tags?: string[];
   source_url?: string | null;
   source_name?: string | null;
+  is_public?: boolean | null;
+  author_name?: string | null;
   created_at?: string;
 };
 
 // Mapper: Supabase DB row to AppRecipe
 export function mapDbRowToRecipe(row: RecipeDbRow): AppRecipe {
-  const extra = (row.nutrition as any) || {};
+  const extra = (row.nutrition as unknown as RecipeExtraMetadata) || {};
   const normalized = normalizeRecipe({
     id: Number(row.id),
     title: row.title,
@@ -69,12 +84,14 @@ export function mapDbRowToRecipe(row: RecipeDbRow): AppRecipe {
     ingredientGroups: extra.ingredientGroups || normalized.ingredientGroups,
     videoUrl: extra.videoUrl || normalized.videoUrl,
     videoEmbedUrl: extra.videoEmbedUrl || normalized.videoEmbedUrl,
-    category: (row.category as any) || normalized.category,
-    mealType: (row.meal_type as any) || normalized.mealType,
+    category: (row.category as RecipeCategory) || normalized.category,
+    mealType: (row.meal_type as MealType) || normalized.mealType,
     tags:
       Array.isArray(row.tags) && row.tags.length > 0
         ? row.tags
         : normalized.tags,
+    isPublic: Boolean(row.is_public),
+    authorName: row.author_name || undefined,
   };
 }
 
@@ -103,6 +120,8 @@ export function mapRecipeToDbRow(recipe: Partial<AppRecipe>, userId: string) {
     tags: recipe.tags || [],
     source_url: recipe.sourceUrl ?? null,
     source_name: recipe.sourceName ?? null,
+    is_public: Boolean(recipe.isPublic),
+    author_name: recipe.authorName?.trim() || "",
   };
 }
 
@@ -177,6 +196,11 @@ export function saveRecipeId(id: number) {
   if (savedIds.includes(id)) return;
 
   localStorage.setItem(SAVED_RECIPES_KEY, JSON.stringify([...savedIds, id]));
+
+  // Background sync to Supabase
+  import("./sync/cloudSync").then(({ addCloudFavorite }) => {
+    addCloudFavorite(id).catch(() => {});
+  });
 }
 
 export function removeSavedRecipe(id: number) {
@@ -186,6 +210,27 @@ export function removeSavedRecipe(id: number) {
   const updatedSavedIds = savedIds.filter((savedId) => savedId !== id);
 
   localStorage.setItem(SAVED_RECIPES_KEY, JSON.stringify(updatedSavedIds));
+
+  // Background sync to Supabase
+  import("./sync/cloudSync").then(({ removeCloudFavorite }) => {
+    removeCloudFavorite(id).catch(() => {});
+  });
+}
+
+export async function getSavedRecipeIdsWithCloud(): Promise<number[]> {
+  const local = getSavedRecipeIds();
+  try {
+    const { fetchCloudFavorites } = await import("./sync/cloudSync");
+    const cloud = await fetchCloudFavorites();
+    if (cloud && cloud.length > 0) {
+      const merged = Array.from(new Set([...local, ...cloud]));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(SAVED_RECIPES_KEY, JSON.stringify(merged));
+      }
+      return merged;
+    }
+  } catch {}
+  return local;
 }
 
 export function removeImportedRecipe(id: number) {
@@ -250,7 +295,24 @@ export async function fetchUserRecipesFromCloud(): Promise<AppRecipe[]> {
 
     if (!data) return [];
 
-    return data.map((row: any) => mapDbRowToRecipe(row as RecipeDbRow));
+    return (data as unknown as RecipeDbRow[]).map((row) => mapDbRowToRecipe(row));
+  } catch {
+    return [];
+  }
+}
+
+// Fetch public community recipes shared by other users
+export async function fetchPublicCommunityRecipesFromCloud(): Promise<AppRecipe[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("recipes")
+      .select("*")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false });
+
+    if (error || !data) return [];
+    return (data as unknown as RecipeDbRow[]).map((row) => mapDbRowToRecipe(row));
   } catch {
     return [];
   }
@@ -313,7 +375,7 @@ export async function saveRecipeToCloudOrLocal(
         ...recipe,
         id: generatedId,
         origin: recipe.origin || "user",
-      } as any);
+      } as Partial<AppRecipe>);
 
       if (recipe.origin === "imported") {
         const existing = getImportedRecipes();
@@ -333,8 +395,72 @@ export async function saveRecipeToCloudOrLocal(
     }
 
     return { success: false, isCloud: false, error: "Window is undefined." };
-  } catch (err: any) {
-    return { success: false, isCloud: false, error: err.message || "Failed to save." };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Failed to save.";
+    return { success: false, isCloud: false, error: errorMsg };
+  }
+}
+
+// Update an existing recipe in Supabase Cloud or LocalStorage
+export async function updateRecipeInCloudOrLocal(
+  recipe: AppRecipe,
+): Promise<{ success: boolean; recipe?: AppRecipe; isCloud: boolean; error?: string }> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let isCloud = false;
+
+    if (user) {
+      const dbRow = mapRecipeToDbRow(recipe, user.id);
+      const { data, error } = await supabase
+        .from("recipes")
+        .update(dbRow)
+        .eq("id", recipe.id)
+        .select()
+        .maybeSingle();
+
+      if (data && !error) {
+        isCloud = true;
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      const normalized = normalizeRecipe(recipe);
+
+      if (normalized.origin === "imported") {
+        const existing = getImportedRecipes();
+        const updated = existing.map((r) => (r.id === normalized.id ? normalized : r));
+        if (!existing.some((r) => r.id === normalized.id)) {
+          updated.push(normalized);
+        }
+        localStorage.setItem(IMPORTED_RECIPES_KEY, JSON.stringify(updated));
+      } else {
+        const existing = getUserRecipes();
+        let found = false;
+        const updated = existing.map((r) => {
+          if (r.id === normalized.id) {
+            found = true;
+            return normalized;
+          }
+          return r;
+        });
+        if (!found) {
+          updated.unshift(normalized);
+        }
+        localStorage.setItem(USER_RECIPES_KEY, JSON.stringify(updated));
+      }
+
+      window.dispatchEvent(new Event("storage"));
+      return { success: true, recipe: normalized, isCloud };
+    }
+
+    return { success: true, recipe, isCloud };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Failed to update.";
+    return { success: false, isCloud: false, error: errorMsg };
   }
 }
 
@@ -362,8 +488,9 @@ export async function deleteRecipeFromCloudOrLocal(
     removeSavedRecipe(id);
 
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Failed to delete.";
+    return { success: false, error: errorMsg };
   }
 }
 
@@ -407,7 +534,17 @@ export async function getAllRecipesWithCloud(): Promise<AppRecipe[]> {
     recipeMap.set(recipe.id, recipe);
   }
 
-  // 3. Supabase Cloud recipes (highest authority!)
+  // 3. Supabase Public Community recipes
+  try {
+    const communityRecipes = await fetchPublicCommunityRecipesFromCloud();
+    for (const recipe of communityRecipes) {
+      recipeMap.set(recipe.id, recipe);
+    }
+  } catch (err) {
+    console.warn("Failed to fetch community recipes:", err);
+  }
+
+  // 4. Supabase User's own Cloud recipes (highest authority!)
   try {
     const cloudRecipes = await fetchUserRecipesFromCloud();
     for (const recipe of cloudRecipes) {
@@ -522,7 +659,8 @@ export function restoreRecipeFromTrash(id: number): {
   localStorage.setItem(TRASH_RECIPES_KEY, JSON.stringify(updatedTrash));
 
   // Strip deletedAt and re-save to appropriate list
-  const { deletedAt, ...cleanRecipe } = target;
+  const { deletedAt: _deletedAt, ...cleanRecipe } = target;
+  void _deletedAt;
 
   if (cleanRecipe.origin === "imported") {
     const existing = getImportedRecipes();

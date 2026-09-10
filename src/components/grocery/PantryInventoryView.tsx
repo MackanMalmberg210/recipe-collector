@@ -7,6 +7,7 @@ import {
   type PantryItem,
   type GroceryCategory,
   formatGroceryItemName,
+  TEN_PANTRY_ESSENTIALS,
 } from "../../lib/groceries";
 import GroceryCategoryIcon from "./GroceryCategoryIcon";
 
@@ -90,6 +91,17 @@ export default function PantryInventoryView({
     inputRef.current?.focus();
   };
 
+  const handleAddAllEssentials = () => {
+    TEN_PANTRY_ESSENTIALS.forEach((item) => {
+      const already = pantryItems.some(
+        (p) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+      );
+      if (!already) {
+        onAddItem(item.name, item.category);
+      }
+    });
+  };
+
   // Group pantry items by aisle/category
   const visibleCategories = GROCERY_CATEGORIES.filter(
     (cat) => filterCategory === "all" || filterCategory === cat.id
@@ -99,7 +111,7 @@ export default function PantryInventoryView({
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* QUICK ADD NEW STAPLE WITH AUTOMATIC AISLE DETECTION & SEARCH RECOMMENDATIONS */}
-      <div className="rounded-3xl border border-white/10 bg-[#16120f] p-4 sm:p-5 shadow-lg space-y-3 relative">
+      <div className="rounded-3xl border border-stone-200/90 bg-white dark:border-white/10 dark:bg-[#16120f] p-4 sm:p-5 shadow-sm dark:shadow-lg space-y-3 relative">
         <form onSubmit={handleAddNewStaple} className="flex flex-col sm:flex-row gap-2.5 relative">
           <div className="relative flex-1" data-pantry-search="true">
             <input
@@ -112,19 +124,19 @@ export default function PantryInventoryView({
                 setShowSuggestions(true);
               }}
               placeholder="Add pantry staple (e.g. Sriracha, Jasmine rice, Greek yogurt, Cinnamon)..."
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-stone-100 placeholder-stone-500 focus:border-amber-400 focus:outline-none transition pr-36"
+              className="w-full rounded-2xl border border-stone-200 bg-stone-50/50 dark:border-white/10 dark:bg-black/40 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 dark:text-stone-100 dark:placeholder-stone-500 focus:border-amber-400 focus:outline-none transition pr-36"
             />
             {newStapleName.trim() && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] font-bold text-stone-300">
-                <GroceryCategoryIcon category={detectedCategory} className="h-3.5 w-3.5 text-stone-300" />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-lg bg-stone-200/60 dark:bg-white/5 border border-stone-300 dark:border-white/10 px-2 py-1 text-[11px] font-bold text-stone-700 dark:text-stone-300">
+                <GroceryCategoryIcon category={detectedCategory} className="h-3.5 w-3.5 text-amber-500" />
                 <span>{detectedMeta.name.split("&")[0].trim()}</span>
               </span>
             )}
 
             {/* AUTOCOMPLETE SUGGESTIONS IN PANTRY VIEW */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-amber-500/30 bg-[#1b1512] shadow-[0_20px_60px_rgba(0,0,0,0.85)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-amber-400/80 border-b border-white/8 bg-white/2">
+              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-amber-500/30 dark:bg-[#1b1512] shadow-2xl dark:shadow-[0_20px_60px_rgba(0,0,0,0.85)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400/80 border-b border-stone-100 dark:border-white/8 bg-stone-50 dark:bg-white/2">
                   Recommended Pantry Staples
                 </div>
                 <ul className="divide-y divide-white/5 py-1">
@@ -174,8 +186,8 @@ export default function PantryInventoryView({
             onClick={() => setFilterCategory("all")}
             className={`rounded-xl px-3.5 py-1.5 text-xs transition cursor-pointer ${
               filterCategory === "all"
-                ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 dark:border-amber-600/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)]"
-                : "bg-white/5 text-stone-400 hover:text-white border border-transparent font-medium"
+                ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 dark:border-amber-600/50 shadow-xs"
+                : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-white/5 dark:text-stone-400 dark:hover:text-white border border-transparent font-medium"
             }`}
           >
             All Staples ({pantryItems.length})
@@ -192,13 +204,13 @@ export default function PantryInventoryView({
                 onClick={() => setFilterCategory(cat.id)}
                 className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition cursor-pointer ${
                   filterCategory === cat.id
-                    ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 dark:border-amber-600/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)]"
-                    : "bg-white/5 text-stone-400 hover:text-white border border-transparent font-medium"
+                    ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-bold border border-amber-600/60 dark:border-amber-600/50 shadow-xs"
+                    : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-white/5 dark:text-stone-400 dark:hover:text-white border border-transparent font-medium"
                 }`}
               >
                 <GroceryCategoryIcon
                   category={cat.id}
-                  className={`h-3.5 w-3.5 ${filterCategory === cat.id ? "text-stone-950" : "text-stone-400"}`}
+                  className={`h-3.5 w-3.5 ${filterCategory === cat.id ? "text-stone-950" : "text-amber-500"}`}
                 />
                 <span>{cat.name.split("&")[0].trim()}</span>
                 <span className="opacity-70 font-mono text-[10px]">({count})</span>
@@ -207,6 +219,52 @@ export default function PantryInventoryView({
           })}
         </div>
       </div>
+
+      {/* EMPTY STATE IF NO PANTRY ITEMS */}
+      {pantryItems.length === 0 && (
+        <div className="rounded-3xl border border-stone-200/90 dark:border-white/10 bg-white dark:bg-[#16120f] p-8 text-center space-y-4 shadow-sm">
+          <svg className="h-10 w-10 text-stone-400 dark:text-stone-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+
+          <div className="max-w-md mx-auto space-y-1.5">
+            <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
+              Your pantry is empty
+            </h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+              Track staples you keep at home (oil, salt, garlic, eggs, pasta) so smart cooking and grocery features only add what you truly need.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleAddAllEssentials}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
+            >
+              <span>+ Add 10 Kitchen Essentials</span>
+            </button>
+          </div>
+
+          <div className="pt-3 border-t border-stone-100 dark:border-white/5 max-w-lg mx-auto">
+            <p className="text-[11px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2">
+              Or tap individual staples:
+            </p>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {TEN_PANTRY_ESSENTIALS.map((essential) => (
+                <button
+                  key={essential.id}
+                  type="button"
+                  onClick={() => onAddItem(essential.name, essential.category)}
+                  className="rounded-full border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 px-3 py-1 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-300 transition cursor-pointer"
+                >
+                  +{essential.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PANTRY INVENTORY CATEGORIZED SHELVES */}
       <div className="space-y-6">
@@ -218,16 +276,16 @@ export default function PantryInventoryView({
             <div
               key={cat.id}
               style={{ contentVisibility: "auto", contain: "paint" }}
-              className="rounded-3xl border border-white/10 bg-[#16120f] p-5 shadow-xl space-y-4"
+              className="rounded-3xl border border-stone-200/90 bg-white dark:border-white/10 dark:bg-[#16120f] p-5 shadow-sm dark:shadow-xl space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-white/8 pb-3">
+              <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/8 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/5 border border-white/10 text-stone-200">
-                    <GroceryCategoryIcon category={cat.id} className="h-4 w-4 text-stone-200" />
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 dark:bg-white/5 dark:border-white/10 text-amber-700 dark:text-stone-200">
+                    <GroceryCategoryIcon category={cat.id} className="h-4 w-4" />
                   </div>
-                  <h3 className="text-sm font-extrabold text-[#fff8ef]">{cat.name}</h3>
+                  <h3 className="text-sm font-extrabold text-stone-900 dark:text-[#fff8ef]">{cat.name}</h3>
                 </div>
-                <span className="text-xs font-mono text-stone-400">
+                <span className="text-xs font-mono text-stone-500 dark:text-stone-400">
                   {itemsInCat.filter((i) => i.inStock).length}/{itemsInCat.length} in stock
                 </span>
               </div>
@@ -241,8 +299,8 @@ export default function PantryInventoryView({
                       key={item.id}
                       className={`group inline-flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-bold transition-all duration-150 select-none ${
                         item.inStock
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
-                          : "border-stone-700/60 bg-stone-900/60 text-stone-400 line-through hover:border-amber-400/40 hover:text-stone-200"
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20"
+                          : "border-stone-200 bg-stone-100 text-stone-400 line-through hover:border-amber-400 hover:text-stone-700 dark:border-stone-700/60 dark:bg-stone-900/60 dark:text-stone-400 dark:hover:border-amber-400/40 dark:hover:text-stone-200"
                       }`}
                     >
                       <button
@@ -264,7 +322,7 @@ export default function PantryInventoryView({
                               onDeleteItem(item.id);
                               setConfirmDeleteId(null);
                             }}
-                            className="rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[10px] font-bold px-1.5 py-0.5 hover:bg-rose-500/30 transition cursor-pointer"
+                            className="rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold px-1.5 py-0.5 hover:bg-rose-500/30 transition cursor-pointer"
                             title="Confirm removal"
                           >
                             Delete?
@@ -272,7 +330,7 @@ export default function PantryInventoryView({
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(null)}
-                            className="text-stone-400 hover:text-stone-200 text-xs px-0.5 cursor-pointer"
+                            className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-xs px-0.5 cursor-pointer"
                             title="Cancel"
                           >
                             ✕
@@ -282,7 +340,7 @@ export default function PantryInventoryView({
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(item.id)}
-                          className="text-stone-500 hover:text-rose-400 transition ml-1 text-xs cursor-pointer p-0.5"
+                          className="text-stone-400 hover:text-rose-600 dark:text-stone-500 dark:hover:text-rose-400 transition ml-1 text-xs cursor-pointer p-0.5"
                           title="Remove staple from pantry tracker"
                         >
                           ×

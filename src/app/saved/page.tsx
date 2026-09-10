@@ -1,20 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useState, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import CookbookEmptyState from "../../components/saved/CookbookEmptyState";
 import CookbookGrid from "../../components/saved/CookbookGrid";
 import CookbookSidebar, {
   type SidebarFilter,
 } from "../../components/saved/CookbookSidebar";
+import { useAuth } from "../../contexts/AuthContext";
 import CookbookHeader from "../../components/saved/CookbookHeader";
 import QuickPeekModal from "../../components/saved/QuickPeekModal";
 import DeleteConfirmModal from "../../components/saved/DeleteConfirmModal";
 import ImportRecipeModal from "../../components/import/ImportRecipeModal";
 import AddRecipeModal from "../../components/cookbook/AddRecipeModal";
 import VisionScanModal from "../../components/vision/VisionScanModal";
+import ChefProModal from "../../components/subscription/ChefProModal";
 import AddIngredientsToListModal from "../../components/saved/AddIngredientsToListModal";
+import AdBanner from "../../components/ui/AdBanner";
 import { useToast } from "../../components/ui/ToastProvider";
+import { getStoredUserSettings } from "../../lib/settings";
 import type { SortMode, ViewMode } from "../../components/saved/SavedToolbar";
 import {
   getAllRecipes,
@@ -22,6 +27,7 @@ import {
   fetchUserRecipesFromCloud,
   getImportedRecipes,
   getSavedRecipeIds,
+  getSavedRecipeIdsWithCloud,
   getUserRecipes,
   saveRecipeId,
   removeSavedRecipe,
@@ -111,10 +117,12 @@ function SavedRecipesContent() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isVisionScanOpen, setIsVisionScanOpen] = useState(false);
+  const [isChefProOpen, setIsChefProOpen] = useState(false);
   const [visionScanMode, setVisionScanMode] = useState<"recipe" | "meal_analyzer">("recipe");
   const [recipeForGroceryModal, setRecipeForGroceryModal] = useState<AppRecipe | null>(null);
 
   const { success: toastSuccess, info: toastInfo } = useToast();
+  const { isGuest } = useAuth();
 
   // Automatically trigger import modal if navigated with ?import=true
   useEffect(() => {
@@ -131,6 +139,12 @@ function SavedRecipesContent() {
     setImportedRecipes(getImportedRecipes());
     setTrashedRecipes(getTrashedRecipes());
     setHasHydrated(true);
+
+    getSavedRecipeIdsWithCloud().then((cloudIds) => {
+      if (cloudIds && cloudIds.length > 0) {
+        setSavedRecipeIds(cloudIds);
+      }
+    }).catch(() => {});
 
     const cloud = await fetchUserRecipesFromCloud();
     if (cloud.length > 0) {
@@ -169,13 +183,20 @@ function SavedRecipesContent() {
   const cookbookRecipes = useMemo(() => {
     const byId = new Map<number, AppRecipe>();
     const trashedIds = new Set(trashedRecipes.map((t) => t.id));
+    const savedIdSet = new Set(savedRecipeIds);
 
     allRecipes.forEach((recipe) => {
-      if (!trashedIds.has(recipe.id)) byId.set(recipe.id, recipe);
+      if (trashedIds.has(recipe.id)) return;
+      // Personal cookbook contains user-created, imported, or favorited recipes
+      const isPersonal = recipe.origin === "user" || recipe.origin === "imported";
+      const isSaved = savedIdSet.has(recipe.id);
+      if (isPersonal || isSaved) {
+        byId.set(recipe.id, recipe);
+      }
     });
 
     return Array.from(byId.values());
-  }, [allRecipes, trashedRecipes]);
+  }, [allRecipes, trashedRecipes, savedRecipeIds]);
 
   // Combined personal recipes created or imported by user
   const myRecipes = useMemo(() => {
@@ -212,7 +233,7 @@ function SavedRecipesContent() {
         ...meta,
         count,
       };
-    });
+    }).sort((a, b) => b.count - a.count);
   }, [cookbookRecipes]);
 
   const isTrashActive = activeFilter.type === "trash";
@@ -240,6 +261,24 @@ function SavedRecipesContent() {
   }, [activeTitle]);
 
   const currentDataset = isTrashActive ? trashedRecipes : cookbookRecipes;
+
+  const [ratingsMap, setRatingsMap] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    setRatingsMap(getRecipeRatings());
+
+    const handleRatingUpdate = () => {
+      setRatingsMap(getRecipeRatings());
+    };
+
+    window.addEventListener("recipe_rating_updated", handleRatingUpdate);
+    window.addEventListener("storage", handleRatingUpdate);
+
+    return () => {
+      window.removeEventListener("recipe_rating_updated", handleRatingUpdate);
+      window.removeEventListener("storage", handleRatingUpdate);
+    };
+  }, []);
 
   const filteredRecipes = useMemo(() => {
     const normalizedQuery = normalizeText(searchQuery);
@@ -274,8 +313,6 @@ function SavedRecipesContent() {
       return tokens.some((token) => token.includes(normalizedQuery));
     });
 
-    const ratingsMap = getRecipeRatings();
-
     const sorted = [...searchFiltered].sort((a, b) => {
       if (sortMode === "alphabetical") {
         return a.title.localeCompare(b.title);
@@ -301,7 +338,7 @@ function SavedRecipesContent() {
     });
 
     return sorted;
-  }, [currentDataset, searchQuery, activeFilter, sortMode, savedRecipeIds]);
+  }, [currentDataset, searchQuery, activeFilter, sortMode, savedRecipeIds, ratingsMap]);
 
   const handleAddToGrocery = (recipe: AppRecipe) => {
     setRecipeForGroceryModal(recipe);
@@ -360,7 +397,7 @@ function SavedRecipesContent() {
   const handleRestoreRecipe = (id: number) => {
     restoreRecipeFromTrash(id);
     loadData();
-    toastSuccess("Recipe restored to your Cookbook! ✨");
+    toastSuccess("Recipe restored to your Cookbook.");
   };
 
   const handleEmptyTrash = async () => {
@@ -389,7 +426,7 @@ function SavedRecipesContent() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f5f0] text-stone-900 transition-colors duration-300 dark:bg-[#0e0c0a] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 transition-colors duration-300 dark:bg-[#0e0c0a] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
       {/* Background ambient lighting */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0 dark:opacity-100 transition-opacity">
         <div className="absolute left-1/3 top-0 h-120 w-120 -translate-x-1/2 rounded-full bg-amber-500/8 blur-[160px]" />
@@ -436,7 +473,9 @@ function SavedRecipesContent() {
             {isTrashActive && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs sm:text-sm text-rose-800 dark:text-rose-200">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base">🗑️</span>
+                  <svg className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                   <span>Recipes in Trash will be kept for <strong>30 days</strong> before automatic permanent deletion.</span>
                 </div>
                 {trashedRecipes.length > 0 && (
@@ -448,6 +487,33 @@ function SavedRecipesContent() {
                     Empty Trash
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Guest Cloud Sync Callout Banner */}
+            {isGuest && currentDataset.length > 0 && !isTrashActive && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs text-xs sm:text-sm text-slate-900 dark:border-amber-500/30 dark:bg-gradient-to-r dark:from-amber-500/10 dark:via-amber-500/5 dark:to-transparent dark:text-stone-100">
+                <div className="flex items-center gap-3.5">
+                  <svg className="h-6 w-6 shrink-0 text-slate-900 dark:text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v6m0 0l-2-2m2 2l2-2" />
+                  </svg>
+                  <div>
+                    <p className="font-bold text-sm text-slate-950 dark:text-white">
+                      You have {currentDataset.length} {currentDataset.length === 1 ? "recipe" : "recipes"} stored locally in this browser
+                    </p>
+                    <p className="text-slate-500 dark:text-stone-400 text-xs mt-0.5 leading-relaxed">
+                      Create a free account to sync to the cloud, protect against accidental browser clearing, and access them from your phone.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/login?mode=signup"
+                  className="self-start sm:self-auto shrink-0 inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold border border-slate-900 shadow-sm dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/60 px-4 py-2.5 text-xs transition active:scale-95 cursor-pointer"
+                >
+                  <span>Sync to Cloud</span>
+                  <span className="font-black">→</span>
+                </Link>
               </div>
             )}
 
@@ -476,6 +542,8 @@ function SavedRecipesContent() {
               />
             )}
 
+            {/* AD BANNER (Visible only for Free users, completely hidden for PRO) */}
+            <AdBanner slot="feed" className="mt-8" />
           </div>
 
         </div>
@@ -527,7 +595,7 @@ function SavedRecipesContent() {
         }}
         onRecipeSaved={() => {
           loadData();
-          toastSuccess("Imported recipe added to your cookbook! ✨");
+          toastSuccess("Imported recipe added to your cookbook.");
         }}
       />
 
@@ -543,8 +611,14 @@ function SavedRecipesContent() {
         onRecipeExtracted={() => {
           loadData();
           setIsVisionScanOpen(false);
-          toastSuccess("Recipe extracted & added to your cookbook! 📷✨");
+          toastSuccess("Recipe extracted & added to your cookbook.");
         }}
+      />
+
+      {/* CHEF PRO VIP UPGRADE MODAL */}
+      <ChefProModal
+        isOpen={isChefProOpen}
+        onClose={() => setIsChefProOpen(false)}
       />
 
       {/* CHOOSE DESTINATION GROCERY LIST MODAL */}
@@ -553,7 +627,7 @@ function SavedRecipesContent() {
         isOpen={Boolean(recipeForGroceryModal)}
         onClose={() => setRecipeForGroceryModal(null)}
       />
-    </main>
+    </div>
   );
 }
 

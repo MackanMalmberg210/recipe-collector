@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { capitalize } from "../../lib/format";
-import StarRating from "../StarRating";
+import { capitalizeFirstLetter } from "../../lib/culinaryTextSanitizer";
 
 type QuickPeekModalProps = {
   recipe: AppRecipe | null;
@@ -63,8 +63,10 @@ export default function QuickPeekModal({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl">
-                🍲
+              <div className="flex h-full w-full items-center justify-center text-stone-400">
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
               </div>
             )}
           </div>
@@ -87,10 +89,32 @@ export default function QuickPeekModal({
               {recipe.title}
             </h2>
 
-            <div className="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400 font-medium">
-              {recipe.cookTime && <span>⏱ {recipe.cookTime} mins</span>}
-              {recipe.calories && <span>• 🔥 {recipe.calories} kcal</span>}
-              {recipe.servings && <span>• 👥 {recipe.servings} servings</span>}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 dark:text-stone-400 font-medium">
+              {recipe.cookTime && (
+                <span className="flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="9" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+                  </svg>
+                  <span>{recipe.cookTime} mins</span>
+                </span>
+              )}
+              {recipe.calories && (
+                <span className="flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                  </svg>
+                  <span>{recipe.calories} kcal</span>
+                </span>
+              )}
+              {recipe.servings && (
+                <span className="flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>{recipe.servings} servings</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -100,7 +124,7 @@ export default function QuickPeekModal({
           {/* Ingredients list */}
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center justify-between">
-              <span>🥕 Key Ingredients</span>
+              <span>Key Ingredients</span>
               <span className="text-[11px] font-normal text-stone-400">
                 ({recipe.ingredients.length})
               </span>
@@ -109,7 +133,7 @@ export default function QuickPeekModal({
               {recipe.ingredients.map((ing, i) => (
                 <li key={i} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                  <span className="capitalize">{ing}</span>
+                  <span>{capitalizeFirstLetter(ing)}</span>
                 </li>
               ))}
             </ul>
@@ -118,7 +142,7 @@ export default function QuickPeekModal({
           {/* Instructions preview */}
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center justify-between">
-              <span>📝 Instructions</span>
+              <span>Instructions</span>
               <span className="text-[11px] font-normal text-stone-400">
                 ({instructions.length} steps)
               </span>

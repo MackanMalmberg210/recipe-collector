@@ -59,23 +59,23 @@ export default function CookWhatIHaveModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-5xl 2xl:max-w-6xl max-h-[90vh] overflow-hidden rounded-4xl border border-white/12 bg-[#16120f] shadow-[0_25px_80px_rgba(0,0,0,0.85)] cursor-default animate-in zoom-in-95 duration-150"
+        className="relative flex flex-col w-full max-w-5xl 2xl:max-w-6xl max-h-[90vh] overflow-hidden rounded-4xl border border-stone-200/90 bg-[#faf8f5] text-stone-900 shadow-[0_25px_80px_rgba(0,0,0,0.4)] dark:border-white/12 dark:bg-[#16120f] dark:text-stone-100 cursor-default animate-in zoom-in-95 duration-150"
       >
         
         {/* MODAL HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 sm:px-8 py-5 border-b border-white/8 bg-[#1d1612]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 sm:px-8 py-5 border-b border-stone-200/80 bg-white dark:border-white/8 dark:bg-[#1d1612]">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
-              <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
+              <svg className="h-4 w-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V20H6v-6.13zM6 17h12" />
               </svg>
               <span>Pantry Matcher</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#fff8ef] tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-950 dark:text-[#fff8ef] tracking-tight">
               {highlightedMatch ? "Recommended Dinner" : "What You Can Cook Tonight"}
             </h2>
-            <p className="text-xs sm:text-sm text-stone-400">
-              Matched against your <strong className="text-amber-300 font-bold">{inStockCount} pantry staples</strong>. Ranked by ingredient availability.
+            <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400">
+              Matched against your <strong className="text-amber-700 dark:text-amber-300 font-bold">{inStockCount} pantry staples</strong>. Ranked by ingredient availability.
             </p>
           </div>
 
@@ -97,7 +97,7 @@ export default function CookWhatIHaveModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-10 w-10 flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-stone-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              className="h-10 w-10 flex items-center justify-center rounded-2xl border border-stone-200 bg-stone-100 text-stone-500 hover:text-stone-900 hover:bg-stone-200 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 transition cursor-pointer"
               title="Close modal"
             >
               ✕
@@ -119,7 +119,7 @@ export default function CookWhatIHaveModal({
                 <button
                   type="button"
                   onClick={() => setHighlightedMatch(null)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 px-3.5 py-2 text-xs font-bold text-stone-300 hover:text-white transition cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 px-3.5 py-2 text-xs font-bold text-stone-700 hover:text-stone-950 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-stone-300 dark:hover:text-white transition cursor-pointer"
                 >
                   <span>←</span>
                   <span>View all {matches.length} matches</span>
@@ -127,7 +127,7 @@ export default function CookWhatIHaveModal({
               </div>
 
               {/* Big Spotlight Card */}
-              <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-[#241a14] via-[#1b1410] to-[#14100d] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+              <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-50/60 via-white to-stone-50 p-6 sm:p-8 shadow-xl relative overflow-hidden dark:from-[#241a14] dark:via-[#1b1410] dark:to-[#14100d]">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />
                 
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start relative z-10">
@@ -170,13 +170,13 @@ export default function CookWhatIHaveModal({
                   {/* Recipe Content & Actions */}
                   <div className="flex-1 space-y-4 w-full">
                     <div>
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                         <span>Spotlight Recommendation</span>
                       </div>
-                      <h3 className="text-2xl sm:text-3xl font-black text-[#fff8ef] mt-1 tracking-tight leading-snug">
+                      <h3 className="text-2xl sm:text-3xl font-black text-stone-950 dark:text-[#fff8ef] mt-1 tracking-tight leading-snug">
                         {highlightedMatch.recipe.title}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-xs sm:text-sm text-stone-400 mt-1 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 flex-wrap">
                         {highlightedMatch.recipe.cookTime && (
                           <span className="inline-flex items-center gap-1">
                             <svg className="h-3.5 w-3.5 text-stone-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -197,8 +197,8 @@ export default function CookWhatIHaveModal({
 
                     {/* Missing Ingredients Section */}
                     {highlightedMatch.missingItems.length > 0 && (
-                      <div className="p-4 rounded-2xl bg-black/40 border border-white/8 space-y-2">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
+                      <div className="p-4 rounded-2xl bg-stone-100/90 dark:bg-black/40 border border-stone-200 dark:border-white/8 space-y-2">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                           Missing items to buy:
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -212,7 +212,7 @@ export default function CookWhatIHaveModal({
                             return (
                               <span
                                 key={idx}
-                                className="rounded-xl bg-rose-500/15 border border-rose-500/30 px-3 py-1 text-xs font-semibold text-rose-300"
+                                className="rounded-xl bg-rose-500/15 border border-rose-500/30 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300"
                               >
                                 {cleanName}
                               </span>
@@ -235,7 +235,7 @@ export default function CookWhatIHaveModal({
                             );
                             onClose();
                           }}
-                          className="w-full sm:flex-1 rounded-2xl border border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/20 py-3 text-xs sm:text-sm font-bold text-amber-300 transition cursor-pointer text-center"
+                          className="w-full sm:flex-1 rounded-2xl border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:hover:bg-amber-400/20 py-3 text-xs sm:text-sm font-bold dark:text-amber-300 transition cursor-pointer text-center"
                         >
                           + Add {highlightedMatch.missingIngredientsCount} Missing to List
                         </button>
@@ -258,10 +258,16 @@ export default function CookWhatIHaveModal({
           ) : matches.length === 0 ? (
             /* CASE B: NO MATCHES */
             <div className="text-center py-20 space-y-4">
-              <span className="text-5xl">🥫</span>
-              <h3 className="text-xl font-bold text-stone-200">No close recipe matches found</h3>
-              <p className="text-xs sm:text-sm text-stone-400 max-w-md mx-auto leading-relaxed">
-                Try marking more of your items as in-stock in the <strong className="text-amber-300">Pantry</strong> tab, or save more recipes into your cookbook!
+              <div className="flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-stone-900 dark:text-stone-200">No close recipe matches found</h3>
+              <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed">
+                Try marking more of your items as in-stock in the <strong className="text-amber-700 dark:text-amber-300">Pantry</strong> tab, or save more recipes into your cookbook!
               </p>
             </div>
           ) : (
@@ -284,13 +290,13 @@ export default function CookWhatIHaveModal({
                 return (
                   <div
                     key={recipe.id}
-                    className="flex flex-col justify-between rounded-3xl border border-white/10 bg-[#1f1915]/95 p-5 sm:p-6 shadow-xl space-y-5 hover:border-amber-400/40 hover:bg-[#231c17] transition duration-200"
+                    className="flex flex-col justify-between rounded-3xl border border-stone-200/90 bg-white p-5 sm:p-6 shadow-sm space-y-5 hover:border-amber-500/40 hover:shadow-md dark:border-white/10 dark:bg-[#1f1915]/95 dark:hover:border-amber-400/40 dark:hover:bg-[#231c17] transition duration-200"
                   >
                     <div className="space-y-4">
                       
                       {/* HEADER: IMAGE, BADGE, TITLE & STATS */}
                       <div className="flex items-start gap-4">
-                        <div className="relative h-20 w-20 sm:h-22 sm:w-22 rounded-2xl overflow-hidden shrink-0 border border-white/10 bg-stone-900 shadow-md">
+                        <div className="relative h-20 w-20 sm:h-22 sm:w-22 rounded-2xl overflow-hidden shrink-0 border border-stone-200 dark:border-white/10 bg-stone-100 dark:bg-stone-900 shadow-md">
                           <Image
                             src={recipe.image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352"}
                             alt={recipe.title}
@@ -306,8 +312,8 @@ export default function CookWhatIHaveModal({
                             <span
                               className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold tracking-wide ${
                                 isFullMatch
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-xs"
-                                  : "bg-amber-500/15 text-amber-300 border border-amber-500/40"
+                                  ? "bg-emerald-500/15 text-emerald-800 border border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/50 shadow-xs"
+                                  : "bg-amber-500/15 text-amber-800 border border-amber-500/30 dark:text-amber-300 dark:border-amber-500/40"
                               }`}
                             >
                               {isFullMatch ? (
@@ -323,11 +329,11 @@ export default function CookWhatIHaveModal({
                             </span>
                           </div>
 
-                          <h3 className="text-base sm:text-lg font-bold text-[#fff8ef] leading-snug line-clamp-2">
+                          <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-[#fff8ef] leading-snug line-clamp-2">
                             {recipe.title}
                           </h3>
 
-                          <div className="flex items-center gap-1.5 text-xs text-stone-400 font-medium flex-wrap">
+                          <div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 font-medium flex-wrap">
                             {recipe.cookTime && (
                               <span className="inline-flex items-center gap-1">
                                 <svg className="h-3.5 w-3.5 text-stone-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -349,8 +355,8 @@ export default function CookWhatIHaveModal({
 
                       {/* MISSING INGREDIENTS CLEAN CHIPS */}
                       {!isFullMatch && cleanMissingNames.length > 0 && (
-                        <div className="pt-3 border-t border-white/8 space-y-2">
-                          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-400">
+                        <div className="pt-3 border-t border-stone-100 dark:border-white/8 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                             <span>Missing to buy:</span>
                           </div>
 
@@ -358,13 +364,13 @@ export default function CookWhatIHaveModal({
                             {cleanMissingNames.slice(0, 5).map((cleanName, idx) => (
                               <span
                                 key={idx}
-                                className="rounded-xl bg-rose-500/10 border border-rose-500/25 px-2.5 py-1 text-xs font-semibold text-rose-300"
+                                className="rounded-xl bg-rose-500/10 border border-rose-500/25 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300"
                               >
                                 {cleanName}
                               </span>
                             ))}
                             {cleanMissingNames.length > 5 && (
-                              <span className="text-xs text-stone-400 self-center font-bold px-1">
+                              <span className="text-xs text-stone-500 dark:text-stone-400 self-center font-bold px-1">
                                 +{cleanMissingNames.length - 5} more
                               </span>
                             )}
@@ -375,7 +381,7 @@ export default function CookWhatIHaveModal({
                     </div>
 
                     {/* ACTIONS */}
-                    <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-3 border-t border-white/8">
+                    <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-3 border-t border-stone-100 dark:border-white/8">
                       {!isFullMatch && (
                         <button
                           type="button"
@@ -383,7 +389,7 @@ export default function CookWhatIHaveModal({
                             onAddMissingToGroceryList(missingItems, recipe.title, recipe.id);
                             onClose();
                           }}
-                          className="w-full sm:flex-1 rounded-2xl border border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/20 py-2.5 text-xs font-bold text-amber-300 transition cursor-pointer text-center"
+                          className="w-full sm:flex-1 rounded-2xl border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:hover:bg-amber-400/20 py-2.5 text-xs font-bold dark:text-amber-300 transition cursor-pointer text-center"
                         >
                           + Add {missingIngredientsCount} Missing
                         </button>

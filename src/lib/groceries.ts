@@ -112,6 +112,7 @@ export type StoredGroceryItem = {
   sourceRecipeTitle?: string;
   sourceRecipeId?: number | string;
   sourceDay?: string;
+  notes?: string;
 };
 
 export type GroceryListCollection = {
@@ -177,20 +178,41 @@ export const DEFAULT_PANTRY_ITEMS: PantryItem[] = [
   { id: "p36", name: "Potatoes", category: "produce", inStock: true },
 ];
 
+export const TEN_PANTRY_ESSENTIALS: PantryItem[] = [
+  { id: "e1", name: "Olive oil", category: "bakery_grains", inStock: true },
+  { id: "e2", name: "Sea salt", category: "spices_condiments", inStock: true },
+  { id: "e3", name: "Black pepper", category: "spices_condiments", inStock: true },
+  { id: "e4", name: "Garlic", category: "produce", inStock: true },
+  { id: "e5", name: "Yellow onions", category: "produce", inStock: true },
+  { id: "e6", name: "Butter", category: "dairy_fridge", inStock: true },
+  { id: "e7", name: "Eggs", category: "dairy_fridge", inStock: true },
+  { id: "e8", name: "Pasta", category: "bakery_grains", inStock: true },
+  { id: "e9", name: "Rice", category: "bakery_grains", inStock: true },
+  { id: "e10", name: "Flour", category: "bakery_grains", inStock: true },
+];
+
 export const COMMON_PANTRY_STAPLES = DEFAULT_PANTRY_ITEMS.map((item) => item.name.toLowerCase());
 
 export function getPantryInventory(): PantryItem[] {
-  if (typeof window === "undefined") return DEFAULT_PANTRY_ITEMS;
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(PANTRY_INVENTORY_KEY);
     if (!raw) {
-      localStorage.setItem(PANTRY_INVENTORY_KEY, JSON.stringify(DEFAULT_PANTRY_ITEMS));
-      return DEFAULT_PANTRY_ITEMS;
+      return [];
     }
     return JSON.parse(raw);
   } catch {
-    return DEFAULT_PANTRY_ITEMS;
+    return [];
   }
+}
+
+export function addPantryEssentials(): PantryItem[] {
+  const current = getPantryInventory();
+  const currentNames = new Set(current.map((i) => i.name.toLowerCase().trim()));
+  const toAdd = TEN_PANTRY_ESSENTIALS.filter((e) => !currentNames.has(e.name.toLowerCase().trim()));
+  const merged = [...current, ...toAdd];
+  savePantryInventory(merged);
+  return merged;
 }
 
 export function savePantryInventory(items: PantryItem[]) {
@@ -198,7 +220,29 @@ export function savePantryInventory(items: PantryItem[]) {
   try {
     localStorage.setItem(PANTRY_INVENTORY_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("pantry_inventory_updated"));
+    // Cloud sync in background if logged in
+    import("./sync/cloudSync").then(({ syncCloudPantry }) => {
+      syncCloudPantry(items).catch(() => {});
+    }).catch(() => {});
   } catch {}
+}
+
+export async function getPantryInventoryWithCloud(): Promise<PantryItem[]> {
+  const local = getPantryInventory();
+  try {
+    const { fetchCloudPantry } = await import("./sync/cloudSync");
+    const cloud = await fetchCloudPantry();
+    if (cloud && cloud.length > 0) {
+      const map = new Map(local.map((p) => [p.name.toLowerCase().trim(), p]));
+      cloud.forEach((cp) => map.set(cp.name.toLowerCase().trim(), cp));
+      const merged = Array.from(map.values());
+      if (typeof window !== "undefined") {
+        localStorage.setItem(PANTRY_INVENTORY_KEY, JSON.stringify(merged));
+      }
+      return merged;
+    }
+  } catch {}
+  return local;
 }
 
 const CATEGORY_KEYWORDS: Record<GroceryCategory, string[]> = {

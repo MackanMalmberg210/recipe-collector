@@ -18,6 +18,8 @@ type RecipeCardProps = {
   origin?: "mock" | "imported" | "user";
   ingredients?: string[];
   priority?: boolean;
+  isPublic?: boolean;
+  authorName?: string;
 };
 
 function RecipeCard({
@@ -32,6 +34,8 @@ function RecipeCard({
   isBestMatch,
   origin,
   priority = true,
+  isPublic,
+  authorName,
 }: RecipeCardProps) {
   const router = useRouter();
   const [rating, setRating] = useState<RecipeRating | null>(null);
@@ -51,16 +55,16 @@ function RecipeCard({
   return (
     <div
       onClick={handleClick}
-      className="group relative flex flex-col justify-between cursor-pointer overflow-hidden rounded-3xl border border-stone-200/90 bg-white text-stone-900 shadow-sm transform-gpu transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-xl dark:border-white/10 dark:bg-[#181310] dark:text-white dark:hover:border-amber-400/40 dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+      className="group relative flex flex-col justify-between cursor-pointer overflow-hidden rounded-3xl border border-slate-200/90 bg-white text-slate-900 shadow-xs transform-gpu transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-[#181310] dark:text-white dark:hover:border-amber-400/40 dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
     >
       {/* TALL CINEMATIC APPETIZING IMAGE CONTAINER */}
-      <div className="relative h-56 sm:h-60 w-full overflow-hidden bg-stone-200/80 dark:bg-[#221a15]">
+      <div className="relative h-56 sm:h-60 w-full overflow-hidden bg-slate-200/80 dark:bg-[#221a15]">
         <img
           src={image}
           alt={title}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
-          className="h-full w-full object-cover block transition-transform duration-500 ease-out group-hover:scale-105"
+          className="h-full w-full object-cover object-center block transition-transform duration-500 ease-out group-hover:scale-[1.02]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
@@ -75,17 +79,22 @@ function RecipeCard({
             <div />
           )}
 
-          {origin === "imported" && (
+          {isPublic && authorName ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-stone-900/90 border border-amber-400/40 px-2.5 py-1 text-xs font-bold text-amber-200 shadow-md">
+              <svg className="h-3.5 w-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span>By {authorName}</span>
+            </div>
+          ) : origin === "imported" ? (
             <div className="inline-flex items-center gap-1 rounded-full bg-[#3b1702]/90 border border-amber-500/40 px-3 py-1 text-xs font-bold text-amber-300 shadow-md">
               <span>Imported</span>
             </div>
-          )}
-
-          {origin === "user" && (
+          ) : origin === "user" ? (
             <div className="inline-flex items-center gap-1 rounded-full bg-[#1c1917]/90 border border-white/20 px-3 py-1 text-xs font-bold text-stone-100 shadow-md">
               <span>Your recipe</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* BOTTOM FLOATING STATS BAR */}
@@ -120,23 +129,23 @@ function RecipeCard({
       {/* CONTENT DETAILS */}
       <div className="flex flex-col justify-between flex-1 p-5 space-y-4">
         <div>
-          <h3 className="line-clamp-2 text-lg sm:text-xl font-bold leading-snug tracking-tight text-stone-900 transition-colors duration-200 group-hover:text-amber-600 dark:text-stone-100 dark:group-hover:text-amber-300">
+          <h3 className="line-clamp-2 text-lg sm:text-xl font-bold leading-snug tracking-tight text-slate-900 transition-colors duration-200 group-hover:text-slate-700 dark:text-stone-100 dark:group-hover:text-amber-300">
             {title}
           </h3>
         </div>
 
-        <div className="pt-3 border-t border-stone-100 dark:border-white/8 flex items-center justify-between">
+        <div className="pt-3 border-t border-slate-100 dark:border-white/8 flex items-center justify-between">
           {selectedIngredients.length > 0 ? (
             <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
               Matches {matchedIngredients} of {totalIngredients} ingredients
             </div>
           ) : (
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+            <div className="text-xs font-semibold text-slate-500 dark:text-stone-400">
               {totalIngredients} ingredients
             </div>
           )}
 
-          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 transition-transform duration-200 group-hover:translate-x-1 flex items-center gap-1">
+          <span className="text-xs font-bold text-slate-900 dark:text-amber-400 transition-transform duration-200 group-hover:translate-x-1 flex items-center gap-1">
             <span>View recipe</span>
             <span>→</span>
           </span>

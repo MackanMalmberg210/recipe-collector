@@ -14,6 +14,7 @@ import SimilarRecipesPanel from "./recipe-detail/SimilarRecipesPanel";
 import CookModeModal from "./recipe-detail/CookModeModal";
 import ShareRecipeModal from "./recipe-detail/ShareRecipeModal";
 import ConfirmModal from "./ui/ConfirmModal";
+import AdBanner from "./ui/AdBanner";
 import { useToast } from "./ui/ToastProvider";
 import {
   getAllRecipesWithCloud,
@@ -308,7 +309,7 @@ export default function RecipeDetailedView({
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] px-4 py-8 text-[#1c1917] transition dark:bg-[#12100e] dark:text-[#fafaf9] sm:px-6 xl:px-10 relative overflow-hidden">
+    <div className="min-h-screen bg-[#faf8f5] px-4 py-8 text-[#1c1917] transition dark:bg-[#12100e] dark:text-[#fafaf9] sm:px-6 xl:px-10 relative overflow-hidden">
       {/* SUBTLE, BALANCED AMBIENT GLOW */}
       <div className="pointer-events-none absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-amber-500/4 blur-[160px] dark:bg-amber-500/5" />
 
@@ -368,6 +369,8 @@ export default function RecipeDetailedView({
               ingredientGroups={recipe.ingredientGroups}
               baseServings={recipe.servings || 4}
               checkedIngredients={checkedIngredients}
+              recipeTitle={recipe.title}
+              recipeCategory={recipe.category}
               checkedCount={checkedCount}
               totalCount={totalCount}
               missingCount={missingCount}
@@ -378,6 +381,9 @@ export default function RecipeDetailedView({
               onUndoAddMissing={handleUndoAddMissing}
               isAddedToGrocery={isAddedToGrocery}
             />
+
+            {/* AD BANNER (Free tier only, 100% hidden for PRO) */}
+            <AdBanner slot="recipe_detail" />
           </aside>
         </div>
 
@@ -415,6 +421,6 @@ export default function RecipeDetailedView({
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
       />
-    </main>
+    </div>
   );
 }

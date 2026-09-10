@@ -64,10 +64,15 @@ export function saveRecipeRating(
 
    if (Object.keys(ratings).length === 0) {
       localStorage.removeItem(RECIPE_RATINGS_KEY);
-      return;
+   } else {
+      localStorage.setItem(RECIPE_RATINGS_KEY, JSON.stringify(ratings));
    }
 
-   localStorage.setItem(RECIPE_RATINGS_KEY, JSON.stringify(ratings));
+   window.dispatchEvent(
+      new CustomEvent("recipe_rating_updated", {
+         detail: { recipeId, rating },
+      }),
+   );
 }
 
 export const RATING_LABELS: Record<RecipeRating, string> = {

@@ -4,14 +4,14 @@ export default function Footer() {
   return (
     <footer className="relative mt-16 px-4 sm:px-6 lg:px-10 pb-12 pt-6">
       {/* FLOATING BENTO CULINARY CONSOLE */}
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] rounded-4xl border border-stone-800/90 bg-gradient-to-b from-[#1c1916] via-[#141210] to-[#0c0a09] text-white p-7 sm:p-10 lg:p-12 shadow-[0_20px_70px_rgba(0,0,0,0.35)] relative overflow-hidden dark:border-[#2e2722]">
+      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] rounded-4xl border border-stone-200/90 bg-white text-stone-900 shadow-sm dark:border-[#2e2722] dark:bg-gradient-to-b dark:from-[#1c1916] dark:via-[#141210] dark:to-[#0c0a09] dark:text-white p-7 sm:p-10 lg:p-12 dark:shadow-[0_20px_70px_rgba(0,0,0,0.35)] relative overflow-hidden transition-colors duration-300">
         
         {/* SUBTLE AMBIENT CORNER GLOW */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-amber-500/5 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-emerald-500/5 blur-3xl" />
 
         {/* TOP LEVEL: INTERACTIVE QUICK COMMAND DOCK */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/10 pb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-stone-100 dark:border-white/10 pb-8">
           
           {/* BRAND EMBLEM */}
           <Link href="/" className="inline-flex items-center gap-3.5 group">
@@ -21,10 +21,10 @@ export default function Footer() {
               </svg>
             </div>
             <div>
-              <span className="font-black text-lg tracking-tight text-white block">
+              <span className="font-black text-lg tracking-tight text-stone-900 dark:text-white block">
                 Recipe Collector
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
                 Smart Kitchen &amp; Recipe Studio
               </span>
             </div>

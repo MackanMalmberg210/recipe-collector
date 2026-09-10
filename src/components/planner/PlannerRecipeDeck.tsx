@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
+import { PlateIcon, ClockIcon, FlameIcon } from "./PlannerIcons";
 
 type PlannerRecipeDeckProps = {
   isOpen: boolean;
   onClose: () => void;
   recipes: AppRecipe[];
-  onDragStart: (recipeId: number) => void;
 };
 
 type DeckFilter = "all" | "quick" | "breakfast" | "dinner" | "pasta";
@@ -16,7 +17,6 @@ export default function PlannerRecipeDeck({
   isOpen,
   onClose,
   recipes,
-  onDragStart,
 }: PlannerRecipeDeckProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<DeckFilter>("all");
@@ -81,7 +81,7 @@ export default function PlannerRecipeDeck({
               My Cookbook
             </h2>
             <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-0.5">
-              Click or drag recipes directly into your week • {filteredRecipes.length} available
+              Browse your saved recipe collection • {filteredRecipes.length} available
             </p>
           </div>
 
@@ -136,27 +136,24 @@ export default function PlannerRecipeDeck({
         >
           {filteredRecipes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-56 text-center text-stone-400 dark:text-stone-500">
-              <span className="text-4xl mb-3">🔍</span>
+              <svg className="h-10 w-10 mb-3 text-stone-400 dark:text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
               <p className="text-sm font-bold text-stone-800 dark:text-stone-200">No recipes matched your search</p>
               <p className="text-xs text-stone-500 mt-1">Try clearing filters or search terms</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredRecipes.map((recipe) => (
-                <div
+                <Link
                   key={recipe.id}
-                  draggable
-                  onDragStart={() => {
-                    onDragStart(recipe.id);
-                    setTimeout(() => onClose(), 150);
-                  }}
+                  href={`/recipes/${recipe.id}`}
                   style={{
                     contentVisibility: "auto",
                     containIntrinsicSize: "0 140px",
                     contain: "paint",
                   }}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-4 hover:border-amber-500/60 dark:border-white/10 dark:bg-[#1f1915] dark:hover:border-amber-400/50 dark:hover:bg-[#251e19] cursor-grab active:cursor-grabbing shadow-xs transition-colors duration-100 ease-out"
-                  title="Drag recipe into any day slot"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-4 hover:border-amber-500/60 dark:border-white/10 dark:bg-[#1f1915] dark:hover:border-amber-400/50 dark:hover:bg-[#251e19] shadow-xs transition-colors duration-100 ease-out"
                 >
                   <div className="flex gap-4 items-start">
                     {/* LARGER THUMBNAIL */}
@@ -168,7 +165,9 @@ export default function PlannerRecipeDeck({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-2xl">🍲</div>
+                        <div className="flex h-full w-full items-center justify-center text-stone-400">
+                          <PlateIcon className="h-8 w-8 text-stone-400" />
+                        </div>
                       )}
                     </div>
 
@@ -180,10 +179,16 @@ export default function PlannerRecipeDeck({
                       
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-500 dark:text-stone-400 font-medium">
                         {recipe.cookTime !== undefined && (
-                          <span>⏱ {recipe.cookTime}m</span>
+                          <span className="inline-flex items-center gap-1">
+                            <ClockIcon className="h-3 w-3 text-stone-400" />
+                            <span>{recipe.cookTime}m</span>
+                          </span>
                         )}
                         {recipe.calories !== undefined && (
-                          <span>• 🔥 {recipe.calories} kcal</span>
+                          <span className="inline-flex items-center gap-1">
+                            • <FlameIcon className="h-3 w-3 text-amber-500" />
+                            <span>{recipe.calories} kcal</span>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -195,11 +200,11 @@ export default function PlannerRecipeDeck({
                       {recipe.ingredients.length} ingredients
                     </span>
                     <span className="font-bold text-amber-700 dark:text-amber-400 group-hover:underline transition flex items-center gap-1">
-                      <span>Drag to plan</span>
+                      <span>View recipe</span>
                       <span>→</span>
                     </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

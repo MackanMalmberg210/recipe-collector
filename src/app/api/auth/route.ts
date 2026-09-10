@@ -1,16 +1,50 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getClientIp } from "../../../lib/security/rateLimiter";
 
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://wvcfkpgdtrrieryilbkz.supabase.co";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2Y2ZrcGdkdHJyaWVyeWlsYmt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNDU1NzUsImV4cCI6MjEwMjYyMTU3NX0.A2i1onDu95J5fchP4DChmbTI_dhL7_23fvlEcH_qW30";
+function getSafeRedirectBaseUrl(req: Request): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+
+  const origin = req.headers.get("origin");
+  if (origin) {
+    try {
+      const parsed = new URL(origin);
+      if (
+        parsed.hostname === "localhost" ||
+        parsed.hostname === "127.0.0.1" ||
+        parsed.hostname.endsWith(".vercel.app")
+      ) {
+        return parsed.origin;
+      }
+    } catch {}
+  }
+
+  return "http://localhost:3000";
+}
 
 export async function POST(req: Request) {
   try {
+    // Rate limit: max 12 auth attempts per minute per IP to prevent brute-forcing
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`auth:${clientIp}`, 12, 60_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: `Too many authentication attempts. Please try again in ${rateLimit.retryAfterSeconds} seconds.` },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      return NextResponse.json(
+        { error: "Server authentication is temporarily unavailable due to missing configuration." },
+        { status: 500 }
+      );
+    }
+
     const { action, email, password, displayName } = await req.json();
 
     if (!email) {
@@ -26,11 +60,10 @@ export async function POST(req: Request) {
 
     // 1. FORGOT PASSWORD / RECOVERY EMAIL
     if (action === "forgot_password" || action === "reset_password_request") {
-      const origin = req.headers.get("origin") || req.headers.get("referer") || "http://localhost:3000";
-      const cleanOrigin = origin.replace(/\/$/, "");
+      const safeOrigin = getSafeRedirectBaseUrl(req);
 
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${cleanOrigin}/reset-password`,
+        redirectTo: `${safeOrigin}/reset-password`,
       });
 
       if (error) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { convertIngredient } from "../../lib/unitConverter";
+import { capitalizeFirstLetter } from "../../lib/culinaryTextSanitizer";
 import { findSubstitutionsForIngredient, type Substitution } from "../../lib/substitutions";
 import { getStoredUserSettings, saveUserSettings, type MeasurementUnitSystem } from "../../lib/settings";
 import type { IngredientGroup } from "../../lib/types";
@@ -15,6 +16,8 @@ type RecipeIngredientsPanelProps = {
   ingredientGroups?: IngredientGroup[];
   baseServings: number;
   checkedIngredients: string[];
+  recipeTitle?: string;
+  recipeCategory?: string;
   checkedCount?: number;
   totalCount?: number;
   missingCount?: number;
@@ -27,20 +30,13 @@ type RecipeIngredientsPanelProps = {
   allMissingAlreadyInGrocery?: boolean;
 };
 
-// Fallback short badge when no unit/amount exists (e.g., "to taste", "pinch")
-function getFallbackBadge(name: string): string {
-  const lower = name.toLowerCase();
-  if (lower.includes("salt") || lower.includes("pepper")) return "to taste";
-  if (lower.includes("oil") || lower.includes("butter")) return "as needed";
-  if (lower.includes("garnish") || lower.includes("herbs")) return "fresh";
-  return "item";
-}
-
 export default function RecipeIngredientsPanel({
   ingredients,
   ingredientGroups,
   baseServings,
   checkedIngredients,
+  recipeTitle = "",
+  recipeCategory = "",
   onToggleIngredient,
   onAddMissingToGroceryList,
   onUndoAddMissing,
@@ -112,29 +108,32 @@ export default function RecipeIngredientsPanel({
     // Convert unit according to active system and scale
     const { amount, unit, name } = convertIngredient(ingredient, unitSystem, scaleRatio);
     const quantityDisplay = [amount, unit].filter(Boolean).join(" ");
-    const fallbackBadge = !quantityDisplay ? getFallbackBadge(name || ingredient) : "";
+    const displayName = capitalizeFirstLetter(name || ingredient);
 
-    // Check if substitutions are available
-    const substitutionData: Substitution | null = findSubstitutionsForIngredient(name || ingredient);
+    // Check if substitutions are available with recipe context
+    const substitutionData: Substitution | null = findSubstitutionsForIngredient(displayName, {
+      recipeTitle,
+      category: recipeCategory,
+    });
     const isExpanded = Boolean(expandedSubstitutions[normalizedIngredient]);
 
     return (
       <li
         key={normalizedIngredient}
-        className={`rounded-2xl border transition overflow-hidden ${
+        className={`rounded-xl border transition overflow-hidden ${
           isChecked
-            ? "border-emerald-500/25 bg-emerald-500/10 opacity-70"
-            : "border-stone-200/90 bg-stone-50/60 hover:bg-stone-100 hover:border-amber-500/30 dark:border-[#2e2722] dark:bg-[#24201c] dark:hover:bg-[#2d2823] dark:hover:border-amber-400/30 shadow-2xs"
+            ? "border-emerald-500/20 bg-emerald-500/5 opacity-60"
+            : "border-stone-200/70 bg-white hover:bg-stone-50 hover:border-stone-300 dark:border-[#2a2420] dark:bg-[#1a1715]/70 dark:hover:bg-[#201c19] dark:hover:border-[#3a322c]"
         }`}
       >
-        <div className="flex items-center justify-between gap-3 p-3 sm:px-4">
-          <label className="flex min-w-0 items-center gap-3 flex-1 cursor-pointer select-none group/item">
+        <div className="flex items-center justify-between gap-2.5 p-2.5 sm:px-3.5">
+          <label className="flex min-w-0 items-center gap-2.5 flex-1 cursor-pointer select-none group/item">
             {/* SLEEK CUSTOM CHECKBOX */}
             <div
               className={`h-4.5 w-4.5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
                 isChecked
                   ? "border-emerald-500 bg-emerald-500 text-stone-950 shadow-xs shadow-emerald-500/25"
-                  : "border-stone-300 bg-white group-hover/item:border-amber-400 dark:border-[#3a322c] dark:bg-[#1a1715] dark:group-hover/item:border-amber-400/60"
+                  : "border-stone-300 bg-white group-hover/item:border-amber-500 dark:border-[#3a322c] dark:bg-[#141210] dark:group-hover/item:border-amber-400/60"
               }`}
             >
               {isChecked && (
@@ -150,70 +149,54 @@ export default function RecipeIngredientsPanel({
               className="sr-only"
             />
 
-            {/* COMPACT QUANTITY BADGE COLUMN (FIXED WIDTH FOR PERFECT TEXT ALIGNMENT) */}
-            <div className="w-[70px] shrink-0 flex items-center justify-center">
+            {/* CLEAN QUANTITY COLUMN (NO BOX, NO DASH, PERFECT ALIGNMENT) */}
+            <div className="w-16 sm:w-20 shrink-0 text-right pr-2 font-sans font-semibold text-xs sm:text-sm">
               {quantityDisplay ? (
                 <span
-                  className={`w-full text-center rounded-xl py-1 px-1 text-xs font-bold font-mono tracking-tight transition truncate ${
+                  className={`truncate block ${
                     isChecked
-                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 line-through"
-                      : "bg-stone-100 text-stone-800 border border-stone-200 dark:bg-[#1f1b18] dark:text-amber-400 dark:border-[#3a322c] shadow-2xs"
+                      ? "text-stone-400 dark:text-stone-500 line-through"
+                      : "text-stone-900 dark:text-[#fafaf9]"
                   }`}
                   title={quantityDisplay}
                 >
                   {quantityDisplay}
                 </span>
-              ) : (
-                <span
-                  className={`w-full text-center rounded-xl py-1 px-1 text-[10px] font-semibold tracking-tight transition truncate ${
-                    isChecked
-                      ? "bg-emerald-500/10 text-emerald-600 line-through dark:text-emerald-300/60"
-                      : "bg-stone-100 text-stone-500 border border-stone-200/70 dark:bg-[#1a1715] dark:text-[#a8a29e] dark:border-[#2e2722]"
-                  }`}
-                  title={fallbackBadge}
-                >
-                  {fallbackBadge}
-                </span>
-              )}
+              ) : null}
             </div>
 
             {/* INGREDIENT NAME */}
             <span
-              className={`flex-1 text-xs sm:text-sm font-semibold leading-snug break-words ${
+              className={`flex-1 text-xs sm:text-sm leading-snug break-words ${
                 isChecked
-                  ? "text-emerald-800 dark:text-emerald-200 line-through"
-                  : "text-stone-900 dark:text-[#fafaf9]"
+                  ? "text-stone-400 dark:text-stone-500 line-through"
+                  : "font-normal text-stone-700 dark:text-[#d6d3d1]"
               }`}
             >
-              {name || ingredient}
+              {displayName}
             </span>
           </label>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* SMART SUBSTITUTION LAMP ICON BUTTON */}
-            {substitutionData && !isChecked && (
+          {/* SMART SUBSTITUTION TIP PILL */}
+          {substitutionData && !isChecked && (
+            <div className="shrink-0 pl-1">
               <button
                 type="button"
                 onClick={() => toggleSubstitutionDrawer(normalizedIngredient)}
-                className={`inline-flex h-6 w-6 items-center justify-center rounded-lg transition active:scale-95 cursor-pointer ${
+                className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-lg px-2 py-0.5 transition active:scale-95 cursor-pointer ${
                   isExpanded
                     ? "bg-amber-500 text-stone-950 shadow-xs"
-                    : "border border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:bg-[#1f1b18] dark:text-amber-400 dark:border-amber-400/30 hover:scale-110"
+                    : "text-amber-700 hover:text-amber-800 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-400 dark:border-amber-400/20 dark:hover:bg-amber-400/20"
                 }`}
-                title="Did You Know? View ingredient substitute tips"
+                title="View ingredient substitute tips"
               >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
+                <span className="hidden sm:inline">Tip</span>
               </button>
-            )}
-
-            {!isChecked && (
-              <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20">
-                Missing
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* EXPANDABLE SUBSTITUTION ACCORDION */}

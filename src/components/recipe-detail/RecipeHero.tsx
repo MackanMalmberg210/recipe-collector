@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 
 type RecipeHeroProps = {
@@ -49,18 +50,26 @@ export default function RecipeHero({
 
   return (
     <section className="overflow-hidden rounded-4xl border border-stone-200/90 bg-white shadow-xl dark:border-[#2e2722] dark:border-t-amber-500/20 dark:bg-[#1a1715] dark:shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)]">
-      <div className="grid lg:grid-cols-[440px_minmax(0,1fr)] xl:grid-cols-[490px_minmax(0,1fr)] 2xl:grid-cols-[530px_minmax(0,1fr)]">
+      <div className="grid lg:grid-cols-[480px_minmax(0,1fr)] xl:grid-cols-[540px_minmax(0,1fr)] 2xl:grid-cols-[600px_minmax(0,1fr)]">
         
         {/* HERO IMAGE CONTAINER */}
-        <div className="relative h-72 sm:h-80 lg:h-full min-h-[320px] w-full overflow-hidden bg-stone-900">
+        <div className="relative h-72 sm:h-80 lg:h-full min-h-[340px] w-full overflow-hidden bg-stone-950 flex items-center justify-center">
+          {/* Ambient blurred backdrop fills container seamlessly without hard borders */}
+          <img
+            src={recipe.image}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none"
+          />
+
           <img
             src={recipe.image}
             alt={recipe.title}
-            className="h-full w-full object-cover transition duration-700 hover:scale-105"
+            className="relative h-full w-full object-cover object-center transition duration-500"
             loading="eager"
           />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
         </div>
 
         {/* HERO DETAILS CONTENT */}
@@ -72,6 +81,12 @@ export default function RecipeHero({
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-500 dark:text-amber-400">
                   Recipe Details
                 </p>
+
+                {recipe.isPublic && recipe.authorName && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                    <span>👨‍🍳 Created by Chef {recipe.authorName}</span>
+                  </span>
+                )}
 
                 {recipe.sourceUrl && (
                   <a
@@ -224,6 +239,17 @@ export default function RecipeHero({
                 </svg>
                 <span>Share</span>
               </button>
+
+              <Link
+                href={`/create?edit=${recipe.id}`}
+                className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-700 hover:bg-stone-50 dark:border-[#2e2722] dark:bg-[#24201c] dark:text-[#d6d3d1] dark:hover:bg-[#2d2823] dark:hover:text-[#fafaf9] transition cursor-pointer shadow-2xs active:scale-95"
+                title="Edit this recipe"
+              >
+                <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                <span>Edit Recipe</span>
+              </Link>
             </div>
 
             {onDeleteRecipe && (

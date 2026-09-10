@@ -11,30 +11,163 @@ import ChefProModal from "../../components/subscription/ChefProModal";
 import {
   getStoredUserSettings,
   saveUserSettings,
+  getAiScanUsage,
+  toggleSubscriptionTier,
   type UserSettings,
   type DietaryPreference,
 } from "../../lib/settings";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "../../contexts/AuthContext";
 
-const DIETARY_OPTIONS: { id: DietaryPreference; label: string; icon: string; desc: string }[] = [
-  { id: "vegetarian", label: "Vegetarian", icon: "🌱", desc: "No meat or poultry" },
-  { id: "vegan", label: "Vegan", icon: "🌿", desc: "100% plant-based, no dairy/eggs" },
-  { id: "gluten_free", label: "Gluten-Free", icon: "🌾", desc: "Wheat & gluten free" },
-  { id: "dairy_free", label: "Dairy-Free", icon: "🥛", desc: "Lactose & dairy free" },
-  { id: "nut_free", label: "Nut-Free", icon: "🥜", desc: "No peanuts or tree nuts" },
-  { id: "high_protein", label: "High Protein", icon: "🥩", desc: "Focus on protein-rich meals" },
-  { id: "low_carb", label: "Low Carb / Keto", icon: "🥑", desc: "Low sugar & low carbs" },
-  { id: "pescatarian", label: "Pescatarian", icon: "🐟", desc: "Fish & seafood allowed" },
+const DIETARY_OPTIONS: { id: DietaryPreference; label: string; desc: string }[] = [
+  { id: "vegetarian", label: "Vegetarian", desc: "No meat or poultry" },
+  { id: "vegan", label: "Vegan", desc: "100% plant-based, no dairy/eggs" },
+  { id: "gluten_free", label: "Gluten-Free", desc: "Wheat & gluten free" },
+  { id: "dairy_free", label: "Dairy-Free", desc: "Lactose & dairy free" },
+  { id: "nut_free", label: "Nut-Free", desc: "No peanuts or tree nuts" },
+  { id: "high_protein", label: "High Protein", desc: "Focus on protein-rich meals" },
+  { id: "low_carb", label: "Low Carb / Keto", desc: "Low sugar & low carbs" },
+  { id: "pescatarian", label: "Pescatarian", desc: "Fish & seafood allowed" },
 ];
+
+const DIETARY_META: Record<DietaryPreference, { badgeBg: string; badgeBorder: string; badgeText: string }> = {
+  vegetarian: {
+    badgeBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+    badgeBorder: "border-emerald-500/25",
+    badgeText: "text-emerald-700 dark:text-emerald-400",
+  },
+  vegan: {
+    badgeBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+    badgeBorder: "border-emerald-500/25",
+    badgeText: "text-emerald-700 dark:text-emerald-400",
+  },
+  gluten_free: {
+    badgeBg: "bg-amber-500/10 dark:bg-amber-500/15",
+    badgeBorder: "border-amber-500/25",
+    badgeText: "text-amber-700 dark:text-amber-400",
+  },
+  dairy_free: {
+    badgeBg: "bg-amber-500/10 dark:bg-amber-500/15",
+    badgeBorder: "border-amber-500/25",
+    badgeText: "text-amber-700 dark:text-amber-400",
+  },
+  nut_free: {
+    badgeBg: "bg-orange-500/10 dark:bg-orange-500/15",
+    badgeBorder: "border-orange-500/25",
+    badgeText: "text-orange-700 dark:text-orange-400",
+  },
+  high_protein: {
+    badgeBg: "bg-rose-500/10 dark:bg-rose-500/15",
+    badgeBorder: "border-rose-500/25",
+    badgeText: "text-rose-700 dark:text-rose-400",
+  },
+  low_carb: {
+    badgeBg: "bg-teal-500/10 dark:bg-teal-500/15",
+    badgeBorder: "border-teal-500/25",
+    badgeText: "text-teal-700 dark:text-teal-400",
+  },
+  pescatarian: {
+    badgeBg: "bg-sky-500/10 dark:bg-sky-500/15",
+    badgeBorder: "border-sky-500/25",
+    badgeText: "text-sky-700 dark:text-sky-400",
+  },
+};
+
+function getDietaryIcon(id: DietaryPreference, isSelected: boolean) {
+  const strokeClass = isSelected
+    ? "text-emerald-700 dark:text-emerald-300"
+    : "currentColor";
+  switch (id) {
+    case "vegetarian":
+      // Crisp botanical leaf with stem and side veins
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5C6 15 9 10.5 14.5 8c4.5-2 6-5 6.5-5.5-.5 2-2 6.5-5.5 10-3 3-7 5.5-11 7z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 17c3-3 6.5-5.5 10-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 13.5l2.5-1" />
+        </svg>
+      );
+    case "vegan":
+      // Two-leaf young plant seedling sprouting with soil base
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 13c-4.5 0-7.5-3-7.5-7.5 4.5 0 7.5 3 7.5 7.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10.5c4 0 7-2.5 7-6.5-4 0-7 2.5-7 6.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8" />
+        </svg>
+      );
+    case "gluten_free":
+      // Universal crossed wheat grain stalk with diagonal slash
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 22V6" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6c-2-2-4-1.5-4 0s2 2 4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6c2-2 4-1.5 4 0s-2 2-4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10c-2-2-4-1.5-4 0s2 2 4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10c2-2 4-1.5 4 0s-2 2-4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 14c-2-2-4-1.5-4 0s2 2 4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 14c2-2 4-1.5 4 0s-2 2-4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l16 16" />
+        </svg>
+      );
+    case "dairy_free":
+      // Milk carton with diagonal slash
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 6l2.5-3h5L17 6v14a2 2 0 01-2 2H9a2 2 0 01-2-2V6z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 10h10" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 3v3h2V3" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l16 16" />
+        </svg>
+      );
+    case "nut_free":
+      // Clean hazelnut with cap and diagonal ban slash
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.5" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 9.5c0-2 2.2-3.5 5-3.5s5 1.5 5 3.5v.5H7v-.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 10c0 4 2.2 7 5 8.5 2.8-1.5 5-4.5 5-8.5" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l16 16" />
+        </svg>
+      );
+    case "high_protein":
+      // Poultry drumstick / meat cut with bone
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M14.5 4.5a4.5 4.5 0 015 6.3l-4.2 4.2a6 6 0 01-5.3 1.6l-2.8 2.8a1.5 1.5 0 11-2.1-2.1l2.8-2.8a6 6 0 011.6-5.3l4.2-4.2a4.5 4.5 0 01.8-.5z" />
+          <circle cx="5" cy="19" r="1.5" />
+        </svg>
+      );
+    case "low_carb":
+      // Pear-shaped avocado half with stem and round seed
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2.5" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5c-2 0-3.5 1.8-3.5 4.5 0 2-.9 3.5-2 5.5A6.5 6.5 0 0012 21.5a6.5 6.5 0 005.5-7c-1.1-2-2-3.5-2-5.5 0-2.7-1.5-4.5-3.5-4.5z" />
+          <circle cx="12" cy="14.5" r="3" strokeWidth={1.8} />
+        </svg>
+      );
+    case "pescatarian":
+      // Fish with eye, fins, gill and double-fluke tail
+      return (
+        <svg className={`h-5 w-5 ${strokeClass} transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2 12c3.5-4.5 10-5.5 15-1.5L22 7v10l-5-3.5C12 17.5 5.5 16.5 2 12z" />
+          <circle cx="6" cy="11.5" r="1" fill="currentColor" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 9.5c.5 1.5.5 3.5 0 5" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
 
 function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const focusParam = searchParams.get("focus");
   const { success, error, info } = useToast();
-  const supabase = createClient();
+  const { user, signOut, updateUser } = useAuth();
 
-  const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [settings, setSettings] = useState<UserSettings>(getStoredUserSettings());
@@ -61,31 +194,21 @@ function SettingsContent() {
   const [timerSound, setTimerSound] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        setDisplayName(user.user_metadata?.display_name || user.email?.split("@")[0] || "");
-      }
-    };
+    if (user) {
+      setDisplayName(user.user_metadata?.display_name || user.email?.split("@")[0] || "");
+    } else {
+      setDisplayName("");
+    }
+  }, [user]);
 
-    fetchUser();
+  useEffect(() => {
     setSettings(getStoredUserSettings());
 
     // Load theme
     const isLight = document.documentElement.classList.contains("light");
     setCurrentTheme(isLight ? "light" : "dark");
     setHasHydrated(true);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setDisplayName(session.user.user_metadata?.display_name || session.user.email?.split("@")[0] || "");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, []);
 
   // Smooth scroll down from top + glowing pulsating highlight animation
   useEffect(() => {
@@ -150,14 +273,18 @@ function SettingsContent() {
     updateSettings({ dietaryPreferences: updated });
   };
 
+  const [isNameJustSaved, setIsNameJustSaved] = useState(false);
+
   const handleSaveDisplayName = async () => {
     if (!displayName.trim()) return;
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { error: updateError } = await updateUser({
         data: { display_name: displayName.trim() },
       });
       if (updateError) throw updateError;
       setIsEditingName(false);
+      setIsNameJustSaved(true);
+      setTimeout(() => setIsNameJustSaved(false), 2500);
       success("Profile name updated.");
     } catch {
       error("Failed to update profile name.");
@@ -177,7 +304,7 @@ function SettingsContent() {
 
     setPasswordChangeLoading(true);
     try {
-      const { error: pwdError } = await supabase.auth.updateUser({
+      const { error: pwdError } = await updateUser({
         password: newPassword,
       });
       if (pwdError) throw pwdError;
@@ -195,8 +322,7 @@ function SettingsContent() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      setUser(null);
+      await signOut();
       setDisplayName("");
       success("Signed out successfully.");
     } catch {
@@ -206,10 +332,9 @@ function SettingsContent() {
 
   const handleDeleteAccount = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
       localStorage.clear();
       setIsDeleteAccountModalOpen(false);
-      setUser(null);
       info("Account data deleted.");
       router.push("/");
     } catch {
@@ -220,7 +345,7 @@ function SettingsContent() {
   const shownName = displayName || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Guest Chef";
 
   return (
-    <main className="min-h-screen bg-[#f7f4ed] text-[#1f1b18] transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-8 sm:px-6 xl:px-10">
+    <div className="min-h-screen bg-[#f7f4ed] text-[#1f1b18] transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-8 sm:px-6 xl:px-10">
       <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1820px] space-y-8">
         
         {/* TOP HEADER WITH AUTO-SAVE BADGE */}
@@ -268,15 +393,15 @@ function SettingsContent() {
               
               {/* TOP HEADER */}
               <div className="flex items-center justify-between border-b border-[#eee8dc] dark:border-white/8 pb-4">
-                <span className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                  Chef Identity &amp; Studio
+                <span className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                  Account &amp; Profile
                 </span>
-                <span className={`rounded-full px-3 py-0.5 text-xs font-black uppercase tracking-wider ${
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider ${
                   settings.subscriptionTier === "pro"
-                    ? "bg-amber-500 text-stone-950"
+                    ? "bg-amber-500 text-stone-950 shadow-xs"
                     : "bg-[#f2ece0] text-[#3d362e] dark:bg-white/10 dark:text-stone-200"
                 }`}>
-                  {settings.subscriptionTier === "pro" ? "👑 Chef Pro" : "Free Plan"}
+                  {settings.subscriptionTier === "pro" ? "PRO Plan" : "Free Plan"}
                 </span>
               </div>
 
@@ -291,8 +416,8 @@ function SettingsContent() {
                     </svg>
                   )}
                   {settings.subscriptionTier === "pro" && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-300 text-[10px] shadow-sm">
-                      👑
+                    <span className="absolute -top-1.5 -right-1.5 flex h-5 px-1.5 items-center justify-center rounded-full bg-amber-400 text-stone-950 text-[9px] font-black shadow-xs">
+                      PRO
                     </span>
                   )}
                 </div>
@@ -302,6 +427,14 @@ function SettingsContent() {
                     <h2 className="text-xl font-black text-[#1c1815] dark:text-[#fff8ef] truncate">
                       {shownName}
                     </h2>
+                    {isNameJustSaved && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 animate-in fade-in duration-200">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Saved</span>
+                      </span>
+                    )}
                     {user && (
                       <button
                         type="button"
@@ -383,7 +516,7 @@ function SettingsContent() {
                   <div className="flex flex-col gap-2">
                     <Link
                       href="/login"
-                      className="w-full rounded-2xl bg-amber-500 py-3 text-xs sm:text-sm font-black text-stone-950 hover:bg-amber-600 transition shadow-md shadow-amber-400/20 cursor-pointer text-center block"
+                      className="w-full rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 py-3 text-xs sm:text-sm font-black text-stone-950 border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer text-center block"
                     >
                       Sign In to Account
                     </Link>
@@ -475,38 +608,79 @@ function SettingsContent() {
               )}
             </section>
 
-            {/* PRESTIGIOUS CHEF PRO VIP CARD */}
+            {/* CLEAN SUBSCRIPTION & PLAN CARD */}
             <section
               id="membership"
               className={`relative overflow-hidden rounded-3xl border border-stone-200/90 dark:border-white/10 bg-[#181310] p-6 sm:p-7 shadow-sm text-white ${getHighlightClass("membership")}`}
             >
-              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none text-7xl">👑</div>
-              
               <div className="relative">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold text-amber-300 border border-amber-400/25 mb-3">
-                  <span>👑</span>
-                  <span>Chef Pro Membership</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-1 text-xs font-bold text-amber-300 border border-amber-400/20">
+                    <span>{settings.subscriptionTier === "pro" ? "PRO Plan Active" : "Free Plan"}</span>
+                  </div>
+                  {settings.subscriptionTier === "pro" && (
+                    <span className="rounded-full bg-amber-400 text-stone-950 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                      PRO
+                    </span>
+                  )}
                 </div>
                 
                 <h3 className="text-xl font-black text-[#fff8ef] tracking-tight">
-                  Unlock Full Culinary Power
+                  Subscription &amp; Plan
                 </h3>
                 <p className="mt-1.5 text-xs text-stone-300 leading-relaxed">
-                  Infinite cloud sync, multi-aisle grocery hub, AI substitutions, and camera vision scanning.
+                  {settings.subscriptionTier === "pro"
+                    ? "You have full access to unlimited AI vision scans, nutritional macros, and an ad-free kitchen."
+                    : "Enjoy free recipe collecting, or upgrade to Pro for unlimited AI scans and an ad-free experience."}
                 </p>
 
+                {/* Live Monthly AI Quota Display */}
+                <div className="mt-4 rounded-2xl border border-white/8 bg-white/5 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-stone-300">AI Vision Scans</span>
+                    <span className="font-bold text-amber-400">
+                      {settings.subscriptionTier === "pro"
+                        ? "Unlimited"
+                        : `${getAiScanUsage(settings).used} / ${getAiScanUsage(settings).max} this month`}
+                    </span>
+                  </div>
+                  {settings.subscriptionTier !== "pro" && (
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.min(100, (getAiScanUsage(settings).used / getAiScanUsage(settings).max) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Features List with clean SVGs */}
                 <div className="mt-4 space-y-2 text-xs text-stone-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 font-bold">✓</span>
-                    <span>Unlimited Cloud Sync across all devices</span>
+                  <div className="flex items-center gap-2.5">
+                    <svg className="h-3.5 w-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{settings.subscriptionTier === "pro" ? "100% Ad-Free Experience" : "Ad-Free cooking with Pro"}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 font-bold">✓</span>
-                    <span>AI Ingredient Substitution Engine</span>
+                  <div className="flex items-center gap-2.5">
+                    <svg className="h-3.5 w-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{settings.subscriptionTier === "pro" ? "Unlimited AI Vision Scans & OCR" : "3 Free AI Vision Scans / month"}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 font-bold">✓</span>
-                    <span>Camera &amp; Vision Scanner</span>
+                  <div className="flex items-center gap-2.5">
+                    <svg className="h-3.5 w-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{settings.subscriptionTier === "pro" ? "Full Nutritional Macros per Serving" : "Nutritional macros & breakdown"}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <svg className="h-3.5 w-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{settings.subscriptionTier === "pro" ? "Unlimited Cloud Sync Across Devices" : "Cloud recipe storage"}</span>
                   </div>
                 </div>
 
@@ -516,12 +690,48 @@ function SettingsContent() {
                     <span className="text-xs text-stone-400">/mo</span>
                   </div>
 
+                  {settings.subscriptionTier === "pro" ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsProModalOpen(true)}
+                      className="rounded-2xl border border-white/15 bg-white/10 hover:bg-white/15 px-4 py-2 text-xs font-bold text-white transition cursor-pointer"
+                    >
+                      Manage Plan
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsProModalOpen(true)}
+                      className="rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-5 py-2.5 text-xs font-bold text-stone-950 border border-amber-600/60 transition shadow-sm cursor-pointer active:scale-95"
+                    >
+                      Upgrade to Pro
+                    </button>
+                  )}
+                </div>
+
+                {/* LIVE TESTING & PREVIEW TOGGLE FOR TESTING PURPOSES */}
+                <div className="mt-5 rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
+                      Testing &amp; Preview Mode
+                    </span>
+                    <p className="text-xs text-stone-300">
+                      Toggle active plan between Free and Pro to test feature access.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setIsProModalOpen(true)}
-                    className="rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-black text-stone-950 hover:from-amber-300 hover:to-amber-200 transition shadow-md shadow-amber-400/30 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                    onClick={() => {
+                      const newTier = toggleSubscriptionTier();
+                      setSettings((prev) => ({ ...prev, subscriptionTier: newTier }));
+                      success(`Switched preview to ${newTier === "pro" ? "PRO Plan" : "Free Plan"}!`);
+                    }}
+                    className="shrink-0 flex items-center gap-2 rounded-xl border border-amber-500/40 bg-white/5 hover:bg-white/10 px-3 py-2 text-xs font-bold text-amber-300 transition cursor-pointer"
                   >
-                    {settings.subscriptionTier === "pro" ? "Manage Pro" : "Start Free Trial 👑"}
+                    <span>Switch to {settings.subscriptionTier === "pro" ? "Free" : "PRO"}</span>
+                    <span className="rounded-full bg-amber-500 text-stone-950 px-1.5 py-0.2 text-[9px] font-black">
+                      {settings.subscriptionTier.toUpperCase()}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -557,7 +767,12 @@ function SettingsContent() {
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-base font-extrabold">☀️ Day Studio (Linen)</span>
+                    <div className="flex items-center gap-2">
+                      <svg className="h-4 w-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      <span className="text-base font-extrabold">Day Studio (Linen)</span>
+                    </div>
                     {currentTheme === "light" && (
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-stone-950 text-xs font-black">✓</span>
                     )}
@@ -575,7 +790,12 @@ function SettingsContent() {
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-base font-extrabold">🌙 Midnight (Cast Iron)</span>
+                    <div className="flex items-center gap-2">
+                      <svg className="h-4 w-4 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                      </svg>
+                      <span className="text-base font-extrabold">Midnight (Cast Iron)</span>
+                    </div>
                     {currentTheme === "dark" && (
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-stone-950 text-xs font-black">✓</span>
                     )}
@@ -616,7 +836,15 @@ function SettingsContent() {
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <span className="text-base font-extrabold">⚖️ Metric</span>
+                        <div className="flex items-center gap-2">
+                          <svg className="h-4 w-4 text-stone-600 dark:text-stone-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 4h14M12 4v3" />
+                            <rect x="5" y="7" width="14" height="13" rx="2" strokeWidth={1.8} />
+                            <circle cx="12" cy="13.5" r="3.5" strokeWidth={1.5} />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 13.5l1.5-1.5" />
+                          </svg>
+                          <span className="text-base font-extrabold">Metric</span>
+                        </div>
                         {settings.unitSystem === "metric" && (
                           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-stone-950 text-xs font-black">✓</span>
                         )}
@@ -634,7 +862,14 @@ function SettingsContent() {
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <span className="text-base font-extrabold">🇺🇸 Imperial</span>
+                        <div className="flex items-center gap-2">
+                          <svg className="h-4 w-4 text-stone-600 dark:text-stone-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h12v11a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 8h2.5a2 2 0 012 2v3a2 2 0 01-2 2H16" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 9h3M7 12h5M7 15h3" />
+                          </svg>
+                          <span className="text-base font-extrabold">Imperial</span>
+                        </div>
                         {settings.unitSystem === "imperial" && (
                           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-stone-950 text-xs font-black">✓</span>
                         )}
@@ -722,28 +957,45 @@ function SettingsContent() {
                 </label>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 {DIETARY_OPTIONS.map((option) => {
                   const isSelected = settings.dietaryPreferences.includes(option.id);
+                  const meta = DIETARY_META[option.id];
                   return (
                     <button
                       key={option.id}
                       type="button"
                       onClick={() => toggleDietaryPreference(option.id)}
-                      className={`flex flex-col items-start rounded-2xl p-4 border text-left transition cursor-pointer ${
+                      className={`group flex flex-col justify-between rounded-2xl p-4 border text-left transition-all duration-200 cursor-pointer ${
                         isSelected
-                          ? "border-emerald-600 bg-emerald-50 text-[#1c1815] font-bold ring-2 ring-emerald-500/20 dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-300"
-                          : "border-[#dcd5c7] bg-[#faf7f2] text-[#4a4239] hover:bg-[#f2ece0] dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/8"
+                          ? "border-emerald-600 bg-emerald-50 text-[#1c1815] ring-2 ring-emerald-500/20 dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-[#fff8ef] dark:ring-emerald-500/30 shadow-sm"
+                          : "border-[#dcd5c7] bg-[#faf7f2] text-[#4a4239] hover:border-amber-500/40 hover:bg-[#f5efe4] dark:border-white/10 dark:bg-[#181310] dark:text-stone-300 dark:hover:border-white/20 dark:hover:bg-[#1f1915] shadow-xs"
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <span className="text-xl">{option.icon}</span>
-                        <span className={`text-xs font-black ${isSelected ? "text-emerald-800 dark:text-emerald-400" : "text-[#8c8275] dark:text-stone-400"}`}>
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
+                            isSelected
+                              ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                              : `${meta.badgeBg} ${meta.badgeBorder} ${meta.badgeText}`
+                          }`}
+                        >
+                          {getDietaryIcon(option.id, isSelected)}
+                        </div>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold transition-all ${
+                            isSelected
+                              ? "bg-emerald-600 text-white dark:bg-emerald-500 dark:text-stone-950 font-black shadow-xs"
+                              : "border border-[#cfc7b7] dark:border-white/10 bg-white dark:bg-white/5 text-[#6e6356] dark:text-stone-300 group-hover:border-amber-500/50 group-hover:text-amber-600 dark:group-hover:text-amber-400"
+                          }`}
+                        >
                           {isSelected ? "✓ Active" : "+ Add"}
                         </span>
                       </div>
-                      <span className="mt-2 text-sm font-bold text-[#1c1815] dark:text-stone-100">{option.label}</span>
-                      <span className="text-xs text-[#6e6356] dark:text-stone-400 mt-0.5 font-medium">{option.desc}</span>
+                      <div className="mt-3">
+                        <span className="block text-sm font-bold text-[#1c1815] dark:text-[#fff8ef]">{option.label}</span>
+                        <span className="block text-xs text-[#6e6356] dark:text-stone-400 mt-0.5 font-medium leading-relaxed">{option.desc}</span>
+                      </div>
                     </button>
                   );
                 })}
@@ -876,7 +1128,7 @@ function SettingsContent() {
         initialMode={authInitialMode}
         onClose={() => setIsAuthModalOpen(false)}
       />
-    </main>
+    </div>
   );
 }
 

@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0c0907] px-4 py-12 text-stone-100 sm:px-6 lg:px-8">
+    <div className="relative flex min-h-[calc(100vh-73px)] w-full items-center justify-center overflow-hidden bg-[#0c0907] px-4 py-12 text-stone-100 sm:px-6 lg:px-8">
       {/* Subtle Culinary Ambient Lighting */}
       <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[550px] w-[550px] rounded-full bg-amber-500/10 blur-[130px]" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 h-[450px] w-[450px] rounded-full bg-orange-600/8 blur-[150px]" />
@@ -254,6 +254,6 @@ export default function ResetPasswordPage() {
         </div>
 
       </div>
-    </main>
+    </div>
   );
 }

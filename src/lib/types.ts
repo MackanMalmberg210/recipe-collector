@@ -54,6 +54,8 @@ export type AppRecipe = {
   mealType?: MealType;
   tags?: string[];
   origin: "mock" | "imported" | "user";
+  isPublic?: boolean;
+  authorName?: string;
 };
 
 export type ImportedRecipe = {
@@ -104,7 +106,8 @@ export type RecipeCategory =
   | "bowl"
   | "stir-fry"
   | "breakfast"
-  | "dessert";
+  | "dessert"
+  | "snack";
 
 export type MealType =
   | "breakfast"

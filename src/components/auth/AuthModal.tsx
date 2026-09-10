@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../lib/supabase/client";
+import { useAuth } from "../../contexts/AuthContext";
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -27,7 +27,13 @@ export default function AuthModal({
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const supabase = createClient();
+  const {
+    signInWithPassword,
+    signUp,
+    signInWithOAuth,
+    signInWithOtp,
+    resetPasswordForEmail,
+  } = useAuth();
 
   useEffect(() => {
     setMode(initialMode);
@@ -50,12 +56,7 @@ export default function AuthModal({
   const handleOAuthSignIn = async (provider: "google" | "github") => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
+      const { error } = await signInWithOAuth(provider);
       if (error) throw error;
     } catch (err: unknown) {
       const e = err as { message?: string };
@@ -73,12 +74,7 @@ export default function AuthModal({
     setLoading(true);
     setMessage(null);
     try {
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+      const { error: otpError } = await signInWithOtp(email.trim());
 
       if (otpError) throw otpError;
       setMessage({
@@ -100,9 +96,7 @@ export default function AuthModal({
 
     if (mode === "forgot_password") {
       try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
+        const { error } = await resetPasswordForEmail(email.trim());
         if (error) throw error;
         setMessage({
           text: `Password reset link sent to ${email}! ✉️ Check your inbox.`,
@@ -118,7 +112,7 @@ export default function AuthModal({
     }
 
     if (mode === "login") {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await signInWithPassword({
         email,
         password,
       });
@@ -143,14 +137,10 @@ export default function AuthModal({
         }, 600);
       }
     } else {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await signUp({
         email,
         password,
-        options: {
-          data: {
-            display_name: displayName.trim() || email.split("@")[0],
-          },
-        },
+        displayName: displayName.trim() || email.split("@")[0],
       });
 
       if (error) {
