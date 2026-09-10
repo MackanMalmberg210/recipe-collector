@@ -112,7 +112,7 @@ export default function CookbookHeader({
   const activeSortLabel = SORT_OPTIONS.find((s) => s.value === sortMode)?.label || "Newest";
 
   return (
-    <div className="relative overflow-visible rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs transition dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+    <div className="relative overflow-visible rounded-[32px] border border-slate-200/90 bg-white p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
       
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         

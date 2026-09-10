@@ -165,50 +165,52 @@ export default function Navbar() {
   return (
     <>
       {/* TOP DESKTOP & MOBILE HEADER */}
-      <nav className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-xl shadow-xs transition-colors duration-300 dark:border-[#2e2722] dark:bg-[#12100e]/95 px-4 sm:px-6 xl:px-10">
-        <div className="relative mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between">
+      <nav className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-2xs transition-colors duration-300 dark:border-white/10 dark:bg-[#0A0A0A]/90 px-4 sm:px-6 xl:px-10">
+        <div className="relative mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between gap-3">
           
           {/* LOGO & BRAND (LEFT) */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Link
               href="/"
               className="flex items-center gap-2.5 transition-opacity hover:opacity-90 cursor-pointer"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-stone-950 shadow-md shadow-amber-500/25">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-gradient-to-br dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 shadow-sm">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V20H6v-6.13z" />
                   <line x1="6" y1="17" x2="18" y2="17" />
                 </svg>
               </div>
-              <span className="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-stone-100">
+              <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-950 dark:text-stone-100 whitespace-nowrap">
                 Recipe Collector
               </span>
             </Link>
           </div>
 
-          {/* DESKTOP NAV LINKS (CENTERED IN MIDDLE OF NAVBAR) */}
-          <div className="hidden lg:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm transition-all duration-150 cursor-pointer ${
-                    isActive
-                      ? "bg-slate-900 text-white font-bold shadow-xs dark:bg-[#201c19] dark:text-[#fafaf9] dark:border-[#382f27]"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-stone-400 dark:hover:bg-white/5 dark:hover:text-stone-100 border border-transparent font-medium"
-                  }`}
-                >
-                  <span className={isActive ? "text-amber-400 dark:text-amber-400" : "text-slate-400 group-hover:text-slate-600 dark:text-stone-500 dark:group-hover:text-stone-300"}>{link.icon}</span>
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
+          {/* DESKTOP NAV LINKS (CENTERED SEGMENTED PILL DOCK - IN-FLOW FLEX TO PREVENT OVERLAPPING) */}
+          <div className="hidden lg:flex items-center justify-center flex-1 min-w-0 px-2">
+            <div className="flex items-center gap-0.5 xl:gap-1 bg-slate-200/70 dark:bg-white/10 p-1 rounded-full border border-slate-300/80 dark:border-white/10 shadow-2xs shrink-0">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-1.5 xl:gap-2 rounded-full px-3 xl:px-4 py-1.5 text-xs xl:text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? "bg-zinc-900 text-white shadow-xs dark:bg-white/20 dark:text-white"
+                        : "text-slate-700 hover:text-slate-950 hover:bg-white hover:shadow-xs dark:text-stone-300 dark:hover:text-white dark:hover:bg-white/10"
+                    }`}
+                  >
+                    <span className={isActive ? "text-white dark:text-amber-400" : "text-slate-500 group-hover:text-slate-800 dark:text-stone-400 dark:group-hover:text-stone-200"}>{link.icon}</span>
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           {/* RIGHT UTILITIES & USER MENU */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {/* THEME TOGGLE */}
             <ThemeToggle />
 
@@ -224,12 +226,15 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsProModalOpen(true)}
-                className="hidden xl:inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300 px-3 py-1 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
+                className="hidden xl:inline-flex items-center gap-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-900 dark:bg-amber-400 dark:hover:bg-amber-300 dark:text-slate-950 dark:border-amber-400 px-3.5 py-1.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
               >
-                <svg className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg className="h-3.5 w-3.5 text-amber-400 dark:text-slate-950 fill-amber-400 dark:fill-slate-950" viewBox="0 0 24 24">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span>Upgrade</span>
+                <span className="rounded-md bg-white/20 dark:bg-black/15 px-1.5 py-0.2 text-[10px] font-black tracking-wide uppercase">
+                  PRO
+                </span>
               </button>
             )}
 
@@ -240,9 +245,9 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 pr-2.5 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer group"
+                    className="flex items-center gap-2 rounded-full border border-slate-200/90 bg-white p-1 pr-3 hover:bg-slate-50 hover:border-slate-300 shadow-2xs transition cursor-pointer group dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-amber-400 font-bold text-xs text-slate-950 shadow-xs">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-white font-bold text-xs dark:bg-amber-400 dark:text-slate-950 shadow-xs">
                       {userInitial}
                     </div>
                     <span className="max-w-[110px] truncate text-xs font-bold text-slate-900 dark:text-stone-200 transition-colors group-hover:text-slate-950 dark:group-hover:text-amber-300">
@@ -250,7 +255,7 @@ export default function Navbar() {
                     </span>
                     <svg
                       className={`h-3 w-3 text-slate-500 transition-transform duration-200 ${
-                        isDropdownOpen ? "rotate-180 text-amber-600 dark:text-amber-400" : "group-hover:text-slate-800 dark:group-hover:text-stone-200"
+                        isDropdownOpen ? "rotate-180 text-slate-900 dark:text-amber-400" : "group-hover:text-slate-800 dark:group-hover:text-stone-200"
                       }`}
                       fill="none"
                       viewBox="0 0 24 24"
@@ -262,7 +267,7 @@ export default function Navbar() {
                   </button>
 
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-60 origin-top-right rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl ring-1 ring-black/5 transition-all z-50 dark:border-white/12 dark:bg-[#171412] dark:ring-black/50">
+                    <div className="absolute right-0 mt-2 w-60 origin-top-right rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_36px_rgb(0,0,0,0.08)] ring-1 ring-black/5 transition-all z-50 dark:border-white/12 dark:bg-[#171412] dark:ring-black/50">
                       <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/5">
                         <p className="text-xs font-black text-slate-900 dark:text-stone-100 truncate">
                           {displayName}
@@ -328,7 +333,7 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center">
                   <Link
                     href="/login"
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold border border-slate-900 shadow-sm transition-all duration-150 active:scale-95 cursor-pointer dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 dark:border-amber-500 px-4.5 py-2 text-xs sm:text-sm"
+                    className="inline-flex items-center gap-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold border border-zinc-900 shadow-sm transition-all duration-150 active:scale-95 cursor-pointer dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 dark:border-amber-500 px-5 py-2 text-xs sm:text-sm"
                   >
                     <span>Sign In</span>
                     <span className="text-white/70 dark:text-stone-950/70 font-black text-xs">→</span>
@@ -341,7 +346,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 transition cursor-pointer"
+              className="flex md:hidden h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 transition cursor-pointer shadow-2xs"
               aria-label="Toggle navigation menu"
             >
               {isMobileMenuOpen ? (

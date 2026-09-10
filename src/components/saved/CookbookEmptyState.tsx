@@ -26,7 +26,7 @@ export default function CookbookEmptyState({
   // 1. TRASH EMPTY STATE
   if (activeFilter.type === "trash") {
     return (
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-xs dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
+      <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
         <svg className="h-10 w-10 text-slate-400 dark:text-stone-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
@@ -55,7 +55,7 @@ export default function CookbookEmptyState({
   // 2. SEARCH EMPTY STATE
   if (searchQuery) {
     return (
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-xs dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
+      <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
         <svg className="h-10 w-10 text-slate-400 dark:text-stone-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -84,7 +84,7 @@ export default function CookbookEmptyState({
   // 3. FAVORITES EMPTY STATE
   if (activeFilter.type === "favorites") {
     return (
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-xs dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
+      <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
         <svg className="h-10 w-10 text-slate-400 dark:text-amber-500/80 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
         </svg>
@@ -113,7 +113,7 @@ export default function CookbookEmptyState({
   // 4. TOTAL ZERO RECIPES (ONBOARDING MODE)
   if (!hasTotalRecipes) {
     return (
-      <section className="relative overflow-hidden rounded-4xl border border-slate-200/90 bg-white p-7 sm:p-12 text-center shadow-xs dark:border-white/[0.08] dark:bg-gradient-to-b dark:from-[#191411] dark:via-[#15110e] dark:to-[#120e0c]">
+      <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-7 sm:p-12 text-center shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/[0.08] dark:bg-gradient-to-b dark:from-[#191411] dark:via-[#15110e] dark:to-[#120e0c]">
         {/* Ambient warm culinary glow */}
         <div className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 h-64 w-[32rem] rounded-full bg-slate-900/5 blur-3xl opacity-70 dark:bg-amber-500/10" />
 
@@ -217,7 +217,7 @@ export default function CookbookEmptyState({
 
   // 5. FILTER EMPTY (e.g. Category empty)
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-xs dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
+    <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/[0.08] dark:bg-[#151210] md:p-12">
       <span className="text-4xl block mb-3">🍲</span>
 
       <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950 dark:text-stone-50">

@@ -119,10 +119,10 @@ export default function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 transition-colors duration-300 dark:bg-[#110d0b] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
-      <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1820px] space-y-6">
+    <div className="min-h-screen bg-[#FCFCFC] text-slate-900 transition-colors duration-300 dark:bg-[#0A0A0A] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
+      <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1820px] space-y-8">
         
-        {/* 1. PROMINENT FULL-WIDTH SEARCH & TASTE VIBES HERO */}
+        {/* 1. PERSONALIZED HEADER & TASTE VIBES */}
         <HomeHero
           activeVibe={activeVibe}
           onVibeChange={setActiveVibe}
@@ -133,30 +133,38 @@ export default function HomePage() {
           onOpenImport={() => setIsImportModalOpen(true)}
         />
 
-        {/* 2. DYNAMIC 2-COLUMN HUB: TODAY'S MENU & CHEF AI VISION */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <TodaysMenuBanner allRecipes={allRecipes} />
+        {/* 2. BENTO DASHBOARD HUB */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
+          {/* Main Feature: Today's Menu */}
+          <div className="lg:col-span-2">
+            <TodaysMenuBanner allRecipes={allRecipes} />
+          </div>
           
-          <CulinaryAiShowcaseBanner
-            onOpenSnapPlate={() => {
-              setVisionMode("meal_analyzer");
-              setIsVisionScanOpen(true);
-            }}
-            onOpenScanCookbook={() => {
-              setVisionMode("recipe");
-              setIsVisionScanOpen(true);
-            }}
-          />
+          {/* Side Features: Culinary AI / Scanner */}
+          <div className="lg:col-span-1">
+            <CulinaryAiShowcaseBanner
+              onOpenSnapPlate={() => {
+                setVisionMode("meal_analyzer");
+                setIsVisionScanOpen(true);
+              }}
+              onOpenScanCookbook={() => {
+                setVisionMode("recipe");
+                setIsVisionScanOpen(true);
+              }}
+            />
+          </div>
         </div>
 
-        {/* 4. INSTANT RECIPE MATCHES & DISCOVERY GRID */}
-        <RecipeMatchesSection
-          filteredRecipes={filteredRecipes}
-          sortMode={sortMode}
-          onSortModeChange={setSortMode}
-          activeVibe={activeVibe}
-          searchTerm={searchTerm}
-        />
+        {/* 3. RECIPE FLIGHT & MATCHES */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both pt-4">
+          <RecipeMatchesSection
+            filteredRecipes={filteredRecipes}
+            sortMode={sortMode}
+            onSortModeChange={setSortMode}
+            activeVibe={activeVibe}
+            searchTerm={searchTerm}
+          />
+        </div>
 
       </div>
 

@@ -59,7 +59,7 @@ export default function CookbookListRow({
         containIntrinsicSize: "0 120px",
         contain: "paint",
       }}
-      className="group/row relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs transition-colors duration-150 hover:border-slate-300 dark:border-white/[0.08] dark:bg-[#151210] dark:hover:border-amber-400/30 dark:hover:bg-[#191411]"
+      className="group/row relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 rounded-[28px] border border-slate-200/90 bg-white p-4 sm:p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-colors duration-150 hover:border-slate-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:border-white/[0.08] dark:bg-[#151210] dark:hover:border-amber-400/30 dark:hover:bg-[#191411]"
     >
       {/* LEFT: Photo + Main Info */}
       <div className="flex items-start sm:items-center gap-4 sm:gap-5 min-w-0 flex-1">
@@ -201,14 +201,14 @@ export default function CookbookListRow({
             <button
               type="button"
               onClick={() => onAddToGrocery(recipe)}
-              className="flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/90 bg-emerald-50 px-3 text-xs font-bold text-emerald-950 transition hover:bg-emerald-100 hover:border-emerald-400 dark:border-emerald-500/30 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer shrink-0 active:scale-[0.98]"
+              className="flex h-9.5 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 shadow-xs dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:text-white dark:border-emerald-500 px-3 text-xs font-bold transition active:scale-[0.98] cursor-pointer shrink-0"
               title="Add ingredients to grocery list"
               aria-label="Add ingredients to grocery list"
             >
-              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <svg className="h-4 w-4 shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span className="text-xs font-black">+</span>
+              <span className="text-xs font-black text-white">+</span>
             </button>
 
             {/* Trash Trigger */}

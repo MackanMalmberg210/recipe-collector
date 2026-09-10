@@ -140,10 +140,28 @@ export default function CookbookSidebar({
           <span>Quick</span>
           <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "quick" }) ? "bg-white/20 text-white dark:bg-stone-900/20 dark:text-stone-950" : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-stone-300"}`}>{quickCount}</span>
         </button>
+
+        {trashCount > 0 && (
+          <button
+            type="button"
+            onClick={() => handleFilterClick({ type: "trash" })}
+            className={`shrink-0 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer ${
+              isSelected({ type: "trash" })
+                ? "bg-rose-600 text-white shadow-xs font-bold border border-rose-600 dark:bg-rose-600 dark:text-white"
+                : "bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 dark:bg-[#181412] dark:border-rose-500/30 dark:text-rose-400"
+            }`}
+          >
+            <svg className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Trash</span>
+            <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "trash" }) ? "bg-white/20 text-white" : "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 font-bold"}`}>{trashCount}</span>
+          </button>
+        )}
       </div>
 
       {/* DESKTOP SIDEBAR CONTAINER */}
-      <div className="hidden lg:block relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+      <div className="hidden lg:block relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/[0.08] dark:bg-[#151210] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
         
         {/* Sidebar Header & Action Button */}
         <div className="mb-6 space-y-4">
@@ -383,19 +401,19 @@ export default function CookbookSidebar({
                 onClick={() => handleFilterClick({ type: "trash" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "trash" })
-                    ? "bg-rose-50 text-rose-950 border border-rose-300 font-bold shadow-xs dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/40"
-                    : "text-slate-500 hover:bg-slate-100 dark:text-stone-400 dark:hover:bg-white/5"
+                    ? "bg-rose-600 text-white border border-rose-600 font-bold shadow-xs dark:bg-rose-600 dark:text-white dark:border-rose-500"
+                    : "text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:text-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-rose-500">
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${isSelected({ type: "trash" }) ? "text-white" : "text-rose-600 dark:text-rose-400"}`}>
                     <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </div>
                   <span className="truncate text-left font-semibold">Trash</span>
                 </div>
-                <span suppressHydrationWarning className="text-xs font-bold shrink-0 text-slate-400 dark:text-stone-500">
+                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "trash" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white" : "rounded-full bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 px-2 py-0.5 text-[11px]"}`}>
                   {trashCount}
                 </span>
               </button>

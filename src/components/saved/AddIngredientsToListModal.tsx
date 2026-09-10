@@ -112,7 +112,7 @@ export default function AddIngredientsToListModal({
       />
 
       {/* MODAL DIALOG */}
-      <div className="relative w-full max-w-lg rounded-3xl border border-stone-200/90 bg-white p-6 shadow-2xl transition-all dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg rounded-[32px] border border-slate-200/90 bg-white p-6 shadow-[0_16px_40px_rgb(0,0,0,0.09)] transition-all dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 animate-in fade-in zoom-in-95 duration-200">
         
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-stone-100 pb-4 dark:border-white/8">
@@ -307,7 +307,7 @@ export default function AddIngredientsToListModal({
           <button
             type="button"
             onClick={handleAdd}
-            className="rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95 cursor-pointer"
+            className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 text-xs sm:text-sm border border-slate-900 shadow-sm dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/60 transition active:scale-95 cursor-pointer"
           >
             Add Ingredients ({recipe.ingredients.length})
           </button>

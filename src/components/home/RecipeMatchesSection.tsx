@@ -228,8 +228,8 @@ export default function RecipeMatchesSection({
 
       {/* EMPTY STATE */}
       {filteredRecipes.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200/90 bg-white dark:border-white/8 dark:bg-[#16120f] p-12 text-center text-slate-500 dark:text-stone-400 shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
+        <div className="rounded-[32px] border border-slate-100 bg-white dark:border-white/8 dark:bg-[#16120f] p-12 text-center text-slate-500 dark:text-stone-400 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-amber-500/10 dark:text-amber-500">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -270,7 +270,7 @@ export default function RecipeMatchesSection({
               <button
                 type="button"
                 onClick={() => setShowAllMatches(!showAllMatches)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 py-3 text-sm font-bold text-slate-800 shadow-2xs transition hover:bg-slate-50 hover:border-slate-300 hover:text-slate-950 dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 dark:hover:border-amber-400 dark:hover:text-amber-300 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 hover:text-slate-950 dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 dark:hover:border-amber-400 dark:hover:text-amber-300 cursor-pointer"
               >
                 <span>
                   {showAllMatches

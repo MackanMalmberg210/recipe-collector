@@ -41,7 +41,7 @@ export default function QuickPeekModal({
     >
       <div
         style={{ willChange: "scroll-position", transform: "translateZ(0)" }}
-        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-stone-200/90 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 sm:p-7"
+        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-[32px] border border-slate-200/90 bg-white p-6 shadow-[0_16px_40px_rgb(0,0,0,0.09)] dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 sm:p-7"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -55,7 +55,7 @@ export default function QuickPeekModal({
 
         {/* Header with image & title */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-stone-100 dark:bg-stone-950">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] bg-stone-100 dark:bg-stone-950">
             {recipe.image ? (
               <img
                 src={recipe.image}
@@ -170,9 +170,9 @@ export default function QuickPeekModal({
           <button
             type="button"
             onClick={() => onAddToGrocery(recipe)}
-            className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-800 transition hover:bg-emerald-500/20 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25 cursor-pointer"
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 shadow-xs dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:text-white dark:border-emerald-500 px-4 py-2.5 text-xs font-bold transition active:scale-95 cursor-pointer"
           >
-            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+            <svg className="h-4 w-4 shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             <span>Add Ingredients to Grocery</span>
@@ -180,7 +180,7 @@ export default function QuickPeekModal({
 
           <Link
             href={`/recipes/${recipe.id}`}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border border-amber-600/60 dark:border-amber-600/50 px-5 py-2.5 text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] transition active:scale-95"
+            className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 text-xs border border-slate-900 shadow-sm dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/60 transition active:scale-95"
           >
             <span>Open Full Recipe</span>
             <span>→</span>

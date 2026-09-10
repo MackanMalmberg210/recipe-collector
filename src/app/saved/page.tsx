@@ -426,7 +426,7 @@ function SavedRecipesContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 transition-colors duration-300 dark:bg-[#0e0c0a] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
+    <div className="min-h-screen bg-[#FCFCFC] text-slate-900 transition-colors duration-300 dark:bg-[#0A0A0A] dark:text-stone-100 px-4 py-6 sm:px-6 xl:px-10">
       {/* Background ambient lighting */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0 dark:opacity-100 transition-opacity">
         <div className="absolute left-1/3 top-0 h-120 w-120 -translate-x-1/2 rounded-full bg-amber-500/8 blur-[160px]" />
@@ -492,7 +492,7 @@ function SavedRecipesContent() {
 
             {/* Guest Cloud Sync Callout Banner */}
             {isGuest && currentDataset.length > 0 && !isTrashActive && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs text-xs sm:text-sm text-slate-900 dark:border-amber-500/30 dark:bg-gradient-to-r dark:from-amber-500/10 dark:via-amber-500/5 dark:to-transparent dark:text-stone-100">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-[32px] border border-slate-200/90 bg-white p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.05)] text-xs sm:text-sm text-slate-900 dark:border-amber-500/30 dark:bg-gradient-to-r dark:from-amber-500/10 dark:via-amber-500/5 dark:to-transparent dark:text-stone-100">
                 <div className="flex items-center gap-3.5">
                   <svg className="h-6 w-6 shrink-0 text-slate-900 dark:text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />

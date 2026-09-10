@@ -34,7 +34,7 @@ export default function DeleteConfirmModal({
       onClick={onCancel}
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-stone-200/90 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 sm:p-7"
+        className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-6 shadow-[0_16px_40px_rgb(0,0,0,0.09)] dark:border-white/10 dark:bg-[#151210] dark:text-stone-100 sm:p-7"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Warning Icon Badge */}
