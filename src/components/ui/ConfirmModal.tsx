@@ -70,19 +70,19 @@ export default function ConfirmModal({
       {/* Solid High-Speed Backdrop */}
       <div
         onClick={onCancel}
-        className="fixed inset-0 bg-black/80 transition-opacity animate-in fade-in duration-200 cursor-pointer"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200 cursor-pointer"
       />
 
       {/* Dialog Box */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-stone-200/90 bg-white p-6 text-stone-900 shadow-2xl dark:border-white/10 dark:bg-[#181412] dark:text-stone-100 animate-in zoom-in-95 fade-in duration-200">
+      <div className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-6 sm:p-7 text-slate-900 shadow-2xl dark:border-white/10 dark:bg-[#121212] dark:text-stone-100 animate-in zoom-in-95 fade-in duration-200">
         <div className="flex items-start gap-4">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl mt-0.5 ${
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
             isDestructive
-              ? "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"
-              : "bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
+              ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+              : "bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white"
           }`}>
             {isDestructive ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-5 w-5 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             ) : (
@@ -94,21 +94,21 @@ export default function ConfirmModal({
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-stone-950 dark:text-stone-50">
+            <h3 className="text-base sm:text-lg font-bold text-slate-950 dark:text-white">
               {title}
             </h3>
-            <p className="mt-1.5 text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {description}
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="mt-6 flex items-center justify-end gap-2.5">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 transition cursor-pointer"
+            className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 transition cursor-pointer"
           >
             {cancelLabel}
           </button>
@@ -117,10 +117,10 @@ export default function ConfirmModal({
             type="button"
             disabled={isCountdownActive}
             onClick={onConfirm}
-            className={`rounded-2xl px-5 py-2 text-xs font-bold transition cursor-pointer shadow-md ${
+            className={`rounded-full px-6 py-2.5 text-xs sm:text-sm font-bold transition active:scale-95 cursor-pointer shadow-sm ${
               isDestructive
-                ? "bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-rose-600/20"
-                : "bg-amber-500 text-stone-950 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-amber-500/20"
+                ? "bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
             }`}
           >
             {isCountdownActive ? `${confirmLabel} (${secondsLeft}s)` : confirmLabel}

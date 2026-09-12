@@ -734,9 +734,13 @@ export default function GroceriesPage() {
                             )}
                           </div>
                           {item.sourceRecipeTitle && (
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-stone-400 mt-1 truncate">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] text-slate-700 dark:text-stone-300 truncate">
-                                For: {item.sourceRecipeTitle}
+                            <div className="flex items-center gap-1.5 mt-1 truncate">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-200/90 dark:bg-white/15 border border-slate-300 dark:border-white/20 text-[11px] font-bold text-slate-900 dark:text-white truncate shadow-2xs">
+                                <svg className="h-3 w-3 text-slate-600 dark:text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                <span className="text-slate-600 dark:text-slate-300 font-semibold">For:</span>
+                                <span className="truncate">{item.sourceRecipeTitle}</span>
                               </span>
                             </div>
                           )}
@@ -873,24 +877,32 @@ export default function GroceriesPage() {
       {isVisionModalOpen && (
         <div
           onClick={() => setIsVisionModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150 cursor-pointer"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150 cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/12 bg-[#16120f] p-6 shadow-2xl space-y-4 cursor-default"
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] border border-slate-200/90 bg-[#FCFCFC] p-6 sm:p-8 shadow-[0_25px_80px_rgba(0,0,0,0.3)] space-y-6 cursor-default text-slate-900 dark:border-white/10 dark:bg-[#121212] dark:text-white"
           >
-            <div className="flex items-center justify-between border-b border-white/8 pb-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-amber-300">
-                <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Grocery List Scanner</span>
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-4 dark:border-white/8">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-stone-300">
+                  <svg className="h-4 w-4 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>AI Camera OCR</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-white tracking-tight">
+                  Grocery List Scanner
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Photograph handwritten notes, fridge lists or store receipts to import items into your cart.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsVisionModalOpen(false)}
-                className="h-9 w-9 flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-stone-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                className="h-10 w-10 flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-600 hover:text-slate-950 hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:text-white transition cursor-pointer shrink-0"
                 title="Close scanner"
               >
                 ✕

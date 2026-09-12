@@ -391,9 +391,9 @@ export default function GroceryHeader({
                 onClick={onClearAll}
                 aria-label="Clear list"
                 title="Clear all items from list"
-                className="h-9 w-9 flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400 transition cursor-pointer shadow-xs"
+                className="h-9 w-9 flex items-center justify-center rounded-full border border-rose-300 bg-rose-100/90 text-rose-800 hover:bg-rose-600 hover:border-rose-600 hover:text-white dark:border-rose-500/40 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-600 dark:hover:text-white transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>

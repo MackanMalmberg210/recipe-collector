@@ -95,18 +95,41 @@ export function findBestPantryMatches(
 
   const pantryKeywords = inStock.map((p) => p.name.toLowerCase().trim());
 
-  const evaluated = recipes.map((recipe) =>
+  // Deduplicate recipes by ID so identical recipes never compete or swap
+  const uniqueRecipesMap = new Map<number | string, AppRecipe>();
+  for (const r of recipes) {
+    if (r && r.id != null && !uniqueRecipesMap.has(r.id)) {
+      uniqueRecipesMap.set(r.id, r);
+    }
+  }
+
+  const evaluated = Array.from(uniqueRecipesMap.values()).map((recipe) =>
     calculateRecipePantryMatch(recipe, inStock, pantryKeywords)
   );
 
-  // Filter recipes that have at least some match and sort by highest match percentage
+  // Filter recipes that have at least some match and sort by highest match percentage with rock-solid tie-breakers
   return evaluated
     .filter((m) => m.matchedIngredientsCount > 0 && m.matchPercentage >= minMatchPercentage)
     .sort((a, b) => {
+      // 1. Highest match percentage first
       if (b.matchPercentage !== a.matchPercentage) {
         return b.matchPercentage - a.matchPercentage;
       }
-      return a.missingIngredientsCount - b.missingIngredientsCount;
+      // 2. Fewest missing ingredients first
+      if (a.missingIngredientsCount !== b.missingIngredientsCount) {
+        return a.missingIngredientsCount - b.missingIngredientsCount;
+      }
+      // 3. Most matched ingredients first (e.g. 5/5 matched is richer than 1/1)
+      if (b.matchedIngredientsCount !== a.matchedIngredientsCount) {
+        return b.matchedIngredientsCount - a.matchedIngredientsCount;
+      }
+      // 4. Stable alphabetical title tie-breaker
+      const titleA = (a.recipe.title || "").trim();
+      const titleB = (b.recipe.title || "").trim();
+      const titleDiff = titleA.localeCompare(titleB, "sv", { sensitivity: "base" });
+      if (titleDiff !== 0) return titleDiff;
+      // 5. Absolute ID tie-breaker
+      return String(a.recipe.id).localeCompare(String(b.recipe.id));
     });
 }
 

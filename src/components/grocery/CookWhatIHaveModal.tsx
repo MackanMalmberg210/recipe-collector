@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { AppRecipe } from "../../lib/types";
@@ -40,9 +40,13 @@ export default function CookWhatIHaveModal({
     };
   }, [isOpen]);
 
+  const matches = useMemo(() => {
+    if (!isOpen) return [];
+    return findBestPantryMatches(recipes, pantryItems, 12);
+  }, [isOpen, recipes, pantryItems]);
+
   if (!isOpen) return null;
 
-  const matches = findBestPantryMatches(recipes, pantryItems, 12);
   const inStockCount = pantryItems.filter((p) => p.inStock).length;
 
   const handleRollDice = () => {
@@ -210,7 +214,7 @@ export default function CookWhatIHaveModal({
                             return (
                               <span
                                 key={idx}
-                                className="rounded-full bg-rose-50 border border-rose-200 px-3 py-1 text-xs font-bold text-rose-800 dark:bg-rose-950/40 dark:border-rose-500/30 dark:text-rose-300"
+                                className="rounded-full bg-rose-100/90 border border-rose-300 px-3 py-1 text-xs font-bold text-rose-950 dark:bg-rose-950/50 dark:border-rose-500/40 dark:text-rose-200 shadow-2xs"
                               >
                                 {cleanName}
                               </span>
@@ -362,7 +366,7 @@ export default function CookWhatIHaveModal({
                             {cleanMissingNames.slice(0, 5).map((cleanName, idx) => (
                               <span
                                 key={idx}
-                                className="rounded-full bg-rose-50 border border-rose-200/90 text-rose-700 dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-300 px-2.5 py-1 text-xs font-semibold"
+                                className="rounded-full bg-rose-100/90 border border-rose-300 text-rose-950 dark:bg-rose-950/50 dark:border-rose-500/40 dark:text-rose-200 px-3 py-1 text-xs font-bold shadow-2xs"
                               >
                                 {cleanName}
                               </span>

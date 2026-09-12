@@ -536,7 +536,7 @@ export const recipes = [
   {
     id: 20,
     title: "Almond Butter & Cacao Energy Bites",
-    image: "https://images.unsplash.com/photo-1604423043839-4458f27622c7?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
+    image: "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=600&auto=format&fit=crop&q=75",
     cookTime: 10,
     calories: 160,
     servings: 4,
