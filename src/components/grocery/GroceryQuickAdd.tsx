@@ -118,7 +118,7 @@ export default function GroceryQuickAdd({
       <form onSubmit={handleSubmit} className="flex gap-2 relative">
         <div className="relative flex-1 flex items-center">
           {/* SEARCH / INPUT ICON */}
-          <div className="pointer-events-none absolute left-4 text-stone-400">
+          <div className="pointer-events-none absolute left-4 text-slate-400 dark:text-stone-500">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -134,7 +134,7 @@ export default function GroceryQuickAdd({
               setShowSuggestions(true);
             }}
             placeholder="Add items to your list (e.g. 2x Avocados, Oat milk, Feta cheese, Bread)..."
-            className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-12 pr-28 sm:pr-32 text-sm text-slate-950 placeholder-slate-400 dark:border-white/10 dark:bg-[#16120f] dark:text-stone-100 dark:placeholder-stone-500 shadow-xs dark:shadow-inner focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900/20 dark:focus:border-amber-400 transition"
+            className="w-full rounded-[24px] border border-slate-200 bg-white py-3.5 pl-12 pr-32 text-sm text-slate-950 placeholder-slate-400 dark:border-white/10 dark:bg-[#121212] dark:text-stone-100 dark:placeholder-stone-500 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:border-white dark:focus:ring-white/10 transition"
           />
 
           {/* INLINE EMBEDDED AISLE BADGE & OVERRIDE PICKER */}
@@ -142,25 +142,25 @@ export default function GroceryQuickAdd({
             <button
               type="button"
               onClick={() => setShowAislePicker(!showAislePicker)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition cursor-pointer shadow-xs"
               title="Click to select or change supermarket aisle"
             >
-              <GroceryCategoryIcon category={activeCategory} className="h-3.5 w-3.5 text-slate-700 dark:text-amber-500" />
+              <GroceryCategoryIcon category={activeCategory} className="h-3.5 w-3.5 text-slate-700 dark:text-stone-200" />
               <span className="hidden sm:inline">{activeCategoryMeta.name.split("&")[0].trim()}</span>
               <span className="text-[10px] text-slate-400">▼</span>
             </button>
 
             {/* AISLE PICKER DROPDOWN */}
             {showAislePicker && (
-              <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-white/10 dark:bg-[#1c1815] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-56 rounded-[24px] border border-slate-200 bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#161616] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedCategory("auto");
                     setShowAislePicker(false);
                   }}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition text-left cursor-pointer ${
-                    selectedCategory === "auto" ? "bg-slate-900 text-white font-bold dark:bg-amber-500 dark:text-stone-950" : "text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition text-left cursor-pointer ${
+                    selectedCategory === "auto" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs" : "text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-white/5"
                   }`}
                 >
                   <span>Auto-detect aisle</span>
@@ -181,13 +181,13 @@ export default function GroceryQuickAdd({
                       }}
                       className={`w-full flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition text-left cursor-pointer ${
                         selectedCategory === cat.id
-                          ? "bg-slate-900 text-white font-bold dark:bg-amber-500 dark:text-stone-950"
+                          ? "bg-slate-900 text-white font-bold dark:bg-white dark:text-slate-950 shadow-xs"
                           : "text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
                     >
                       <GroceryCategoryIcon
                         category={cat.id}
-                        className={`h-3.5 w-3.5 ${selectedCategory === cat.id ? "text-white dark:text-stone-950" : "text-slate-600 dark:text-amber-500"}`}
+                        className={`h-3.5 w-3.5 ${selectedCategory === cat.id ? "text-white dark:text-slate-950" : "text-slate-600 dark:text-stone-400"}`}
                       />
                       <span className="truncate">{cat.name}</span>
                     </button>
@@ -199,8 +199,8 @@ export default function GroceryQuickAdd({
 
           {/* HIGH Z-INDEX AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1 shadow-2xl dark:border-amber-500/30 dark:bg-[#1b1512] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-amber-400 border-b border-slate-100 dark:border-white/8">
+            <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[24px] border border-slate-200 bg-white p-1.5 shadow-2xl dark:border-white/10 dark:bg-[#161616] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+              <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-stone-300 border-b border-slate-100 dark:border-white/8">
                 Suggested Ingredients
               </div>
               <ul className="divide-y divide-slate-100 dark:divide-white/5 py-1">
@@ -211,7 +211,7 @@ export default function GroceryQuickAdd({
                   return (
                     <li
                       key={word}
-                      className="flex items-center justify-between px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-amber-400/10 transition cursor-pointer"
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition cursor-pointer"
                       onClick={() => handleSelectSuggestion(word)}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -221,7 +221,7 @@ export default function GroceryQuickAdd({
                         </span>
                       </div>
 
-                      <span className={`text-[11px] font-bold shrink-0 ${inList ? "text-slate-400 dark:text-stone-500" : "text-slate-900 dark:text-amber-400"}`}>
+                      <span className={`text-[11px] font-bold shrink-0 ${inList ? "text-slate-400 dark:text-stone-500" : "text-slate-900 dark:text-white"}`}>
                         {inList ? "✓ In list" : "+ Add"}
                       </span>
                     </li>
@@ -236,7 +236,7 @@ export default function GroceryQuickAdd({
         <button
           type="submit"
           disabled={!text.trim()}
-          className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-6 py-3.5 text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
+          className="rounded-full bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-white dark:text-slate-950 dark:border-white dark:hover:bg-slate-100 px-7 py-3.5 text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
         >
           Add
         </button>
@@ -253,7 +253,7 @@ export default function GroceryQuickAdd({
             key={staple}
             type="button"
             onClick={() => handleQuickAddStaple(staple)}
-            className="shrink-0 inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-950 shadow-2xs dark:border-white/8 dark:bg-white/4 dark:text-stone-300 dark:hover:border-white/20 dark:hover:bg-white/8 dark:hover:text-stone-100 transition cursor-pointer"
+            className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-900 hover:text-white hover:border-slate-900 shadow-2xs dark:border-white/10 dark:bg-[#121212] dark:text-stone-300 dark:hover:border-white dark:hover:bg-white dark:hover:text-slate-950 transition-all cursor-pointer"
           >
             <span>+</span>
             <span>{staple}</span>

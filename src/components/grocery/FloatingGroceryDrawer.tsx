@@ -330,12 +330,12 @@ export default function FloatingGroceryDrawer() {
           }}
           className={`group relative flex items-center gap-2.5 rounded-full border px-4 py-2.5 shadow-2xl backdrop-blur-md transition-all duration-100 cursor-pointer ${
             isPulsing
-              ? "scale-105 border-amber-400 bg-amber-500 text-stone-950 shadow-amber-400/30"
-              : "border-stone-300/80 bg-white/95 text-stone-900 shadow-stone-400/20 hover:scale-105 hover:border-amber-500/40 hover:bg-stone-50 dark:border-white/12 dark:bg-[#1a1410]/95 dark:text-stone-100 dark:shadow-black/70 dark:hover:border-amber-400/40 dark:hover:bg-[#231b15]"
+              ? "scale-105 border-slate-900 bg-slate-900 text-white shadow-slate-900/30"
+              : "border-slate-200/90 bg-white/95 text-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:scale-105 hover:border-slate-400 hover:bg-slate-50 dark:border-white/10 dark:bg-[#121212]/95 dark:text-white dark:hover:border-white/20"
           }`}
           title="Open Grocery List"
         >
-          <svg className="h-4 w-4 text-stone-800 dark:text-stone-100 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4 w-4 text-slate-900 dark:text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           
@@ -346,8 +346,8 @@ export default function FloatingGroceryDrawer() {
           {items.length > 0 && (
             <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold transition-colors duration-100 ${
               isPulsing
-                ? "bg-stone-950 text-amber-300"
-                : "bg-amber-500 text-stone-950 shadow-sm"
+                ? "bg-white text-slate-950"
+                : "bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm"
             }`}>
               {remainingCount}
             </span>
@@ -355,7 +355,7 @@ export default function FloatingGroceryDrawer() {
 
           {/* CRISP +X POP BADGE */}
           {pulseCount !== null && (
-            <span className="absolute -top-2.5 -right-1.5 flex h-5.5 items-center justify-center rounded-full bg-emerald-400 px-2 text-[11px] font-black text-stone-950 shadow-md border border-stone-950">
+            <span className="absolute -top-2.5 -right-1.5 flex h-5.5 items-center justify-center rounded-full bg-emerald-600 px-2 text-[11px] font-black text-white shadow-md">
               +{pulseCount}
             </span>
           )}
@@ -371,29 +371,31 @@ export default function FloatingGroceryDrawer() {
         {/* BACKDROP */}
         <div
           onClick={() => setIsOpen(false)}
-          className={`absolute inset-0 bg-black/70 transition-opacity duration-150 ${
+          className={`absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-150 ${
             isOpen ? "opacity-100" : "opacity-0"
           }`}
         />
 
         {/* DRAWER PANEL */}
         <aside
-          className={`drawer-spring-transition absolute right-0 top-0 bottom-0 flex h-full w-full max-w-md flex-col border-l border-stone-200 bg-[#f8f6f1] text-stone-900 shadow-2xl dark:border-white/10 dark:bg-[#15110e] dark:text-stone-100 ${
+          className={`drawer-spring-transition absolute right-0 top-0 bottom-0 flex h-full w-full max-w-md flex-col border-l border-slate-200/90 bg-[#FCFCFC] text-slate-900 shadow-2xl dark:border-white/10 dark:bg-[#0A0A0A] dark:text-white ${
             isOpen ? "translate-x-0" : "translate-x-full"
           }`}
           style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
         >
           {/* DRAWER HEADER */}
-          <header className="flex h-16 shrink-0 items-center justify-between border-b border-stone-200 px-6 bg-white dark:border-white/10 dark:bg-[#1a1511]">
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/90 px-6 bg-white dark:border-white/10 dark:bg-[#121212]">
             <div className="flex items-center gap-2.5">
-              <svg className="h-5 w-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-950 shrink-0 shadow-xs">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
               <div>
-                <h2 className="text-base font-bold text-stone-900 dark:text-[#fff8ef]">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Grocery List
                 </h2>
-                <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   {remainingCount} to buy {boughtCount > 0 ? `• ${boughtCount} checked` : ""}
                 </p>
               </div>
@@ -403,7 +405,7 @@ export default function FloatingGroceryDrawer() {
               <Link
                 href="/groceries"
                 onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 dark:hover:text-amber-300 transition-colors duration-100 cursor-pointer text-xs font-bold"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20 dark:hover:text-white transition cursor-pointer text-xs font-bold"
                 title="Open full-page grocery manager"
               >
                 ↗
@@ -413,7 +415,7 @@ export default function FloatingGroceryDrawer() {
                 <button
                   type="button"
                   onClick={handleCopyList}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors duration-100 cursor-pointer text-xs"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20 dark:hover:text-white transition cursor-pointer text-xs"
                   title="Copy to clipboard"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -425,7 +427,7 @@ export default function FloatingGroceryDrawer() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-900 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/15 dark:hover:text-white transition-colors duration-100 cursor-pointer text-xs font-bold"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/10 dark:text-slate-400 dark:hover:bg-white/20 dark:hover:text-white transition cursor-pointer text-xs font-bold"
                 title="Close Drawer"
               >
                 ✕
@@ -434,7 +436,7 @@ export default function FloatingGroceryDrawer() {
           </header>
 
           {/* QUICK ADD WITH SELF-LEARNING SUGGESTIONS & FORGET OPTION */}
-          <div className="relative border-b border-stone-200/80 p-4 bg-stone-50/70 dark:border-white/8 dark:bg-[#1a1410]/50">
+          <div className="relative border-b border-slate-200/90 p-4 bg-white dark:border-white/10 dark:bg-[#121212]">
             <form onSubmit={handleAddItem} className="flex gap-2">
               <input
                 ref={inputRef}
@@ -446,42 +448,41 @@ export default function FloatingGroceryDrawer() {
                   setShowSuggestions(true);
                 }}
                 placeholder="Add item (e.g. Milk, Toothpaste, Coffee)..."
-                className="flex-1 rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:border-amber-500 focus:outline-none transition-colors duration-100 dark:border-white/10 dark:bg-[#221b16] dark:text-stone-100 dark:placeholder-stone-500 dark:focus:border-amber-400"
+                className="flex-1 rounded-[20px] border border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500 dark:focus:border-white"
               />
               <button
                 type="submit"
                 disabled={!newItemText.trim()}
-                className="rounded-2xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-stone-950 hover:bg-amber-600 transition-colors duration-100 cursor-pointer disabled:opacity-40 shadow-sm"
+                className="rounded-full bg-slate-900 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 transition cursor-pointer disabled:opacity-40 shadow-sm"
               >
                 Add
               </button>
             </form>
 
-            {/* CLEAN AUTOCOMPLETE SUGGESTIONS (With quick 'Forget / ✕' for misspelled words) */}
+            {/* CLEAN AUTOCOMPLETE SUGGESTIONS */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-4 right-4 top-[calc(100%-4px)] z-20 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl dark:border-white/10 dark:bg-[#201813]">
-                <ul className="divide-y divide-stone-100 dark:divide-white/5 py-0.5">
+              <div className="absolute left-4 right-4 top-[calc(100%-4px)] z-20 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xl dark:border-white/10 dark:bg-[#181818]">
+                <ul className="divide-y divide-slate-100 dark:divide-white/5 py-0.5">
                   {suggestions.map((item) => (
                     <li
                       key={item.word}
-                      className="group/item flex items-center justify-between hover:bg-amber-500/10 transition-colors duration-100 px-3 py-1.5"
+                      className="group/item flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition px-3.5 py-2"
                     >
                       <button
                         type="button"
                         onClick={() => addItemWithName(item.word)}
-                        className="flex-1 text-left text-xs font-medium text-stone-800 hover:text-amber-600 dark:text-stone-200 dark:hover:text-amber-300 transition-colors duration-100 cursor-pointer py-1"
+                        className="flex-1 text-left text-xs font-medium text-slate-800 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white transition cursor-pointer py-0.5"
                       >
-                        <span className={item.inList ? "text-stone-400 dark:text-stone-400" : "text-stone-900 dark:text-stone-100 font-semibold"}>
+                        <span className={item.inList ? "text-slate-400" : "text-slate-900 dark:text-white font-semibold"}>
                           {item.word}
                         </span>
                       </button>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[10px] ${item.inList ? "text-stone-400 dark:text-stone-500" : "text-amber-600 dark:text-amber-400 font-semibold"}`}>
+                        <span className={`text-[10px] ${item.inList ? "text-slate-400" : "text-emerald-600 dark:text-emerald-400 font-bold"}`}>
                           {item.inList ? "✓ In list" : "+ Add"}
                         </span>
 
-                        {/* DELETE / FORGET BUTTON FOR LEARNED WORDS */}
                         {item.isCustom && (
                           <button
                             type="button"
@@ -489,7 +490,7 @@ export default function FloatingGroceryDrawer() {
                               e.stopPropagation();
                               removeLearnedWord(item.word);
                             }}
-                            className="text-stone-400 hover:text-rose-600 dark:text-stone-500 dark:hover:text-rose-400 transition-colors duration-100 cursor-pointer text-xs p-1 rounded hover:bg-stone-100 dark:hover:bg-white/5"
+                            className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition cursor-pointer text-xs p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/10"
                             title="Remove word from learned suggestions"
                           >
                             ✕
@@ -510,13 +511,15 @@ export default function FloatingGroceryDrawer() {
           >
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-56 text-center">
-                <svg className="h-10 w-10 text-amber-500/80 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <h3 className="text-sm font-bold text-stone-800 dark:text-stone-200">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-500 mb-3">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   Your grocery list is empty
                 </h3>
-                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 max-w-xs leading-relaxed">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
                   Add ingredients from recipes, plan your week, or pick suggested items above!
                 </p>
               </div>
@@ -530,10 +533,10 @@ export default function FloatingGroceryDrawer() {
                       containIntrinsicSize: "0 52px",
                       contain: "paint",
                     }}
-                    className={`group flex items-center justify-between gap-3 rounded-2xl border p-3 ${
+                    className={`group flex items-center justify-between gap-3 rounded-[20px] border p-3 transition ${
                       item.bought
-                        ? "border-emerald-500/20 bg-emerald-500/10 dark:border-emerald-500/15 dark:bg-emerald-500/5 opacity-70"
-                        : "border-stone-200/90 bg-white hover:bg-stone-50/80 hover:border-amber-500/30 text-stone-900 dark:border-white/8 dark:bg-[#1e1713]/90 dark:hover:bg-[#251d18] dark:hover:border-amber-400/25 dark:text-stone-100 shadow-xs"
+                        ? "border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-950/15 opacity-70"
+                        : "border-slate-200/90 bg-white hover:border-slate-300 text-slate-900 dark:border-white/10 dark:bg-[#121212] dark:hover:border-white/20 dark:text-white shadow-2xs"
                     }`}
                   >
                     <label className="flex flex-1 items-center gap-3 cursor-pointer min-w-0">
@@ -541,13 +544,13 @@ export default function FloatingGroceryDrawer() {
                         type="checkbox"
                         checked={item.bought}
                         onChange={() => toggleBought(originalIndex)}
-                        className="h-4 w-4 shrink-0 accent-emerald-500 cursor-pointer"
+                        className="h-4 w-4 shrink-0 accent-emerald-600 rounded cursor-pointer"
                       />
                       <span
                         className={`truncate text-xs sm:text-sm font-medium ${
                           item.bought
-                            ? "text-emerald-700 dark:text-emerald-200 line-through"
-                            : "text-stone-900 dark:text-stone-100"
+                            ? "text-emerald-800 dark:text-emerald-300 line-through"
+                            : "text-slate-900 dark:text-white"
                         }`}
                       >
                         {item.name}
@@ -562,7 +565,7 @@ export default function FloatingGroceryDrawer() {
                             removeItem(originalIndex);
                             setConfirmDeleteIndex(null);
                           }}
-                          className="rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold px-1.5 py-0.5 hover:bg-rose-500/30 transition cursor-pointer"
+                          className="rounded-full bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold px-2.5 py-1 shadow-xs transition cursor-pointer"
                           title="Confirm removal"
                         >
                           Delete?
@@ -570,7 +573,7 @@ export default function FloatingGroceryDrawer() {
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteIndex(null)}
-                          className="text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 text-xs px-0.5 cursor-pointer"
+                          className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs px-1 cursor-pointer"
                           title="Cancel"
                         >
                           ✕
@@ -580,7 +583,7 @@ export default function FloatingGroceryDrawer() {
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteIndex(originalIndex)}
-                        className="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-600 dark:text-stone-500 dark:hover:text-rose-400 transition-colors duration-100 cursor-pointer text-xs p-1"
+                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition cursor-pointer text-xs p-1"
                         title="Delete item"
                       >
                         ✕
@@ -594,12 +597,12 @@ export default function FloatingGroceryDrawer() {
 
           {/* DRAWER FOOTER */}
           {items.length > 0 && (
-            <footer className="border-t border-stone-200 p-4 bg-white dark:border-white/10 dark:bg-[#1a1511] flex items-center justify-between gap-3">
+            <footer className="border-t border-slate-200/90 p-4 bg-white dark:border-white/10 dark:bg-[#121212] flex items-center justify-between gap-3">
               {boughtCount > 0 ? (
                 <button
                   type="button"
                   onClick={handleClearCompleted}
-                  className="text-xs font-semibold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200 transition-colors duration-100 cursor-pointer"
+                  className="rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer"
                 >
                   Clear {boughtCount} checked
                 </button>
@@ -607,13 +610,13 @@ export default function FloatingGroceryDrawer() {
                 <button
                   type="button"
                   onClick={handleClearAll}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400/80 dark:hover:text-rose-300 transition-colors duration-100 cursor-pointer"
+                  className="rounded-full bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 px-3.5 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition cursor-pointer"
                 >
                   Clear all
                 </button>
               )}
 
-              <span className="text-[11px] text-stone-400 dark:text-stone-500">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {items.length} item{items.length === 1 ? "" : "s"}
               </span>
             </footer>

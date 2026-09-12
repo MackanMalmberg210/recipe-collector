@@ -575,17 +575,17 @@ export default function GroceriesPage() {
 
   if (!hasHydrated) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] px-4 py-8 text-slate-900 dark:bg-[#110d0b] dark:text-stone-100 flex items-center justify-center">
-        <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-[#16120f] border border-slate-200/90 dark:border-white/10 p-6 shadow-md dark:shadow-xl">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900 dark:border-amber-500 border-t-transparent" />
-          <span className="text-sm font-semibold">Opening Kitchen Hub...</span>
+      <div className="min-h-screen bg-[#FCFCFC] px-4 py-8 text-slate-900 dark:bg-[#0A0A0A] dark:text-stone-100 flex items-center justify-center">
+        <div className="flex items-center gap-3 rounded-full bg-white dark:bg-[#121212] border border-slate-200/90 dark:border-white/10 px-6 py-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.05)]">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 dark:border-white border-t-transparent" />
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300">Opening Kitchen Hub...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#f8fafc] px-4 sm:px-6 xl:px-10 py-6 text-slate-900 dark:bg-[#110d0b] dark:text-stone-100 pb-28 transition-colors duration-300">
+    <div className="relative min-h-screen bg-[#FCFCFC] px-4 sm:px-6 xl:px-10 py-6 text-slate-900 dark:bg-[#0A0A0A] dark:text-stone-100 pb-28 transition-colors duration-300">
       <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* HEADER BAR */}
@@ -623,22 +623,22 @@ export default function GroceriesPage() {
 
             {/* EMPTY STATE */}
             {currentItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300/80 bg-white py-20 text-center space-y-3 dark:border-white/10 dark:bg-[#16120f]/50 shadow-xs dark:shadow-none">
-                <div className="text-slate-400 dark:text-stone-500">
-                  <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex flex-col items-center justify-center rounded-[32px] border border-dashed border-slate-200/90 bg-white py-20 text-center space-y-3.5 dark:border-white/10 dark:bg-[#121212] shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-stone-300">
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-[#fff8ef]">Your shopping list is empty</h3>
+                <h3 className="text-xl font-black tracking-tight text-slate-950 dark:text-white">Your shopping list is empty</h3>
                 <p className="max-w-md text-xs sm:text-sm text-slate-500 dark:text-stone-400 leading-relaxed">
-                  Add groceries using the input bar above, or click below to match your pantry staples against your recipes.
+                  Add groceries using the input bar above, or click below to match your pantry staples against your saved recipes.
                 </p>
                 <button
                   type="button"
                   onClick={() => setIsCookWhatIHaveOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 cursor-pointer mt-2"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 cursor-pointer mt-2"
                 >
-                  <svg className="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Find What You Can Cook (Pantry Matcher)</span>
@@ -694,7 +694,7 @@ export default function GroceriesPage() {
               </div>
             ) : (
               /* FLAT CHECKLIST VIEW (SORTED: UNCHECKED FIRST, ALPHABETICAL A-Z) */
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                 {flatSortedItems.map(({ item, originalIndex }) => {
                   const displayName = formatGroceryItemName(item.name);
                   const isRecentlyAdded = Boolean(item.id && recentlyAddedItemId === item.id);
@@ -702,65 +702,64 @@ export default function GroceriesPage() {
                   return (
                     <div
                       key={item.id || `${originalIndex}-${item.name}`}
-                      className={`flex items-center justify-between gap-3 rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${
+                      className={`flex items-center justify-between gap-3 rounded-[24px] border p-4 transition-all duration-200 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-md hover:-translate-y-0.5 ${
                         isRecentlyAdded
-                          ? "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-emerald-50/60 border-emerald-400 dark:bg-gradient-to-r dark:from-emerald-950/60 dark:via-emerald-900/25 dark:to-[#1f1915] dark:border-emerald-400/60 scale-[1.01]"
+                          ? "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-emerald-50/70 border-emerald-500 dark:bg-emerald-950/40 dark:border-emerald-500 scale-[1.01]"
                           : item.bought
-                          ? "border-stone-200/60 bg-stone-100/70 opacity-60 dark:border-white/5 dark:bg-black/30"
-                          : "border-stone-200/90 bg-white hover:border-amber-400/50 shadow-2xs dark:border-white/8 dark:bg-[#1f1915] dark:hover:border-amber-400/30"
+                          ? "border-slate-200/60 bg-slate-100/60 opacity-60 dark:border-white/5 dark:bg-[#161616]"
+                          : "border-slate-200/90 bg-white hover:border-slate-300 dark:border-white/10 dark:bg-[#121212] dark:hover:border-white/20"
                       }`}
                     >
-                      <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer select-none">
+                      <label className="flex items-center gap-3.5 flex-1 min-w-0 cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={item.bought}
                           onChange={() => handleToggleBought(originalIndex)}
-                          className="h-4.5 w-4.5 rounded accent-amber-500 cursor-pointer shrink-0"
+                          className="h-5 w-5 rounded-md accent-emerald-600 cursor-pointer shrink-0 transition"
                         />
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span
                               className={`text-sm sm:text-[15px] font-bold leading-snug break-words ${
-                                item.bought ? "text-stone-400 line-through" : "text-stone-900 dark:text-stone-100"
+                                item.bought ? "text-slate-400 line-through" : "text-slate-900 dark:text-white"
                               }`}
                             >
                               {displayName}
                             </span>
                             {isRecentlyAdded && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white dark:bg-emerald-400 dark:text-stone-950 font-black text-[10px] px-2 py-0.5 shadow-sm shadow-emerald-400/50 animate-bounce">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 text-white font-black text-[10px] px-2.5 py-0.5 shadow-sm animate-bounce">
                                 ✓ Added
                               </span>
                             )}
                           </div>
                           {item.sourceRecipeTitle && (
-                            <div className="flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 mt-0.5 truncate">
-                              <svg className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a5.927 5.927 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707-.195-.195.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a5.922 5.922 0 0 1 1.013.16l3.134-3.133a2.772 2.772 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146z"/>
-                              </svg>
-                              <span className="truncate">For: {item.sourceRecipeTitle}</span>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-stone-400 mt-1 truncate">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] text-slate-700 dark:text-stone-300 truncate">
+                                For: {item.sourceRecipeTitle}
+                              </span>
                             </div>
                           )}
                         </div>
                       </label>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center rounded-xl border border-stone-200 bg-stone-100 dark:border-white/10 dark:bg-black/40 p-0.5 shadow-2xs">
+                        <div className="flex items-center rounded-full border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-black/40 p-0.5 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(originalIndex, -1)}
-                            className="h-7 w-7 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-white dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 rounded-lg text-xs font-black transition cursor-pointer"
+                            className="h-7 w-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 rounded-full text-xs font-black transition cursor-pointer"
                             title="Decrease quantity"
                           >
                             −
                           </button>
-                          <span className="px-2 text-xs font-mono font-bold text-stone-800 dark:text-amber-300 min-w-[22px] text-center">
+                          <span className="px-2 text-xs font-mono font-bold text-slate-900 dark:text-white min-w-[22px] text-center">
                             {item.quantity || 1}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(originalIndex, 1)}
-                            className="h-7 w-7 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-white dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 rounded-lg text-xs font-black transition cursor-pointer"
+                            className="h-7 w-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white dark:text-stone-400 dark:hover:text-white dark:hover:bg-white/10 rounded-full text-xs font-black transition cursor-pointer"
                             title="Increase quantity"
                           >
                             +
@@ -776,7 +775,7 @@ export default function GroceriesPage() {
                                 handleDeleteItem(originalIndex);
                                 setConfirmDeleteIndex(null);
                               }}
-                              className="rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[11px] font-bold px-2 py-1 hover:bg-rose-500/30 transition cursor-pointer shadow-xs"
+                              className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-3 py-1 hover:bg-rose-700 transition cursor-pointer shadow-sm"
                               title="Click to confirm removal"
                             >
                               Delete?
@@ -784,7 +783,7 @@ export default function GroceriesPage() {
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteIndex(null)}
-                              className="text-stone-400 hover:text-stone-200 text-xs px-1 cursor-pointer"
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-stone-200 text-xs px-1 cursor-pointer"
                               title="Cancel"
                             >
                               ✕
@@ -794,7 +793,7 @@ export default function GroceriesPage() {
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteIndex(originalIndex)}
-                            className="h-8 w-8 flex items-center justify-center rounded-xl text-stone-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                            className="h-8 w-8 flex items-center justify-center rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                             title="Delete item"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -830,7 +829,7 @@ export default function GroceriesPage() {
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex items-center gap-2 rounded-full border border-stone-300/80 bg-white px-5 py-2.5 text-xs font-extrabold text-stone-700 shadow-xs hover:border-amber-500 hover:bg-amber-500/5 hover:text-amber-700 dark:border-white/12 dark:bg-[#16120f] dark:text-stone-300 dark:hover:border-amber-400/50 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-xs font-bold text-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-slate-900 hover:bg-slate-900 hover:text-white dark:border-white/10 dark:bg-[#121212] dark:text-stone-300 dark:hover:border-white dark:hover:bg-white dark:hover:text-slate-950 transition-all cursor-pointer"
             title="Scroll back to top"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
