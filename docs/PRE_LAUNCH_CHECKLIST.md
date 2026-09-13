@@ -34,8 +34,9 @@ Detta dokument samlar alla krav, kontroller och förbättringar som ska genomfö
   - Möjlighet för användaren att ladda upp egna bilder på det färdiga resultatet direkt på ett recept.
 - [x] **Supabase Storage Bucket för bilder (`recipe-media`):**
   - Skapa bucket med uppladdningspolicy (RLS) och automatisk WebP-komprimering via `imageCompressor.ts` så att användarbilder sparas på CDN och inte i localStorage/databaskolumner.
-- [ ] **Receptkatalog:**
-  - Fylla på med fler kurerade kvalitetsrecept med kompletta näringsvärden och ingredienser.
+- [x] **Receptkatalog:**
+  - Utökat startkatalogen med 8 nya distinkta rätter (Toast Skagen, Tagine, Smash Burgers, Thai Green Curry, Chili con Carne, Chicken Katsu Curry, m.fl.) till totalt 34 kurerade rätter.
+  - Samtliga 34 recept har nu fullständiga näringsvärden och makroprofiler (protein, kolhydrater, fett, mättat fett, fiber, natrium).
 - [ ] **Betalning / Pro Membership:**
   - Sätta upp betalningslösning (Stripe Customer Portal eller LemonSqueezy) för prenumeration på Pro Tier.
 - [ ] **Custom SMTP för E-post & Auth:**

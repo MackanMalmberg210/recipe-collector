@@ -1,7 +1,7 @@
 import { generateRecipeMetadata } from "./recipeMetadata";
 import { parseIngredientList } from "./ingredientParser";
 import { sanitizeCulinaryText, capitalizeFirstLetter } from "./culinaryTextSanitizer";
-import type { AppRecipe, IngredientGroup, NutritionInfo } from "./types";
+import type { AppRecipe, IngredientGroup, NutritionInfo, RecipeCategory, MealType } from "./types";
 
 type NormalizerOrigin = AppRecipe["origin"];
 
@@ -15,6 +15,9 @@ export type RawRecipeInput = {
    calories?: number | null;
    servings?: number | null;
    servingsText?: string | null;
+   category?: RecipeCategory | string | null;
+   mealType?: MealType | string | null;
+   tags?: string[] | null;
    sourceUrl?: string | null;
    sourceName?: string | null;
    ingredients?: string[] | null;
@@ -237,6 +240,29 @@ function normalizeSpoonacularInstructions(
       .filter(Boolean);
 }
 
+function sanitizeCategory(cat?: string | null): RecipeCategory | undefined {
+   if (!cat) return undefined;
+   const normalized = cat.toLowerCase().trim();
+   const validCategories: RecipeCategory[] = [
+      "main-course", "pasta", "rice", "salad", "soup", "sandwich", "bowl", "stir-fry", "breakfast", "dessert", "snack"
+   ];
+   if (validCategories.includes(normalized as RecipeCategory)) {
+      return normalized as RecipeCategory;
+   }
+   if (normalized === "noodles" || normalized === "wok") return "stir-fry";
+   return undefined;
+}
+
+function sanitizeMealType(mt?: string | null): MealType | undefined {
+   if (!mt) return undefined;
+   const normalized = mt.toLowerCase().trim();
+   const validMealTypes: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
+   if (validMealTypes.includes(normalized as MealType)) {
+      return normalized as MealType;
+   }
+   return undefined;
+}
+
 export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
    const title = normalizeString(input.title) || "Untitled recipe";
    const ingredients = normalizeIngredientsArray(input.ingredients);
@@ -286,9 +312,9 @@ export function normalizeRecipe(input: RawRecipeInput): AppRecipe {
       sourceName: normalizeString(input.sourceName) || undefined,
       videoUrl: normalizeString(input.videoUrl) || undefined,
       videoEmbedUrl: normalizeString(input.videoEmbedUrl) || undefined,
-      category: metadata.category,
-      mealType: metadata.mealType,
-      tags: metadata.tags,
+      category: sanitizeCategory(input.category) ?? metadata.category,
+      mealType: sanitizeMealType(input.mealType) ?? metadata.mealType,
+      tags: input.tags && input.tags.length > 0 ? input.tags : metadata.tags,
       origin: input.origin ?? "imported",
       isPublic: Boolean(input.isPublic),
       authorName: normalizeString(input.authorName) || undefined,
