@@ -208,7 +208,7 @@ export default function HomePage() {
           <div className="flex items-center gap-1.5 shrink-0">
             <Link
               href="/login"
-              className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 font-bold px-3 py-1 text-xs transition shadow-xs cursor-pointer"
+              className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50 font-bold px-3 py-1 text-xs transition shadow-xs cursor-pointer"
             >
               Sign In
             </Link>

@@ -182,7 +182,7 @@ export default function HomeHero({
 
           <Link
             href="/create"
-            className="flex shrink-0 items-center justify-center h-11 w-11 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 shadow-[0_8px_16px_rgb(0,0,0,0.1)] transition-all active:scale-95 cursor-pointer"
+            className="flex shrink-0 items-center justify-center h-11 w-11 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50 shadow-[0_8px_16px_rgb(0,0,0,0.1)] transition-all active:scale-95 cursor-pointer"
             title="Create new recipe"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

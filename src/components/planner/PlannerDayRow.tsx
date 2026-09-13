@@ -131,7 +131,7 @@ function PlannerDayRow({
               {formatWeekDay(day)}
             </h3>
             {isToday() && (
-              <span className="rounded-full bg-slate-900 text-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs dark:bg-white dark:text-slate-950">
+              <span className="rounded-full bg-slate-900 text-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs dark:bg-amber-500 dark:text-stone-950">
                 Today
               </span>
             )}
@@ -271,16 +271,16 @@ function PlannerDayRow({
                           {/* Top Gradient Overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/30 pointer-events-none" />
 
-                          {/* Floating Category Slot Badge */}
+                          {/* Floating Category Slot Badge (Clean modern dark-slate pill in Light mode, warm amber in Dark mode) */}
                           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 dark:bg-black/85 backdrop-blur-md border border-white/20 text-white px-3 py-1 text-xs font-bold shadow-md">
-                              <SlotIcon className="h-3 w-3 text-white" />
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 dark:bg-amber-500 backdrop-blur-md border border-white/20 dark:border-transparent text-white dark:text-stone-950 px-3 py-1 dark:px-2.5 dark:py-1 text-xs dark:text-[11px] font-bold dark:font-black dark:uppercase dark:tracking-wider shadow-md dark:shadow-sm dark:rounded-xl">
+                              <SlotIcon className="h-3 w-3 text-white dark:text-stone-950" />
                               <span>{formatMealSlot(slot)}</span>
                             </span>
 
                             {isLeftoverLunch && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/90 dark:bg-black/85 backdrop-blur-md border border-white/20 text-emerald-300 px-2.5 py-1 text-xs font-bold shadow-md">
-                                <MealPrepIcon className="h-3 w-3 text-emerald-400" />
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/90 dark:bg-emerald-500 backdrop-blur-md border border-white/20 dark:border-transparent text-emerald-300 dark:text-stone-950 px-2.5 py-1 dark:px-2 dark:py-1 text-xs dark:text-[10px] font-bold dark:font-black dark:uppercase dark:tracking-wider shadow-md dark:shadow-sm dark:rounded-xl">
+                                <MealPrepIcon className="h-3 w-3 text-emerald-400 dark:text-stone-950" />
                                 <span>Leftovers</span>
                               </span>
                             )}
@@ -293,7 +293,7 @@ function PlannerDayRow({
                               e.stopPropagation();
                               onClearSlot(day, slot);
                             }}
-                            className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 backdrop-blur-md border border-white/20 text-white hover:bg-rose-600 hover:border-rose-600 transition-colors cursor-pointer shadow-sm focus-visible:outline-none"
+                            className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 backdrop-blur-md border border-white/20 text-white hover:bg-rose-600 hover:border-rose-600 dark:bg-black/60 dark:border-transparent dark:text-white/80 dark:hover:bg-rose-600 dark:hover:text-white dark:rounded-xl transition-colors cursor-pointer shadow-sm focus-visible:outline-none"
                             title={`Remove ${formatMealSlot(slot)}`}
                           >
                             <CloseIcon className="h-3.5 w-3.5" />
@@ -353,10 +353,10 @@ function PlannerDayRow({
                             <button
                               type="button"
                               onClick={() => onOpenMealPrep(day, recipe)}
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1 text-xs font-bold shadow-xs transition active:scale-95 focus-visible:outline-none cursor-pointer"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-400/10 dark:text-emerald-300 dark:hover:bg-emerald-400/20 px-2.5 py-1 text-xs font-bold shadow-xs transition active:scale-95 focus-visible:outline-none cursor-pointer"
                               title="Distribute extra portions to lunches"
                             >
-                              <MealPrepIcon className="h-3.5 w-3.5 text-white" />
+                              <MealPrepIcon className="h-3.5 w-3.5 text-white dark:text-emerald-300" />
                               <span>Prep for Lunches</span>
                             </button>
                           )
@@ -507,7 +507,7 @@ function PlannerDayRow({
                         className="w-full h-20 sm:h-[84px] flex items-center justify-between rounded-[20px] border border-dashed border-slate-200 bg-slate-50/40 hover:border-slate-400 hover:bg-slate-100/50 px-3.5 sm:px-4 dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group/snackbtn focus-visible:outline-none"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 group-hover/snackbtn:bg-slate-900 group-hover/snackbtn:text-white dark:bg-white/6 dark:text-stone-400 dark:group-hover/snackbtn:bg-white dark:group-hover/snackbtn:text-slate-950 transition-colors shadow-2xs">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 group-hover/snackbtn:bg-slate-900 group-hover/snackbtn:text-white dark:border-white/10 dark:bg-white/6 dark:text-stone-400 dark:group-hover/snackbtn:bg-white/10 dark:group-hover/snackbtn:text-stone-200 transition-colors shadow-2xs">
                             <SnackIcon className="h-4 w-4" />
                           </div>
                           <div className="text-left min-w-0">
@@ -520,7 +520,7 @@ function PlannerDayRow({
                           </div>
                         </div>
 
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-400 group-hover/snackbtn:border-slate-400 dark:group-hover/snackbtn:border-white/20 group-hover/snackbtn:text-slate-600 dark:group-hover/snackbtn:text-stone-300 transition-colors shadow-2xs">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-400 group-hover/snackbtn:border-slate-400 dark:group-hover/snackbtn:border-white/20 group-hover/snackbtn:text-slate-600 dark:group-hover/snackbtn:text-stone-300 dark:group-hover/snackbtn:bg-white/8 transition-colors shadow-2xs">
                           <PlusIcon className="h-3.5 w-3.5" />
                         </div>
                       </button>

@@ -222,30 +222,45 @@ export default function PlannerPage() {
       <div className="relative mx-auto flex w-full max-w-7xl 2xl:max-w-[1820px] flex-col gap-6">
         
         {/* HEADER BAR */}
-        <header className="flex flex-col gap-4 rounded-[32px] border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#151210] p-6 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.05)]">
+        <header className="flex flex-col gap-6 rounded-[32px] border border-slate-200/90 bg-white dark:border-white/10 dark:bg-[#16120f] p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-1.5">
+            <div>
               {/* USP TYPOGRAPHY HEADER */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-white/10 px-3 py-1 text-xs font-bold text-slate-800 dark:text-stone-300">
-                <svg className="h-3.5 w-3.5 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              {/* Light Theme Pill Eyebrow */}
+              <div className="dark:hidden inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-800 mb-2">
+                <svg className="h-3.5 w-3.5 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>Weekly Meal Planner</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-stone-50">
+              {/* Dark Theme Text Eyebrow */}
+              <div className="hidden dark:flex items-center gap-2 mb-1 text-xs font-black uppercase tracking-widest text-amber-400">
+                <svg className="h-4 w-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Weekly Meal Planner</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 dark:text-[#fff8ef]">
                 Take the stress out of daily cooking.
               </h1>
               
-              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-stone-400">
+              {/* Light Theme Subtitle with Bento badge */}
+              <div className="dark:hidden flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500 mt-1">
                 <span>Save time, eat healthier, and streamline your weekly groceries</span>
                 <span>•</span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-white/10 px-2 py-0.5 font-bold text-slate-900 dark:text-stone-100">
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-900">
                   {plannedMealsCount}/21 planned
                 </span>
                 <span>•</span>
-                <span>Target: <strong className="text-slate-900 dark:text-stone-100">{dailyCalorieTarget}</strong> kcal/day</span>
+                <span>Target: <strong className="text-slate-900 font-bold">{dailyCalorieTarget}</strong> kcal/day</span>
               </div>
+
+              {/* Dark Theme Subtitle with inline text (no gray bubble) */}
+              <p className="hidden dark:block mt-1 text-xs sm:text-sm text-stone-400">
+                Save time, eat healthier, and streamline your weekly groceries • <strong className="text-stone-200 font-bold">{plannedMealsCount}/21</strong> meals planned • Target: <strong className="text-stone-200 font-bold">{dailyCalorieTarget}</strong> kcal/day
+              </p>
             </div>
 
             {/* STREAMLINED ACTION TOOLBAR */}
@@ -258,11 +273,11 @@ export default function PlannerPage() {
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 px-3.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 transition cursor-pointer shadow-xs active:scale-95"
                 title="Browse Cookbook recipes"
               >
-                <svg className="h-4 w-4 shrink-0 text-slate-600 dark:text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 shrink-0 text-slate-600 dark:text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 <span>Cookbook</span>
-                <span className="rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 px-2 py-0.2 text-[10px] font-black shadow-xs">
+                <span className="rounded-full bg-slate-900 text-white dark:bg-amber-500 dark:text-stone-950 px-2 py-0.2 text-[10px] font-black shadow-xs">
                   {allRecipes.length}
                 </span>
               </button>
@@ -271,13 +286,13 @@ export default function PlannerPage() {
               <button
                 type="button"
                 onClick={handleAutoSuggestWeek}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 text-xs sm:text-sm border border-slate-900 shadow-xs dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 transition cursor-pointer active:scale-95"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 text-xs sm:text-sm border border-slate-900 shadow-xs dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 transition cursor-pointer active:scale-95"
               >
                 <span>✨</span>
                 <span>Suggest Meals</span>
               </button>
 
-              {/* SEND TO GROCERY LIST (SOLID HIGH CONTRAST EMERALD) */}
+              {/* SEND TO GROCERY LIST */}
               <button
                 type="button"
                 onClick={() => setIsGroceryModalOpen(true)}

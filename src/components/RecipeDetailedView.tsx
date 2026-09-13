@@ -13,9 +13,12 @@ import RecipeIngredientsPanel from "./recipe-detail/RecipeIngredientsPanel";
 import SimilarRecipesPanel from "./recipe-detail/SimilarRecipesPanel";
 import CookModeModal from "./recipe-detail/CookModeModal";
 import ShareRecipeModal from "./recipe-detail/ShareRecipeModal";
+import PrintRecipeModal from "./recipe-detail/PrintRecipeModal";
+import ReportModal from "./common/ReportModal";
 import ConfirmModal from "./ui/ConfirmModal";
 import AdBanner from "./ui/AdBanner";
 import { useToast } from "./ui/ToastProvider";
+import { useAuth } from "../contexts/AuthContext";
 import {
   getAllRecipesWithCloud,
   getSavedRecipeIds,
@@ -47,6 +50,9 @@ export default function RecipeDetailedView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { success, info } = useToast();
+  const { user } = useAuth();
+  const isOwner = Boolean(user?.id && recipe.userId && user.id === recipe.userId);
+  const canReport = Boolean(recipe.isPublic && !isOwner);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [savedRecipeIds, setSavedRecipeIds] = useState<number[]>([]);
@@ -55,7 +61,9 @@ export default function RecipeDetailedView({
   const [allRecipes, setAllRecipes] = useState<AppRecipe[]>([]);
   const [isCookModeOpen, setIsCookModeOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isAddedToGrocery, setIsAddedToGrocery] = useState(false);
   const [lastAddedItems, setLastAddedItems] = useState<string[]>([]);
   const [recipeRating, setRecipeRating] = useState<number | null>(null);
@@ -313,7 +321,7 @@ export default function RecipeDetailedView({
       {/* SUBTLE, BALANCED AMBIENT GLOW */}
       <div className="pointer-events-none absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-amber-500/4 blur-[160px] dark:bg-amber-500/5" />
 
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] space-y-8 relative z-10">
+      <div className="print:hidden mx-auto max-w-7xl 2xl:max-w-[1820px] space-y-8 relative z-10">
         {/* TOP BACK BREADCRUMB */}
         <div>
           <Link
@@ -324,6 +332,24 @@ export default function RecipeDetailedView({
             <span>Back to Cookbook</span>
           </Link>
         </div>
+
+        {/* MODERATION NOTICE (Visible if recipe was unpublished/quarantined by safety team) */}
+        {recipe.isQuarantined && (
+          <div className="rounded-3xl border border-amber-500/40 bg-amber-500/10 p-5 flex items-start gap-4 text-amber-950 dark:text-amber-200 shadow-sm animate-in fade-in">
+            <svg className="h-6 w-6 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <div className="space-y-1">
+              <h3 className="text-sm sm:text-base font-black tracking-tight text-amber-900 dark:text-amber-300">
+                Moderation Notice: Unpublished from Public Community
+              </h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-amber-900/90 dark:text-amber-200/90">
+                This recipe was unpublished from public discovery following a community review (Reason: <strong className="font-bold underline">{recipe.moderationReason || "Community guidelines review"}</strong>).
+                It remains securely saved in your personal cookbook so you will not lose your recipe, but other community cooks cannot search for or view it.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* HERO SECTION (INTEGRATED ACTION CONTROLS & FAVORITE STAR) */}
         <RecipeHero
@@ -337,7 +363,9 @@ export default function RecipeDetailedView({
           onUndoAddMissing={handleUndoAddMissing}
           onOpenCookMode={() => setIsCookModeOpen(true)}
           onOpenShareModal={() => setIsShareModalOpen(true)}
+          onOpenPrintModal={() => setIsPrintModalOpen(true)}
           onDeleteRecipe={handleDeleteRecipe}
+          onReportRecipe={canReport ? () => setIsReportModalOpen(true) : undefined}
         />
 
         {/* HOLISTIC 2-COLUMN CULINARY LAYOUT */}
@@ -354,8 +382,12 @@ export default function RecipeDetailedView({
               onOpenCookMode={() => setIsCookModeOpen(true)}
             />
 
-            {/* 3. Combined Cooking Journal (Ratings & Chef's Note Card) */}
-            <RecipeJournalPanel recipeId={recipe.id} />
+            {/* 3. Combined Cooking Journal & Kitchen Gallery */}
+            <RecipeJournalPanel
+              recipeId={recipe.id}
+              recipeTitle={recipe.title}
+              isPublic={recipe.isPublic}
+            />
 
             {/* 4. Chef's Pro Tips & Pairings (balances column height for recipes with many ingredients) */}
             <RecipeChefTipsCard recipe={recipe} />
@@ -410,6 +442,13 @@ export default function RecipeDetailedView({
         recipe={recipe}
       />
 
+      {/* DEDICATED KITCHEN-READY PRINT & PDF EXPORT MODAL */}
+      <PrintRecipeModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        recipe={recipe}
+      />
+
       {/* DELETE CONFIRMATION MODAL */}
       <ConfirmModal
         isOpen={isDeleteModalOpen}
@@ -421,6 +460,17 @@ export default function RecipeDetailedView({
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
       />
+
+      {/* REPORT CONTENT MODAL */}
+      {canReport && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="recipe"
+          targetId={recipe.id.toString()}
+          targetTitle={recipe.title}
+        />
+      )}
     </div>
   );
 }

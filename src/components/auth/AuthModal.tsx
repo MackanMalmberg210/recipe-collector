@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
 
 type AuthModalProps = {
@@ -380,6 +381,28 @@ export default function AuthModal({
               ? "Create Account"
               : "Send Password Reset Link ✉️"}
           </button>
+
+          {mode === "signup" && (
+            <p className="pt-2 text-center text-[11px] leading-relaxed text-stone-400">
+              By creating an account, you agree to our{" "}
+              <Link
+                href="/terms"
+                onClick={onClose}
+                className="font-semibold text-stone-300 underline hover:text-amber-400"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                onClick={onClose}
+                className="font-semibold text-stone-300 underline hover:text-amber-400"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          )}
 
           {mode === "login" && (
             <div className="pt-2 text-center">

@@ -173,7 +173,7 @@ export default function PantryInventoryView({
           <button
             type="submit"
             disabled={!newStapleName.trim()}
-            className="rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-6 py-3.5 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
+            className="rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-6 py-3.5 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
           >
             + Add to Pantry
           </button>
@@ -186,7 +186,7 @@ export default function PantryInventoryView({
             onClick={() => setFilterCategory("all")}
             className={`rounded-full px-4 py-2 text-xs transition cursor-pointer ${
               filterCategory === "all"
-                ? "bg-slate-900 text-white font-bold shadow-sm dark:bg-white dark:text-slate-950"
+                ? "bg-slate-900 text-white font-bold shadow-sm dark:bg-amber-500 dark:text-stone-950"
                 : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:text-white font-semibold"
             }`}
           >
@@ -204,13 +204,13 @@ export default function PantryInventoryView({
                 onClick={() => setFilterCategory(cat.id)}
                 className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs transition cursor-pointer ${
                   filterCategory === cat.id
-                    ? "bg-slate-900 text-white font-bold shadow-sm dark:bg-white dark:text-slate-950"
+                    ? "bg-slate-900 text-white font-bold shadow-sm dark:bg-amber-500 dark:text-stone-950"
                     : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:text-white font-semibold"
                 }`}
               >
                 <GroceryCategoryIcon
                   category={cat.id}
-                  className={`h-3.5 w-3.5 ${filterCategory === cat.id ? "text-white dark:text-slate-950" : "text-slate-600 dark:text-stone-300"}`}
+                  className={`h-3.5 w-3.5 ${filterCategory === cat.id ? "text-white dark:text-stone-950" : "text-slate-600 dark:text-amber-500"}`}
                 />
                 <span>{cat.name.split("&")[0].trim()}</span>
                 <span className="opacity-70 font-mono text-[10px]">({count})</span>
@@ -242,7 +242,7 @@ export default function PantryInventoryView({
             <button
               type="button"
               onClick={handleAddAllEssentials}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 cursor-pointer"
             >
               <span>+ Add 10 Kitchen Essentials</span>
             </button>
@@ -326,7 +326,7 @@ export default function PantryInventoryView({
                               onDeleteItem(item.id);
                               setConfirmDeleteId(null);
                             }}
-                            className="rounded-full bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 hover:bg-rose-700 transition cursor-pointer shadow-xs"
+                            className="rounded-full bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 hover:bg-rose-700 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:text-rose-300 dark:border dark:border-rose-500/30 transition cursor-pointer shadow-xs"
                             title="Confirm removal"
                           >
                             Delete?

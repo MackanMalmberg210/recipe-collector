@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="relative mt-20 px-4 sm:px-6 lg:px-10 pb-16 pt-6">
+    <footer className="print:hidden relative mt-20 px-4 sm:px-6 lg:px-10 pb-16 pt-6">
       {/* FLOATING BENTO CULINARY CONSOLE */}
       <div className="mx-auto max-w-7xl 2xl:max-w-[1820px] rounded-[32px] border border-slate-200/90 bg-white text-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:border-white/10 dark:bg-[#12100e] dark:text-stone-100 p-8 sm:p-10 lg:p-12 relative overflow-hidden transition-colors duration-300">
         
@@ -75,7 +75,7 @@ export default function Footer() {
 
             <Link
               href="/create"
-              className="inline-flex items-center gap-2 rounded-full bg-zinc-900 text-white px-4 py-2 text-xs sm:text-sm font-bold hover:bg-zinc-800 dark:bg-amber-500 dark:text-stone-950 dark:hover:bg-amber-400 transition shadow-xs"
+              className="inline-flex items-center gap-2 rounded-full bg-zinc-900 text-white px-4 py-2 text-xs sm:text-sm font-bold hover:bg-zinc-800 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50 transition shadow-xs"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -194,11 +194,17 @@ export default function Footer() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-stone-500 pt-2 font-medium">
             <p>© {new Date().getFullYear()} Recipe Collector. All rights reserved.</p>
-            <div className="flex items-center gap-3">
-              <span>Distraction-free culinary studio</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/terms" className="hover:text-slate-950 dark:hover:text-stone-300 transition">
+                Terms of Service
+              </Link>
+              <span>•</span>
+              <Link href="/privacy" className="hover:text-slate-950 dark:hover:text-stone-300 transition">
+                Privacy Policy
+              </Link>
               <span>•</span>
               <Link href="/settings" className="hover:text-slate-950 dark:hover:text-stone-300 transition">
-                Settings &amp; Preferences
+                Settings
               </Link>
             </div>
           </div>

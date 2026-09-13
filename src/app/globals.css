@@ -84,3 +84,94 @@ input:-webkit-autofill:active {
   caret-color: #fafaf9 !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* ==========================================================================
+   KITCHEN-READY A4 PRINT & PDF EXPORT STYLESHEET
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide app navigation, footers, toast notifications, floating action drawers, ads, and page content */
+  nav,
+  footer,
+  aside,
+  .no-print,
+  .print\:hidden,
+  [data-print-hide="true"],
+  .fixed:not(#printable-modal-backdrop):not(#printable-modal-dialog) {
+    display: none !important;
+  }
+
+  /* Reset modal containers so sheet prints naturally without clipping or page bloat */
+  #printable-modal-backdrop,
+  #printable-modal-dialog,
+  #printable-modal-body {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  #printable-recipe-sheet {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 12mm 14mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Enforce side-by-side 2-column culinary layout on printed paper */
+  #printable-recipe-sheet .print-grid {
+    display: grid !important;
+    grid-template-columns: 5fr 7fr !important;
+    gap: 1.5rem !important;
+  }
+  #printable-recipe-sheet .print-col-ingredients {
+    grid-column: 1 !important;
+  }
+  #printable-recipe-sheet .print-col-instructions {
+    grid-column: 2 !important;
+  }
+
+  /* Prevent page slicing across steps and ingredients */
+  .break-inside-avoid,
+  #printable-recipe-sheet li,
+  #printable-recipe-sheet h1,
+  #printable-recipe-sheet h2,
+  #printable-recipe-sheet h3,
+  #printable-recipe-sheet img {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

@@ -147,15 +147,15 @@ export default function CookbookSidebar({
             onClick={() => handleFilterClick({ type: "trash" })}
             className={`shrink-0 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer ${
               isSelected({ type: "trash" })
-                ? "bg-rose-600 text-white shadow-xs font-bold border border-rose-600 dark:bg-rose-600 dark:text-white"
-                : "bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 dark:bg-[#181412] dark:border-rose-500/30 dark:text-rose-400"
+                ? "bg-rose-600 text-white shadow-xs font-bold border border-rose-600 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40"
+                : "bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 dark:bg-[#171e27] dark:border-rose-500/25 dark:text-rose-400"
             }`}
           >
             <svg className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             <span>Trash</span>
-            <span suppressHydrationWarning className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected({ type: "trash" }) ? "bg-white/20 text-white" : "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 font-bold"}`}>{trashCount}</span>
+            <span suppressHydrationWarning className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelected({ type: "trash" }) ? "bg-white/20 text-white" : "bg-rose-200 text-rose-900 dark:bg-rose-500/30 dark:text-rose-200 border border-rose-300 dark:border-rose-500/40"}`}>{trashCount}</span>
           </button>
         )}
       </div>
@@ -184,7 +184,7 @@ export default function CookbookSidebar({
             <button
               type="button"
               onClick={onOpenAddRecipeModal}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 shadow-sm dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 dark:border-amber-500 py-3 px-4 text-xs sm:text-sm font-bold transition-all duration-200 active:scale-[0.98] cursor-pointer"
+              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 shadow-sm dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 py-3 px-4 text-xs sm:text-sm font-bold transition-all duration-200 active:scale-[0.98] cursor-pointer"
             >
               <span className="text-base font-black transition-transform duration-200 group-hover:scale-110">+</span>
               <span>Add Recipe</span>
@@ -401,7 +401,7 @@ export default function CookbookSidebar({
                 onClick={() => handleFilterClick({ type: "trash" })}
                 className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition cursor-pointer ${
                   isSelected({ type: "trash" })
-                    ? "bg-rose-600 text-white border border-rose-600 font-bold shadow-xs dark:bg-rose-600 dark:text-white dark:border-rose-500"
+                    ? "bg-rose-600 text-white border border-rose-600 font-bold shadow-xs dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40"
                     : "text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:text-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-300"
                 }`}
               >
@@ -413,7 +413,7 @@ export default function CookbookSidebar({
                   </div>
                   <span className="truncate text-left font-semibold">Trash</span>
                 </div>
-                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "trash" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white" : "rounded-full bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 px-2 py-0.5 text-[11px]"}`}>
+                <span suppressHydrationWarning className={`text-xs font-bold shrink-0 ${isSelected({ type: "trash" }) ? "rounded-full bg-white/20 px-2 py-0.5 text-[11px] text-white" : "rounded-full bg-rose-200 text-rose-900 border border-rose-300 dark:border-rose-500/40 dark:bg-rose-500/30 dark:text-rose-200 px-2 py-0.5 text-[11px]"}`}>
                   {trashCount}
                 </span>
               </button>
@@ -425,3 +425,4 @@ export default function CookbookSidebar({
     </aside>
   );
 }
+

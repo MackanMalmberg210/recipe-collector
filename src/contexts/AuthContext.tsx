@@ -19,6 +19,8 @@ interface AuthContextType {
   isGuest: boolean;
   displayName: string;
   userInitial: string;
+  role: string;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   signInWithPassword: (credentials: {
     email: string;
@@ -44,9 +46,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [role, setRole] = useState<string>("user");
   const [isLoading, setIsLoading] = useState(true);
 
+  const isAdmin = role === "admin";
   const supabase = useMemo(() => createClient(), []);
+
+  const fetchUserRole = useCallback(
+    async (userId: string) => {
+      try {
+        const { data } = await supabase
+          .from("user_profiles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (data?.role) {
+          setRole(data.role);
+        } else {
+          setRole("user");
+        }
+      } catch {
+        setRole("user");
+      }
+    },
+    [supabase]
+  );
 
   const refreshSession = useCallback(async () => {
     try {
@@ -55,12 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      if (currentSession?.user) {
+        await fetchUserRole(currentSession.user.id);
+      } else {
+        setRole("user");
+      }
     } catch (err) {
       console.warn("Error refreshing auth session:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, fetchUserRole]);
 
   useEffect(() => {
     // Initial fetch of session and user
@@ -73,10 +102,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
 
       if (initialSession?.user) {
+        fetchUserRole(initialSession.user.id);
         // Trigger automatic guest-to-cloud migration
         migrateGuestDataToCloud(initialSession.user.id).catch((err) =>
           console.warn("Guest data migration background error:", err)
         );
+      } else {
+        setRole("user");
       }
     });
 
@@ -88,6 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setIsLoading(false);
+
+      if (newSession?.user) {
+        fetchUserRole(newSession.user.id);
+      } else {
+        setRole("user");
+      }
 
       if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && newSession?.user) {
         // Seamlessly migrate guest work (recipes, favorites, groceries, etc.)
@@ -108,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      setRole("user");
     } catch (err) {
       console.warn("Sign out error:", err);
     }
@@ -223,6 +262,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGuest: !user && !isLoading,
       displayName,
       userInitial,
+      role,
+      isAdmin,
       signOut,
       signInWithPassword,
       signUp,
@@ -238,6 +279,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       displayName,
       userInitial,
+      role,
+      isAdmin,
       signOut,
       signInWithPassword,
       signUp,

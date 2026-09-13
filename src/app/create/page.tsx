@@ -10,6 +10,7 @@ import { sanitizeCulinaryText, capitalizeFirstLetter } from "../../lib/culinaryT
 import { useToast } from "../../components/ui/ToastProvider";
 import { useAuth } from "../../contexts/AuthContext";
 import { compressImage } from "../../lib/imageCompressor";
+import { detectRecipeLanguage } from "../../lib/languageDetector";
 import type { AppRecipe, MealType, RecipeCategory } from "../../lib/types";
 
 const SUGGESTED_TAGS = [
@@ -106,6 +107,7 @@ function CreateRecipeForm() {
   const [saveMessage, setSaveMessage] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
@@ -183,6 +185,11 @@ function CreateRecipeForm() {
     setImageUrlInput("");
   };
 
+  // Language Check for Community Recipes
+  const languageCheck = useMemo(() => {
+    return detectRecipeLanguage(title, rawIngredients, cleanedInstructions);
+  }, [title, rawIngredients, cleanedInstructions]);
+
   // Real-time Community Quality Standards Verification (Required for publishing to Explore)
   const communityQuality = useMemo(() => {
     const hasTitle = title.trim().length >= 5;
@@ -192,6 +199,7 @@ function CreateRecipeForm() {
     const hasCookTime = Boolean(cookTime.trim() && Number(cookTime) > 0);
     const hasServings = Boolean(servings.trim() && Number(servings) > 0);
     const hasCategory = Boolean(category || autoMetadata.category);
+    const isEnglishLanguage = languageCheck.isEnglish;
 
     const checks = [
       {
@@ -236,6 +244,12 @@ function CreateRecipeForm() {
         passed: hasCategory,
         hint: !hasCategory ? "Select or let auto-tag classify your dish" : "Category assigned",
       },
+      {
+        id: "language",
+        label: "English language (Required for Explore)",
+        passed: isEnglishLanguage,
+        hint: isEnglishLanguage ? "Recipe is in English" : languageCheck.detectedHint || "Please translate to English for community feed",
+      },
     ];
 
     const allPassed = checks.every((c) => c.passed);
@@ -246,8 +260,52 @@ function CreateRecipeForm() {
       allPassed,
       passedCount,
       totalCount: checks.length,
+      isEnglishLanguage,
     };
-  }, [title, image, rawIngredients, cleanedInstructions, cookTime, servings, category, autoMetadata.category]);
+  }, [title, image, rawIngredients, cleanedInstructions, cookTime, servings, category, autoMetadata.category, languageCheck]);
+
+  const handleTranslateToEnglish = async () => {
+    if (!title && rawIngredients.length === 0) {
+      setError("Please enter a recipe title or ingredients before translating.");
+      return;
+    }
+
+    setIsTranslating(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/translate-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          ingredients: rawIngredients,
+          instructions: cleanedInstructions,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.translated) {
+        throw new Error(data.error || "Failed to translate recipe.");
+      }
+
+      const { translated } = data;
+      if (translated.title) setTitle(translated.title);
+      if (Array.isArray(translated.ingredients) && translated.ingredients.length > 0) {
+        setIngredientText(translated.ingredients.join("\n"));
+      }
+      if (Array.isArray(translated.instructions) && translated.instructions.length > 0) {
+        setInstructionText(translated.instructions.join("\n"));
+      }
+
+      success("Recipe translated to English with AI!");
+    } catch (err: any) {
+      console.error("AI translation error:", err);
+      setError(err?.message || "Failed to translate recipe. Please try again.");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   const resetForm = () => {
     setTitle("");
@@ -612,7 +670,7 @@ function CreateRecipeForm() {
                           value={imageUrlInput}
                           onChange={(e) => setImageUrlInput(e.target.value)}
                           placeholder="Paste image link here..."
-                          className="flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1a1715] dark:text-[#fafaf9] dark:placeholder:text-stone-600 dark:focus:border-amber-400"
+                          className="flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1a1715] dark:text-[#fafaf9] dark:placeholder:text-stone-600 dark:focus:border-amber-400 dark:focus:bg-[#221e1a]"
                         />
                         <button
                           type="button"
@@ -961,7 +1019,7 @@ function CreateRecipeForm() {
                     <select
                       value={category ?? ""}
                       onChange={(e) => setCategory(e.target.value ? (e.target.value as RecipeCategory) : null)}
-                      className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold capitalize text-stone-900 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#fafaf9] dark:focus:border-amber-400 cursor-pointer"
+                      className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold capitalize text-stone-900 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#fafaf9] dark:focus:border-amber-400 dark:focus:bg-[#1f1b18] cursor-pointer"
                     >
                       <option value="" className="dark:bg-[#1f1b18]">
                         Auto-detect from recipe ({hasContent ? autoMetadata.category.replace(/-/g, " ") : "Main Course"})
@@ -1014,7 +1072,7 @@ function CreateRecipeForm() {
                           }
                         }}
                         placeholder="Add custom tag (e.g. dinner, spicy)..."
-                        className="flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#fafaf9] dark:placeholder:text-stone-600 dark:focus:border-amber-400"
+                        className="flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400/60 outline-none transition focus:border-amber-500 focus:bg-white dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-[#fafaf9] dark:placeholder:text-stone-600 dark:focus:border-amber-400 dark:focus:bg-[#1f1b18]"
                       />
                       <button
                         type="button"
@@ -1269,22 +1327,69 @@ function CreateRecipeForm() {
                     ))}
                   </ul>
 
+                  {/* AI Translation Banner (shown when recipe contains non-English text) */}
+                  {!communityQuality.isEnglishLanguage && (
+                    <div className="rounded-2xl border border-stone-200 bg-white p-4 dark:border-white/10 dark:bg-[#14110f] space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2 text-xs font-bold text-stone-900 dark:text-stone-100">
+                            <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896 3.025 2.196 5.874 3.82 8.446" />
+                            </svg>
+                            <span>Translate to English for Explore</span>
+                          </div>
+                          <p className="text-xs text-stone-500 dark:text-stone-400">
+                            Community recipes in Explore are published in English. Use 1-click AI translation to convert your title, ingredients, and steps while keeping all your amounts intact.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleTranslateToEnglish}
+                          disabled={isTranslating}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)] px-4 py-2 text-xs transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
+                        >
+                          {isTranslating ? (
+                            <>
+                              <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                              <span>Translating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="h-3.5 w-3.5 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                              </svg>
+                              <span>Translate to English with AI</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Notice depending on status */}
                   {communityQuality.allPassed ? (
-                    <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                      <span className="text-base">🎉</span>
+                    <div className="rounded-2xl border border-stone-200 bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] p-3 text-xs font-semibold text-stone-800 dark:text-stone-200 flex items-center gap-2">
+                      <svg className="h-4 w-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
                       <span>Your recipe fulfills all community requirements! When you save, it will be published to Explore with your author credit: <strong>Chef {displayName || user?.user_metadata?.display_name || "Community Chef"}</strong>.</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-stone-100 dark:border-white/10 dark:bg-[#1c1815] p-3 text-xs text-stone-700 dark:text-stone-300">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">💡</span>
+                        <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                        </svg>
                         <span>Complete the remaining {communityQuality.totalCount - communityQuality.passedCount} items to publish to Explore, or switch to Private to save right away!</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => setIsPublic(false)}
-                        className="rounded-xl border border-amber-500/40 bg-white/70 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-white dark:bg-black/30 dark:text-amber-200 cursor-pointer shrink-0"
+                        className="rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-stone-800 hover:bg-stone-50 dark:border-white/10 dark:bg-[#25211d] dark:text-stone-200 cursor-pointer shrink-0"
                       >
                         Switch to Private Save
                       </button>
@@ -1510,6 +1615,23 @@ function CreateRecipeForm() {
                         {cookTime.trim() && Number(cookTime) > 0 && servings.trim() && Number(servings) > 0 ? "✓" : ""}
                       </span>
                       <span>Cook time &amp; servings specified</span>
+                    </li>
+
+                    <li
+                      className={`flex items-center gap-2 ${
+                        communityQuality.isEnglishLanguage
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] shrink-0 font-bold ${
+                        communityQuality.isEnglishLanguage
+                          ? "bg-emerald-500 text-stone-950"
+                          : "border border-amber-500 text-transparent"
+                      }`}>
+                        {communityQuality.isEnglishLanguage ? "✓" : ""}
+                      </span>
+                      <span>English language (Explore requirement)</span>
                     </li>
                   </>
                 )}

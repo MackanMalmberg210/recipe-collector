@@ -56,6 +56,9 @@ export type AppRecipe = {
   origin: "mock" | "imported" | "user";
   isPublic?: boolean;
   authorName?: string;
+  userId?: string;
+  isQuarantined?: boolean;
+  moderationReason?: string;
 };
 
 export type ImportedRecipe = {

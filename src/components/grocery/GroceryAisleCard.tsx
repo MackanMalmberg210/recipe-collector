@@ -24,39 +24,39 @@ const CATEGORY_HEADER_THEMES: Record<
   { headerBg: string; iconBg: string; countBadge: string }
 > = {
   produce: {
-    headerBg: "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-500/20",
-    iconBg: "bg-emerald-600 text-white shadow-xs",
-    countBadge: "bg-emerald-100 border-emerald-300 text-emerald-950 font-bold dark:bg-emerald-500/20 dark:border-emerald-500/30 dark:text-emerald-300",
+    headerBg: "bg-emerald-50/70 dark:bg-[#16120f] border-emerald-200/80 dark:border-white/8",
+    iconBg: "bg-emerald-600 text-white shadow-xs dark:bg-emerald-500/15 dark:text-emerald-300",
+    countBadge: "bg-emerald-100 border-emerald-300 text-emerald-950 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
   meat_seafood: {
-    headerBg: "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200/80 dark:border-rose-500/20",
-    iconBg: "bg-rose-600 text-white shadow-xs",
-    countBadge: "bg-rose-100 border-rose-300 text-rose-950 font-bold dark:bg-rose-500/20 dark:border-rose-500/30 dark:text-rose-300",
+    headerBg: "bg-rose-50/70 dark:bg-[#16120f] border-rose-200/80 dark:border-white/8",
+    iconBg: "bg-rose-600 text-white shadow-xs dark:bg-rose-500/15 dark:text-rose-300",
+    countBadge: "bg-rose-100 border-rose-300 text-rose-950 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
   dairy_fridge: {
-    headerBg: "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-500/20",
-    iconBg: "bg-amber-600 text-white shadow-xs",
-    countBadge: "bg-amber-100 border-amber-300 text-amber-950 font-bold dark:bg-amber-500/20 dark:border-amber-500/30 dark:text-amber-300",
+    headerBg: "bg-amber-50/70 dark:bg-[#16120f] border-amber-200/80 dark:border-white/8",
+    iconBg: "bg-amber-600 text-white shadow-xs dark:bg-amber-500/15 dark:text-amber-300",
+    countBadge: "bg-amber-100 border-amber-300 text-amber-950 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
   bakery_grains: {
-    headerBg: "bg-orange-50/70 dark:bg-orange-950/20 border-orange-200/80 dark:border-orange-500/20",
-    iconBg: "bg-orange-600 text-white shadow-xs",
-    countBadge: "bg-orange-100 border-orange-300 text-orange-950 font-bold dark:bg-orange-500/20 dark:border-orange-500/30 dark:text-orange-300",
+    headerBg: "bg-orange-50/70 dark:bg-[#16120f] border-orange-200/80 dark:border-white/8",
+    iconBg: "bg-orange-600 text-white shadow-xs dark:bg-yellow-600/15 dark:text-yellow-300",
+    countBadge: "bg-orange-100 border-orange-300 text-orange-950 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
   spices_condiments: {
-    headerBg: "bg-indigo-50/70 dark:bg-indigo-950/20 border-indigo-200/80 dark:border-indigo-500/20",
-    iconBg: "bg-indigo-600 text-white shadow-xs",
-    countBadge: "bg-indigo-100 border-indigo-300 text-indigo-950 font-bold dark:bg-indigo-500/20 dark:border-indigo-500/30 dark:text-indigo-300",
+    headerBg: "bg-indigo-50/70 dark:bg-[#16120f] border-indigo-200/80 dark:border-white/8",
+    iconBg: "bg-indigo-600 text-white shadow-xs dark:bg-orange-500/15 dark:text-orange-300",
+    countBadge: "bg-indigo-100 border-indigo-300 text-indigo-950 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
   beverages: {
-    headerBg: "bg-sky-50/70 dark:bg-sky-950/20 border-sky-200/80 dark:border-sky-500/20",
-    iconBg: "bg-sky-600 text-white shadow-xs",
-    countBadge: "bg-sky-100 border-sky-300 text-sky-950 font-bold dark:bg-sky-500/20 dark:border-sky-500/30 dark:text-sky-300",
+    headerBg: "bg-sky-50/70 dark:bg-[#16120f] border-sky-200/80 dark:border-white/8",
+    iconBg: "bg-sky-600 text-white shadow-xs dark:bg-cyan-500/15 dark:text-cyan-300",
+    countBadge: "bg-sky-100 border-sky-300 text-sky-950 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
   household_other: {
-    headerBg: "bg-slate-100/80 dark:bg-white/5 border-slate-200/90 dark:border-white/10",
-    iconBg: "bg-slate-900 text-white shadow-xs",
-    countBadge: "bg-slate-200 border-slate-300 text-slate-900 font-bold dark:bg-white/10 dark:border-white/15 dark:text-white",
+    headerBg: "bg-slate-100/80 dark:bg-[#16120f] border-slate-200/90 dark:border-white/8",
+    iconBg: "bg-slate-900 text-white shadow-xs dark:bg-purple-500/15 dark:text-purple-300",
+    countBadge: "bg-slate-200 border-slate-300 text-slate-900 font-bold dark:bg-white/5 dark:border-white/10 dark:text-amber-300",
   },
 };
 
@@ -259,11 +259,11 @@ export default function GroceryAisleCard({
                     {/* RECIPE ORIGIN TAG (PIN) */}
                     {item.sourceRecipeTitle && (
                       <div className="flex items-center gap-1.5 mt-1 truncate">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-200/90 dark:bg-white/15 border border-slate-300 dark:border-white/20 text-[11px] font-bold text-slate-900 dark:text-white truncate shadow-2xs">
-                          <svg className="h-3 w-3 text-slate-600 dark:text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-900 text-white border border-slate-900 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300 text-[11px] font-bold truncate shadow-2xs">
+                          <svg className="h-3 w-3 text-slate-300 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
-                          <span className="text-slate-600 dark:text-slate-300 font-semibold">For:</span>
+                          <span className="text-slate-300 dark:text-amber-400/90 font-semibold">For:</span>
                           <span className="truncate">{item.sourceRecipeTitle}</span>
                         </span>
                       </div>
@@ -305,7 +305,7 @@ export default function GroceryAisleCard({
                           onDeleteItem(originalIndex);
                           setConfirmDeleteIndex(null);
                         }}
-                        className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-3 py-1 hover:bg-rose-700 transition cursor-pointer shadow-sm"
+                        className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-3 py-1 hover:bg-rose-700 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:text-rose-300 dark:border dark:border-rose-500/30 transition cursor-pointer shadow-xs"
                         title="Click to confirm removal"
                       >
                         Delete?
@@ -379,7 +379,7 @@ export default function GroceryAisleCard({
                             onDeleteItem(originalIndex);
                             setConfirmDeleteIndex(null);
                           }}
-                          className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-2.5 py-0.5 hover:bg-rose-700 transition cursor-pointer shadow-xs"
+                          className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-2.5 py-0.5 hover:bg-rose-700 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:text-rose-300 dark:border dark:border-rose-500/30 transition cursor-pointer shadow-xs"
                           title="Confirm delete"
                         >
                           Delete?

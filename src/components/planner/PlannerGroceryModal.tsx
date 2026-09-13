@@ -14,6 +14,7 @@ import {
 } from "../../lib/groceries";
 import { useToast } from "../ui/ToastProvider";
 import { ShoppingCartIcon, ClipboardIcon } from "./PlannerIcons";
+import { isIngredientPantryMatch } from "../../lib/pantryMatcher";
 
 type PlannerGroceryModalProps = {
   isOpen: boolean;
@@ -101,11 +102,6 @@ export default function PlannerGroceryModal({
     };
   }, [isOpen]);
 
-  const pantryNamesLower = useMemo(
-    () => pantryItems.map((p) => p.name.toLowerCase().trim()),
-    [pantryItems],
-  );
-
   // Split ingredients into missing (to add) and already owned (pantry / list)
   const { missingItems, alreadyOwnedItems } = useMemo(() => {
     const missing: typeof plannedIngredients = [];
@@ -113,7 +109,7 @@ export default function PlannerGroceryModal({
 
     plannedIngredients.forEach((item) => {
       const norm = item.name.toLowerCase().trim();
-      const inPantry = pantryNamesLower.some((p) => norm.includes(p) || p.includes(norm));
+      const inPantry = pantryItems.some((p) => p.inStock && isIngredientPantryMatch(item.name, p.name));
       const inGrocery = existingGroceryNames.has(norm);
 
       if (inPantry || inGrocery) {
@@ -124,7 +120,7 @@ export default function PlannerGroceryModal({
     });
 
     return { missingItems: missing, alreadyOwnedItems: owned };
-  }, [plannedIngredients, pantryNamesLower, existingGroceryNames]);
+  }, [plannedIngredients, pantryItems, existingGroceryNames]);
 
   if (!isOpen) return null;
 
@@ -252,7 +248,7 @@ export default function PlannerGroceryModal({
                         onClick={() => toggleIngredient(item.name)}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
                           isSelected
-                            ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950 shadow-xs"
+                            ? "border-slate-900 bg-slate-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-stone-950 shadow-xs"
                             : "border-slate-200 bg-white text-slate-400 line-through opacity-70 hover:opacity-100 dark:border-white/10 dark:bg-white/5 dark:text-stone-500"
                         }`}
                       >
@@ -284,8 +280,7 @@ export default function PlannerGroceryModal({
                 <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
                   {alreadyOwnedItems.map((item) => {
                     const isSelected = selectedIngredientNames.has(item.name);
-                    const norm = item.name.toLowerCase().trim();
-                    const inPantry = pantryNamesLower.some((p) => norm.includes(p) || p.includes(norm));
+                    const inPantry = pantryItems.some((p) => p.inStock && isIngredientPantryMatch(item.name, p.name));
 
                     return (
                       <button
@@ -294,7 +289,7 @@ export default function PlannerGroceryModal({
                         onClick={() => toggleIngredient(item.name)}
                         className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
                           isSelected
-                            ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950 shadow-xs font-bold"
+                            ? "border-slate-900 bg-slate-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-stone-950 shadow-xs font-bold"
                             : "border-slate-200 bg-white/70 text-slate-500 hover:text-slate-800 dark:border-white/8 dark:bg-white/3 dark:text-stone-400 dark:hover:text-stone-200"
                         }`}
                       >

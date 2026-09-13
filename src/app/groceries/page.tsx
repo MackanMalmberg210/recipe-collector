@@ -13,6 +13,8 @@ import PantryInventoryView from "../../components/grocery/PantryInventoryView";
 import CookWhatIHaveModal from "../../components/grocery/CookWhatIHaveModal";
 import RenameListModal from "../../components/grocery/RenameListModal";
 import CreateListModal from "../../components/grocery/CreateListModal";
+import SupermarketModeModal from "../../components/grocery/SupermarketModeModal";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { getStoredUserSettings } from "../../lib/settings";
 import {
   GROCERY_CATEGORIES,
@@ -62,6 +64,10 @@ export default function GroceriesPage() {
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isNewListModalOpen, setIsNewListModalOpen] = useState(false);
   const [isRenameListModalOpen, setIsRenameListModalOpen] = useState(false);
+  const [isSupermarketModeOpen, setIsSupermarketModeOpen] = useState(false);
+
+  // Network offline/online tracking
+  const isOnline = useOnlineStatus();
 
   // Load initial data and guarantee capitalization across all stored items
   const loadData = () => {
@@ -99,37 +105,6 @@ export default function GroceriesPage() {
 
       setPantryItems(getPantryInventory());
       setRecipes(getAllRecipes());
-
-      // Background cloud sync for groceries & pantry
-      fetchCloudGroceries("main").then((cloudItems) => {
-        if (cloudItems && cloudItems.length > 0) {
-          setMainListItems((prev) => {
-            const existingNames = new Set(prev.map((i) => i.name.toLowerCase().trim()));
-            const toAdd = cloudItems.filter((c) => !existingNames.has(c.name.toLowerCase().trim()));
-            const merged = [...prev, ...toAdd];
-            localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(merged));
-            return merged;
-          });
-        }
-      }).catch(() => {});
-
-      fetchCloudPantry().then((cloudPantry) => {
-        if (cloudPantry && cloudPantry.length > 0) {
-          setPantryItems((prev) => {
-            const map = new Map(prev.map((p) => [p.name.toLowerCase().trim(), p]));
-            cloudPantry.forEach((cp) => map.set(cp.name.toLowerCase().trim(), cp));
-            const merged = Array.from(map.values());
-            savePantryInventory(merged);
-            return merged;
-          });
-        }
-      }).catch(() => {});
-
-      getAllRecipesWithCloud().then((cloudRecs) => {
-        if (cloudRecs && cloudRecs.length > 0) {
-          setRecipes(cloudRecs);
-        }
-      });
     } catch {
       // Fallback
     }
@@ -138,6 +113,42 @@ export default function GroceriesPage() {
   useEffect(() => {
     loadData();
     setHasHydrated(true);
+
+    // Initial background cloud sync for groceries & pantry (runs once on mount)
+    fetchCloudGroceries("main").then((cloudItems) => {
+      if (cloudItems && cloudItems.length > 0) {
+        setMainListItems((prev) => {
+          const existingNames = new Set(prev.map((i) => i.name.toLowerCase().trim()));
+          const toAdd = cloudItems.filter((c) => !existingNames.has(c.name.toLowerCase().trim()));
+          if (toAdd.length === 0) return prev;
+          const merged = [...prev, ...toAdd];
+          try {
+            localStorage.setItem(GROCERY_LIST_KEY, JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    }).catch(() => {});
+
+    fetchCloudPantry().then((cloudPantry) => {
+      if (cloudPantry && cloudPantry.length > 0) {
+        setPantryItems((prev) => {
+          const map = new Map(prev.map((p) => [p.name.toLowerCase().trim(), p]));
+          cloudPantry.forEach((cp) => map.set(cp.name.toLowerCase().trim(), cp));
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem("pantry_inventory", JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    }).catch(() => {});
+
+    getAllRecipesWithCloud().then((cloudRecs) => {
+      if (cloudRecs && cloudRecs.length > 0) {
+        setRecipes(cloudRecs);
+      }
+    }).catch(() => {});
 
     // Build clean, deduplicated, capitalized autocomplete vocabulary
     const allRecs = getAllRecipes();
@@ -161,10 +172,28 @@ export default function GroceriesPage() {
     window.addEventListener("grocery_list_updated", handleStorageChange);
     window.addEventListener("pantry_inventory_updated", handleStorageChange);
 
+    // Auto-sync when reconnecting from offline supermarket mode
+    const handleReconnect = () => {
+      try {
+        const storedMain = localStorage.getItem(GROCERY_LIST_KEY);
+        if (storedMain) {
+          const items = JSON.parse(storedMain) as StoredGroceryItem[];
+          syncCloudGroceries(items, "main").catch(() => {});
+        }
+        const storedPantry = localStorage.getItem("pantry_inventory");
+        if (storedPantry) {
+          const pItems = JSON.parse(storedPantry) as PantryItem[];
+          syncCloudPantry(pItems).catch(() => {});
+        }
+      } catch {}
+    };
+    window.addEventListener("online", handleReconnect);
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("grocery_list_updated", handleStorageChange);
       window.removeEventListener("pantry_inventory_updated", handleStorageChange);
+      window.removeEventListener("online", handleReconnect);
     };
   }, []);
 
@@ -608,6 +637,8 @@ export default function GroceriesPage() {
           onClearAll={() => setIsClearModalOpen(true)}
           groupByAisle={groupByAisle}
           onToggleGroupByAisle={setGroupByAisle}
+          onOpenSupermarketMode={() => setIsSupermarketModeOpen(true)}
+          isOnline={isOnline}
         />
 
         {/* TAB A: SHOPPING LIST VIEW */}
@@ -636,7 +667,7 @@ export default function GroceriesPage() {
                 <button
                   type="button"
                   onClick={() => setIsCookWhatIHaveOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 cursor-pointer mt-2"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-6 py-3 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 cursor-pointer mt-2"
                 >
                   <svg className="h-4 w-4 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -735,11 +766,11 @@ export default function GroceriesPage() {
                           </div>
                           {item.sourceRecipeTitle && (
                             <div className="flex items-center gap-1.5 mt-1 truncate">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-200/90 dark:bg-white/15 border border-slate-300 dark:border-white/20 text-[11px] font-bold text-slate-900 dark:text-white truncate shadow-2xs">
-                                <svg className="h-3 w-3 text-slate-600 dark:text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-900 text-white border border-slate-900 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300 text-[11px] font-bold truncate shadow-2xs">
+                                <svg className="h-3 w-3 text-slate-300 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                 </svg>
-                                <span className="text-slate-600 dark:text-slate-300 font-semibold">For:</span>
+                                <span className="text-slate-300 dark:text-amber-400/90 font-semibold">For:</span>
                                 <span className="truncate">{item.sourceRecipeTitle}</span>
                               </span>
                             </div>
@@ -779,7 +810,7 @@ export default function GroceriesPage() {
                                 handleDeleteItem(originalIndex);
                                 setConfirmDeleteIndex(null);
                               }}
-                              className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-3 py-1 hover:bg-rose-700 transition cursor-pointer shadow-sm"
+                              className="rounded-full bg-rose-600 text-white text-[11px] font-bold px-3 py-1 hover:bg-rose-700 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:text-rose-300 dark:border dark:border-rose-500/30 transition cursor-pointer shadow-xs"
                               title="Click to confirm removal"
                             >
                               Delete?
@@ -933,6 +964,17 @@ export default function GroceriesPage() {
           onCancel={() => setIsClearModalOpen(false)}
         />
       )}
+
+      {/* SUPERMARKET MODE FULLSCREEN FOCUS MODAL */}
+      <SupermarketModeModal
+        isOpen={isSupermarketModeOpen}
+        onClose={() => setIsSupermarketModeOpen(false)}
+        items={currentItems}
+        listTitle={activeCustomList ? activeCustomList.name : "Main Shopping List"}
+        onToggleBought={handleToggleBought}
+        onUpdateQuantity={handleUpdateQuantity}
+        isOnline={isOnline}
+      />
 
     </div>
   );

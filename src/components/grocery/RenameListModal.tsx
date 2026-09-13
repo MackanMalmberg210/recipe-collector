@@ -62,7 +62,7 @@ export default function RenameListModal({
             placeholder="List name..."
             autoFocus
             required
-            className="w-full rounded-[20px] border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500 dark:focus:border-white"
+            className="w-full rounded-[20px] border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:placeholder-stone-500 dark:focus:bg-white/10 dark:focus:border-amber-400/60"
           />
 
           <div className="flex items-center justify-end gap-2.5 pt-1">
@@ -76,7 +76,7 @@ export default function RenameListModal({
             <button
               type="submit"
               disabled={!name.trim() || name.trim() === currentName}
-              className="rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm active:scale-95 transition cursor-pointer disabled:opacity-40"
+              className="rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm active:scale-95 transition cursor-pointer disabled:opacity-40"
             >
               Save Name
             </button>

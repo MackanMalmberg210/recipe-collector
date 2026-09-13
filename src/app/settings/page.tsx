@@ -332,13 +332,24 @@ function SettingsContent() {
 
   const handleDeleteAccount = async () => {
     try {
+      if (user) {
+        const response = await fetch("/api/user/delete-account", {
+          method: "POST",
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to delete account");
+        }
+      }
       await signOut();
       localStorage.clear();
+      sessionStorage.clear();
       setIsDeleteAccountModalOpen(false);
-      info("Account data deleted.");
+      info("Your account and all personal culinary data have been permanently deleted.");
       router.push("/");
-    } catch {
-      error("Failed to delete account.");
+    } catch (err: unknown) {
+      console.error(err);
+      error("Failed to delete account. Please try again or contact support.");
     }
   };
 

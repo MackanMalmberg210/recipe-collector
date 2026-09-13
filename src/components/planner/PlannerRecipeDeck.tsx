@@ -102,7 +102,7 @@ export default function PlannerRecipeDeck({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search recipes, ingredients, tags..."
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-950 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-[#221b16] dark:text-stone-100 dark:placeholder-stone-500"
+            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-950 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none transition dark:border-white/10 dark:bg-[#221b16] dark:text-stone-100 dark:placeholder-stone-500 dark:focus:bg-[#221b16] dark:focus:border-amber-400/60"
           />
 
           <div className="flex flex-wrap gap-2">
@@ -119,7 +119,7 @@ export default function PlannerRecipeDeck({
                 onClick={() => setFilter(f.id as DeckFilter)}
                 className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
                   filter === f.id
-                    ? "bg-slate-900 text-white shadow-xs border border-slate-900 dark:bg-white dark:text-slate-950"
+                    ? "bg-slate-900 text-white shadow-xs border border-slate-900 dark:bg-amber-500 dark:text-stone-950 dark:border-amber-500"
                     : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-white/10"
                 }`}
               >

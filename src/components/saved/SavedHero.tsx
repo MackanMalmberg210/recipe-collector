@@ -27,7 +27,7 @@ export default function SavedHero() {
         <div className="flex flex-wrap gap-2.5">
           <Link
             href="/create"
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-stone-950 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-md transition hover:bg-stone-800 dark:bg-amber-500 dark:text-stone-950 dark:hover:bg-amber-400"
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-stone-950 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-md transition hover:bg-stone-800 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50"
           >
             + Create recipe
           </Link>

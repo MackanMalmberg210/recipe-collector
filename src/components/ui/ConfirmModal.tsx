@@ -78,8 +78,8 @@ export default function ConfirmModal({
         <div className="flex items-start gap-4">
           <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
             isDestructive
-              ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-              : "bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white"
+              ? "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-500/30 shadow-xs"
+              : "bg-slate-900 text-white dark:bg-amber-500 dark:text-stone-950 shadow-sm"
           }`}>
             {isDestructive ? (
               <svg className="h-5 w-5 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +108,7 @@ export default function ConfirmModal({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 transition cursor-pointer"
+            className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 transition cursor-pointer"
           >
             {cancelLabel}
           </button>
@@ -120,7 +120,7 @@ export default function ConfirmModal({
             className={`rounded-full px-6 py-2.5 text-xs sm:text-sm font-bold transition active:scale-95 cursor-pointer shadow-sm ${
               isDestructive
                 ? "bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
             }`}
           >
             {isCountdownActive ? `${confirmLabel} (${secondsLeft}s)` : confirmLabel}

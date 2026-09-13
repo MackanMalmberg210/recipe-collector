@@ -170,17 +170,17 @@ export default function MealPrepModal({
                   onClick={() => toggleDay(day)}
                   className={`flex items-center justify-between rounded-2xl border p-3 text-xs font-semibold transition cursor-pointer ${
                     isSelected
-                      ? "border-slate-900 bg-slate-900 text-white font-bold dark:border-white dark:bg-white dark:text-slate-950 shadow-xs"
+                      ? "border-slate-900 bg-slate-900 text-white font-bold dark:border-amber-500 dark:bg-amber-500 dark:text-stone-950 shadow-xs"
                       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/8 dark:bg-white/4 dark:text-stone-400 dark:hover:bg-white/8"
                   }`}
                 >
                   <div className="text-left">
                     <p className="font-bold">{formatWeekDay(day)}</p>
-                    <p className={`text-[10px] ${isSelected ? "text-slate-300 dark:text-slate-700" : "text-slate-400"}`}>Lunch slot</p>
+                    <p className={`text-[10px] ${isSelected ? "text-slate-300 dark:text-stone-900" : "text-slate-400"}`}>Lunch slot</p>
                   </div>
                   <span className={`flex h-5 w-5 items-center justify-center rounded-lg text-xs font-black ${
                     isSelected
-                      ? "bg-white text-slate-900 dark:bg-slate-950 dark:text-white"
+                      ? "bg-white text-slate-900 dark:bg-stone-950 dark:text-amber-400"
                       : "border border-slate-300 dark:border-white/20"
                   }`}>
                     {isSelected ? "✓" : ""}

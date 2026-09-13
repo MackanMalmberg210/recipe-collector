@@ -63,23 +63,23 @@ export default function CookWhatIHaveModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-5xl 2xl:max-w-6xl max-h-[90vh] overflow-hidden rounded-[32px] border border-slate-200/90 bg-[#FCFCFC] text-slate-900 shadow-[0_25px_80px_rgba(0,0,0,0.3)] dark:border-white/12 dark:bg-[#121212] dark:text-stone-100 cursor-default animate-in zoom-in-95 duration-150"
+        className="relative flex flex-col w-full max-w-5xl 2xl:max-w-6xl max-h-[90vh] overflow-hidden rounded-[32px] border border-slate-200/90 bg-[#FCFCFC] text-slate-900 shadow-[0_25px_80px_rgba(0,0,0,0.3)] dark:border-white/12 dark:bg-[#16120f] dark:text-stone-100 cursor-default animate-in zoom-in-95 duration-150"
       >
         
         {/* MODAL HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 sm:px-8 py-5 border-b border-slate-200/80 bg-white dark:border-white/8 dark:bg-[#161616]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 sm:px-8 py-5 border-b border-slate-200/80 bg-white dark:border-white/8 dark:bg-[#1d1612]">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-stone-300">
-              <svg className="h-4 w-4 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-amber-400">
+              <svg className="h-4 w-4 text-slate-900 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V20H6v-6.13zM6 17h12" />
               </svg>
               <span>Pantry Matcher</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-[#fff8ef] tracking-tight">
               {highlightedMatch ? "Recommended Dinner" : "What You Can Cook Tonight"}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-stone-400">
-              Matched against your <strong className="text-slate-900 dark:text-white font-bold">{inStockCount} pantry staples</strong>. Ranked by ingredient availability.
+              Matched against your <strong className="text-slate-900 dark:text-amber-300 font-bold">{inStockCount} pantry staples</strong>. Ranked by ingredient availability.
             </p>
           </div>
 
@@ -88,10 +88,10 @@ export default function CookWhatIHaveModal({
               <button
                 type="button"
                 onClick={handleRollDice}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 text-xs sm:text-sm shadow-sm transition-all duration-150 active:scale-95 cursor-pointer dark:rounded-2xl dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border dark:border-amber-600/60 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.2)]"
                 title={highlightedMatch ? "Pick another recipe" : "Pick a random high-scoring dinner recipe"}
               >
-                <svg className="h-4 w-4 shrink-0 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 shrink-0 text-white dark:text-stone-950 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>{highlightedMatch ? "Pick Another" : "Pick for Me"}</span>
@@ -131,7 +131,7 @@ export default function CookWhatIHaveModal({
               </div>
 
               {/* Big Spotlight Card */}
-              <div className="rounded-[32px] border border-slate-200/90 bg-white p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden dark:bg-[#161616] dark:border-white/10">
+              <div className="rounded-[32px] border border-slate-200/90 bg-white p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden dark:bg-[#1f1915]/95 dark:border-white/10">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start relative z-10">
                   
                   {/* Large Appetizing Image */}
@@ -147,8 +147,8 @@ export default function CookWhatIHaveModal({
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold tracking-wide shadow-md ${
                           highlightedMatch.missingIngredientsCount === 0
-                            ? "bg-emerald-600 text-white font-bold"
-                            : "bg-slate-900/90 backdrop-blur-md text-white font-bold"
+                            ? "bg-emerald-600 text-white dark:bg-emerald-500/25 dark:text-emerald-300 dark:border dark:border-emerald-500/40"
+                            : "bg-slate-900/90 backdrop-blur-md text-white dark:bg-amber-500/20 dark:text-amber-300 dark:border dark:border-amber-500/40"
                         }`}
                       >
                         {highlightedMatch.missingIngredientsCount === 0 ? (
@@ -172,10 +172,10 @@ export default function CookWhatIHaveModal({
                   {/* Recipe Content & Actions */}
                   <div className="flex-1 space-y-4 w-full">
                     <div>
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-stone-400">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-amber-400">
                         <span>Spotlight Recommendation</span>
                       </div>
-                      <h3 className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white mt-1 tracking-tight leading-snug">
+                      <h3 className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-[#fff8ef] mt-1 tracking-tight leading-snug">
                         {highlightedMatch.recipe.title}
                       </h3>
                       <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-stone-400 mt-1 flex-wrap">
@@ -214,7 +214,7 @@ export default function CookWhatIHaveModal({
                             return (
                               <span
                                 key={idx}
-                                className="rounded-full bg-rose-100/90 border border-rose-300 px-3 py-1 text-xs font-bold text-rose-950 dark:bg-rose-950/50 dark:border-rose-500/40 dark:text-rose-200 shadow-2xs"
+                                className="rounded-full bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-300 px-3 py-1 text-xs font-semibold"
                               >
                                 {cleanName}
                               </span>
@@ -237,7 +237,7 @@ export default function CookWhatIHaveModal({
                             );
                             onClose();
                           }}
-                          className="w-full sm:flex-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer text-center"
+                          className="w-full sm:flex-1 rounded-full border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:hover:bg-amber-400/20 dark:text-amber-300 py-3.5 text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer text-center"
                         >
                           + Add {highlightedMatch.missingIngredientsCount} Missing to List
                         </button>
@@ -246,7 +246,7 @@ export default function CookWhatIHaveModal({
                       <Link
                         href={`/recipes/${highlightedMatch.recipe.id}`}
                         onClick={onClose}
-                        className="w-full sm:flex-1 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 py-3.5 text-xs sm:text-sm font-bold transition text-center shadow-sm active:scale-95"
+                        className="w-full sm:flex-1 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 py-3.5 text-xs sm:text-sm font-bold transition text-center shadow-sm active:scale-95"
                       >
                         Cook This Recipe →
                       </Link>
@@ -292,7 +292,7 @@ export default function CookWhatIHaveModal({
                 return (
                   <div
                     key={recipe.id}
-                    className="flex flex-col justify-between rounded-[28px] border border-slate-200/90 bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] space-y-5 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-[#121212] dark:hover:border-white/20 transition duration-200"
+                    className="flex flex-col justify-between rounded-[28px] border border-slate-200/90 bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] space-y-5 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-[#1f1915]/95 dark:hover:border-amber-400/40 dark:hover:bg-[#231c17] transition duration-200"
                   >
                     <div className="space-y-4">
                       
@@ -314,8 +314,8 @@ export default function CookWhatIHaveModal({
                             <span
                               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-tight shadow-xs ${
                                 isFullMatch
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-slate-100 text-slate-800 dark:bg-white/10 dark:text-slate-200 border border-slate-200/90 dark:border-white/10"
+                                  ? "bg-emerald-600 text-white dark:bg-emerald-500/20 dark:text-emerald-300 dark:border dark:border-emerald-500/50"
+                                  : "bg-slate-100 text-slate-800 border border-slate-200/90 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/40"
                               }`}
                             >
                               {isFullMatch ? (
@@ -331,11 +331,11 @@ export default function CookWhatIHaveModal({
                             </span>
                           </div>
 
-                          <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">
+                          <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#fff8ef] leading-snug line-clamp-2">
                             {recipe.title}
                           </h3>
 
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-stone-400 font-medium flex-wrap">
                             {recipe.cookTime && (
                               <span className="inline-flex items-center gap-1">
                                 <svg className="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -366,7 +366,7 @@ export default function CookWhatIHaveModal({
                             {cleanMissingNames.slice(0, 5).map((cleanName, idx) => (
                               <span
                                 key={idx}
-                                className="rounded-full bg-rose-100/90 border border-rose-300 text-rose-950 dark:bg-rose-950/50 dark:border-rose-500/40 dark:text-rose-200 px-3 py-1 text-xs font-bold shadow-2xs"
+                                className="rounded-full bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-300 px-3 py-1 text-xs font-semibold"
                               >
                                 {cleanName}
                               </span>
@@ -391,7 +391,7 @@ export default function CookWhatIHaveModal({
                             onAddMissingToGroceryList(missingItems, recipe.title, recipe.id);
                             onClose();
                           }}
-                          className="w-full sm:flex-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 text-xs font-bold transition shadow-sm active:scale-95 text-center cursor-pointer"
+                          className="w-full sm:flex-1 rounded-full border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:hover:bg-amber-400/20 dark:text-amber-300 py-2.5 text-xs font-bold transition shadow-xs active:scale-95 text-center cursor-pointer"
                         >
                           + Add {missingIngredientsCount} Missing
                         </button>
@@ -400,7 +400,7 @@ export default function CookWhatIHaveModal({
                       <Link
                         href={`/recipes/${recipe.id}`}
                         onClick={onClose}
-                        className="w-full sm:flex-1 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 py-2.5 text-xs font-bold transition text-center shadow-sm active:scale-95"
+                        className="w-full sm:flex-1 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 py-2.5 text-xs font-bold transition shadow-xs active:scale-95 text-center cursor-pointer"
                       >
                         View Recipe →
                       </Link>

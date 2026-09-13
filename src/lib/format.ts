@@ -158,7 +158,7 @@ export function canonicalizeIngredients(raw: string): string[] {
   if (clean === "salt" || clean.includes("kosher salt") || clean.includes("sea salt")) {
     return ["Salt"];
   }
-  if (clean.includes("salmon") || clean.includes("lax")) {
+  if (clean.includes("salmon") || /\blax\b/i.test(clean) || /\blaxfilé\b/i.test(clean)) {
     return ["Salmon"];
   }
   if (clean.includes("chicken") || clean.includes("kyckling")) {

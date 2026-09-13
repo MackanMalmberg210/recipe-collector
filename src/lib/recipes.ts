@@ -49,6 +49,8 @@ export type RecipeDbRow = {
   is_public?: boolean | null;
   author_name?: string | null;
   created_at?: string;
+  is_quarantined?: boolean | null;
+  moderation_reason?: string | null;
 };
 
 // Mapper: Supabase DB row to AppRecipe
@@ -92,6 +94,9 @@ export function mapDbRowToRecipe(row: RecipeDbRow): AppRecipe {
         : normalized.tags,
     isPublic: Boolean(row.is_public),
     authorName: row.author_name || undefined,
+    userId: row.user_id || undefined,
+    isQuarantined: Boolean(row.is_quarantined),
+    moderationReason: row.moderation_reason || undefined,
   };
 }
 

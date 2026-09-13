@@ -167,7 +167,7 @@ export default function CookbookEmptyState({
             <div>
               <svg className="h-7 w-7 text-slate-900 dark:text-amber-500 mb-4 transition-transform duration-200 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <circle cx="12" cy="12" r="10" />
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" />
               </svg>
               <h3 className="font-bold text-base sm:text-lg text-slate-950 dark:text-stone-100">
                 Explore &amp; Star Dishes
