@@ -308,8 +308,9 @@ const CATEGORY_KEYWORDS: Record<GroceryCategory, string[]> = {
     "gochujang", "sriracha", "sambal oelek", "tabasco", "chilisås", "ketchup", "mustard", "senap",
     "dijonsenap", "mayo", "majonnäs", "mayonnaise", "salt", "flingsalt", "havssalt", "kosher salt",
     "peppar", "svartpeppar", "vitpeppar", "black pepper", "white pepper", "paprika", "paprikapulver",
-    "rökt paprika", "smoked paprika", "cumin", "spiskummin", "oregano", "thyme", "timjan", "rosemary",
-    "rosmarin", "basilika", "curry", "currypulver", "gurkmeja", "turmeric", "kanel", "cinnamon",
+    "rökt paprika", "smoked paprika", "cumin", "spiskummin", "oregano", "torkad oregano", "dried oregano",
+    "thyme", "torkad timjan", "dried thyme", "rosemary", "torkad rosmarin", "dried rosemary",
+    "torkad basilika", "dried basil", "curry", "currypulver", "gurkmeja", "turmeric", "kanel", "cinnamon",
     "kardemumma", "cardamom", "ingefära pulver", "ground ginger", "muskot", "nutmeg", "lagerblad",
     "bay leaves", "chili flakes", "chiliflakes", "garlic powder", "vitlökspulver", "onion powder",
     "lökpulver", "honey", "honung", "syrup", "sirap", "lönnsirap", "maple syrup", "buljong",
@@ -326,7 +327,7 @@ const CATEGORY_KEYWORDS: Record<GroceryCategory, string[]> = {
     "potatoes", "potatis", "färskpotatis", "sweet potato", "sötpotatis", "spinach", "spenat",
     "babyspenat", "kale", "grönkål", "herb", "herbs", "ört", "örter", "parsley", "persilja",
     "bladpersilja", "dill", "färsk dill", "cilantro", "koriander", "färsk koriander", "basil",
-    "basilika", "färsk basilika", "mint", "mynta", "färsk mynta", "ginger", "ingefära", "färsk ingefära",
+    "fresh basil", "basilika", "färsk basilika", "krukbasilika", "mint", "mynta", "färsk mynta", "ginger", "ingefära", "färsk ingefära",
     "chili", "röd chili", "jalapeno", "habanero", "bell pepper", "paprika", "röd paprika", "grön paprika",
     "gul paprika", "carrot", "morot", "morötter", "cucumber", "gurka", "slanggurka", "lettuce",
     "sallad", "isbergssallad", "romansallad", "rucola", "arugula", "machesallad", "apple", "apples",
@@ -360,15 +361,15 @@ export function categorizeGroceryItem(itemName: string): GroceryCategory {
     } catch {}
   }
 
-  // 2. Keyword scanning in strict priority order (Household -> Meat -> Dairy -> Bakery -> Spices -> Beverages -> Produce)
+  // 2. Keyword scanning in strict priority order (Household -> Meat -> Dairy -> Bakery -> Produce -> Spices -> Beverages)
   const priorityOrder: GroceryCategory[] = [
     "household_other",
     "meat_seafood",
     "dairy_fridge",
     "bakery_grains",
+    "produce",
     "spices_condiments",
     "beverages",
-    "produce",
   ];
 
   // Token-based exact matching or word boundaries
