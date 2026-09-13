@@ -7,6 +7,8 @@ import { AuthProvider } from "../contexts/AuthContext";
 import FloatingGroceryDrawer from "../components/grocery/FloatingGroceryDrawer";
 import AuthCallbackListener from "../components/auth/AuthCallbackListener";
 import Footer from "../components/Footer";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: {
@@ -57,6 +59,8 @@ export default function RootLayout({
             <AuthCallbackListener />
           </ToastProvider>
         </AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

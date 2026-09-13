@@ -12,8 +12,8 @@ Detta dokument samlar alla krav, kontroller och förbättringar som ska genomfö
   - `pnpm audit --prod` verifierad med 0 sårbarheter i produktionsberoenden.
   - Verifierat API-routes: Rate limiting (sliding window per IP på auth, import, vision, translate), strikt payload-begränsning och input-sanering.
   - Säkerställ att Supabase Row Level Security (RLS) är 100 % tätt för alla tabeller (`recipes`, `pantry_items`, `grocery_items`, `user_profiles`).
-- [ ] **Web Analytics:**
-  - Aktivera och konfigurera Vercel Web Analytics & Speed Insights (eller integritetsvänligt alternativ som Plausible).
+- [x] **Web Analytics:**
+  - Aktiverat och konfigurerat `@vercel/analytics` och `@vercel/speed-insights` i `src/app/layout.tsx` för integritetsvänlig besöksstatistik och realtidsmätning av Core Web Vitals utan cookies.
 - [x] **Automatiska tester:**
   - Vitest-svit uppsatt med 35 tester (100 % pass) för kärnlogik och edge cases:
     - Skafferimatchning & synonymhantering (`tests/pantryMatcher.test.ts`).
