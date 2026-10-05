@@ -59,10 +59,12 @@ returns boolean language sql security definer as $$
 $$;
 
 -- Policies for user_profiles
+drop policy if exists "Users can view own profile or admins can view all" on public.user_profiles;
 create policy "Users can view own profile or admins can view all"
   on public.user_profiles for select
   using (auth.uid() = user_id or public.is_admin());
 
+drop policy if exists "Users can update own settings" on public.user_profiles;
 create policy "Users can update own settings"
   on public.user_profiles for update
   using (auth.uid() = user_id or public.is_admin())
@@ -72,6 +74,7 @@ create policy "Users can update own settings"
     or public.is_admin()
   );
 
+drop policy if exists "Users can insert own profile" on public.user_profiles;
 create policy "Users can insert own profile"
   on public.user_profiles for insert
   with check (auth.uid() = user_id);
@@ -111,6 +114,7 @@ create index if not exists idx_recipes_category on public.recipes(category);
 create index if not exists idx_recipes_meal_type on public.recipes(meal_type);
 
 -- Policies for recipes
+drop policy if exists "Public recipes viewable by everyone" on public.recipes;
 create policy "Public recipes viewable by everyone"
   on public.recipes for select
   using (
@@ -119,14 +123,17 @@ create policy "Public recipes viewable by everyone"
     or public.is_admin()
   );
 
+drop policy if exists "Authenticated users can create recipes" on public.recipes;
 create policy "Authenticated users can create recipes"
   on public.recipes for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own recipes or admins update any" on public.recipes;
 create policy "Users can update own recipes or admins update any"
   on public.recipes for update
   using (auth.uid() = user_id or public.is_admin());
 
+drop policy if exists "Users can delete own recipes or admins delete any" on public.recipes;
 create policy "Users can delete own recipes or admins delete any"
   on public.recipes for delete
   using (auth.uid() = user_id or public.is_admin());
@@ -151,6 +158,7 @@ alter table public.recipe_cook_photos enable row level security;
 
 create index if not exists idx_cook_photos_recipe on public.recipe_cook_photos(recipe_id);
 
+drop policy if exists "Public can view non-quarantined cook photos" on public.recipe_cook_photos;
 create policy "Public can view non-quarantined cook photos"
   on public.recipe_cook_photos for select
   using (
@@ -159,14 +167,17 @@ create policy "Public can view non-quarantined cook photos"
     or public.is_admin()
   );
 
+drop policy if exists "Authenticated users can add cook photos" on public.recipe_cook_photos;
 create policy "Authenticated users can add cook photos"
   on public.recipe_cook_photos for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own cook photo captions or admins can moderate" on public.recipe_cook_photos;
 create policy "Users can update own cook photo captions or admins can moderate"
   on public.recipe_cook_photos for update
   using (auth.uid() = user_id or public.is_admin());
 
+drop policy if exists "Users can delete own cook photos or admins can delete any" on public.recipe_cook_photos;
 create policy "Users can delete own cook photos or admins can delete any"
   on public.recipe_cook_photos for delete
   using (auth.uid() = user_id or public.is_admin());
@@ -183,6 +194,7 @@ create table if not exists public.user_favorites (
 
 alter table public.user_favorites enable row level security;
 
+drop policy if exists "Users manage own favorites" on public.user_favorites;
 create policy "Users manage own favorites"
   on public.user_favorites for all
   using (auth.uid() = user_id)
@@ -210,6 +222,7 @@ alter table public.grocery_items enable row level security;
 
 create index if not exists idx_groceries_user_list on public.grocery_items(user_id, list_name);
 
+drop policy if exists "Users manage own groceries" on public.grocery_items;
 create policy "Users manage own groceries"
   on public.grocery_items for all
   using (auth.uid() = user_id)
@@ -230,6 +243,7 @@ create table if not exists public.pantry_items (
 
 alter table public.pantry_items enable row level security;
 
+drop policy if exists "Users manage own pantry inventory" on public.pantry_items;
 create policy "Users manage own pantry inventory"
   on public.pantry_items for all
   using (auth.uid() = user_id)
@@ -250,6 +264,7 @@ create table if not exists public.meal_plans (
 
 alter table public.meal_plans enable row level security;
 
+drop policy if exists "Users manage own meal plan" on public.meal_plans;
 create policy "Users manage own meal plan"
   on public.meal_plans for all
   using (auth.uid() = user_id)
@@ -271,14 +286,17 @@ create table if not exists public.content_reports (
 
 alter table public.content_reports enable row level security;
 
+drop policy if exists "Anyone can submit a content report" on public.content_reports;
 create policy "Anyone can submit a content report"
   on public.content_reports for insert
   with check (true);
 
+drop policy if exists "Only admins can view and resolve reports" on public.content_reports;
 create policy "Only admins can view and resolve reports"
   on public.content_reports for select
   using (public.is_admin());
 
+drop policy if exists "Only admins can update reports" on public.content_reports;
 create policy "Only admins can update reports"
   on public.content_reports for update
   using (public.is_admin());
@@ -312,10 +330,12 @@ values ('recipe-media', 'recipe-media', true)
 on conflict (id) do update set public = true;
 
 -- Storage Policies
+drop policy if exists "Public can read recipe-media images" on storage.objects;
 create policy "Public can read recipe-media images"
   on storage.objects for select
   using (bucket_id = 'recipe-media');
 
+drop policy if exists "Authenticated users can upload recipe-media" on storage.objects;
 create policy "Authenticated users can upload recipe-media"
   on storage.objects for insert
   with check (
@@ -324,6 +344,7 @@ create policy "Authenticated users can upload recipe-media"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "Users can delete own recipe-media or admins can delete any" on storage.objects;
 create policy "Users can delete own recipe-media or admins can delete any"
   on storage.objects for delete
   using (
