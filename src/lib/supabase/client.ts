@@ -2,8 +2,8 @@ import { createClient as createSupabaseClient, type SupabaseClient } from "@supa
 
 let clientInstance: SupabaseClient | null = null;
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
 export function createClient(): SupabaseClient {
   if (clientInstance) return clientInstance;
@@ -11,15 +11,19 @@ export function createClient(): SupabaseClient {
   try {
     clientInstance = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
+        persistSession: typeof window !== "undefined",
+        autoRefreshToken: typeof window !== "undefined",
+        detectSessionInUrl: typeof window !== "undefined",
         storage: typeof window !== "undefined" ? window.localStorage : undefined,
       },
     });
     return clientInstance;
   } catch (err) {
     console.warn("Error creating Supabase client:", err);
-    return createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    clientInstance = createSupabaseClient(
+      SUPABASE_URL || "https://placeholder-project.supabase.co",
+      SUPABASE_ANON_KEY || "placeholder-anon-key"
+    );
+    return clientInstance;
   }
 }

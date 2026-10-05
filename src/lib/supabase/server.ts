@@ -1,12 +1,15 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+
 export async function createClient() {
     const cookieStore = await cookies(); // Retrieves next.js cookie-handler
 
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
         {
             cookies: {
                 // Retreives cookies (to see who's logged in)
