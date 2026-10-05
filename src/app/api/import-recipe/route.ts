@@ -811,11 +811,6 @@ async function callSingleGeminiModel(
 }
 
 async function extractRecipeFromTextWithAi(rawText: string, geminiKey: string, url = "", authorName = "", language = "English"): Promise<ImportedRecipe | null> {
-  rawText: string,
-  geminiKey: string,
-  url = "",
-  authorName = ""
-): Promise<ImportedRecipe | null> {
   const prompt = `Convert this raw recipe text into a clean standardized recipe with ingredients, amounts, and step-by-step instructions. IMPORTANT: Translate the output into ${language}.\\n\\n${rawText}`;
   
   // Parallel race: launch top fast models simultaneously. The first valid response wins and aborts the others!
@@ -964,6 +959,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const targetUrl = typeof body?.url === "string" ? body.url.trim() : "";
     const rawText = typeof body?.text === "string" ? body.text.trim() : "";
+    const SUPPORTED_LANGUAGES = ["English", "Swedish", "Norwegian", "Danish", "Finnish", "German", "Spanish", "French"];
+    const language = SUPPORTED_LANGUAGES.includes(body?.language) ? (body.language as string) : "English";
 
     if (!targetUrl && !rawText) {
       return NextResponse.json(
