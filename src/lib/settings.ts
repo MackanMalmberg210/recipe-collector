@@ -22,6 +22,7 @@ export type UserSettings = {
   strictDietaryFilter: boolean;
   autoScaleRecipes: boolean;
   autoAddLowPantryToList: boolean;
+  preferredLanguage: string;
   subscriptionTier: "free" | "pro";
   monthlyAiScansUsed?: number;
   monthlyAiScansResetDate?: string;
@@ -36,6 +37,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   strictDietaryFilter: false, // Default is OFF as requested
   autoScaleRecipes: true,
   autoAddLowPantryToList: true, // Auto-add low pantry staples to shopping list
+  preferredLanguage: "Swedish",
   subscriptionTier: "free",
   monthlyAiScansUsed: 0,
   monthlyAiScansResetDate: "",
@@ -178,3 +180,6 @@ export function isRecipeDietaryCompatible(recipe: AppRecipe, preferences: Dietar
 
   return true;
 }
+
+
+

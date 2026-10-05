@@ -8,6 +8,7 @@ import { addItemsToGroceryList } from "../../lib/home";
 import { compressImageForOcr } from "../../lib/imageCompressor";
 import { capitalizeFirstLetter } from "../../lib/culinaryTextSanitizer";
 import { useToast } from "../ui/ToastProvider";
+import { useAuth } from "../../contexts/AuthContext";
 import ChefProModal from "../subscription/ChefProModal";
 import {
   getStoredUserSettings,
@@ -46,6 +47,7 @@ export default function ChefVisionStudio({
   const { success, error } = useToast();
 
   const [activeMode, setActiveMode] = useState<VisionMode>(initialMode);
+  const { session } = useAuth();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [userNotes, setUserNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -239,11 +241,15 @@ export default function ChefVisionStudio({
     try {
       const res = await fetch("/api/vision-scan", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           image: selectedImage,
           mode: activeMode,
           userNotes: userNotes.trim() || undefined,
+          language: getStoredUserSettings().preferredLanguage,
         }),
       });
 
@@ -961,3 +967,4 @@ export default function ChefVisionStudio({
     </div>
   );
 }
+

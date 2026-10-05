@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Recipe Collector • Culinary Studio & Planner",
-    short_name: "Recipe Collector",
-    description: "A distraction-free studio for recipes, smart meal planning, and everyday cooking.",
+    name: "Culineer • Your Culinary Co-pilot",
+    short_name: "Culineer",
+    description: "Your everyday culinary co-pilot for saving recipes, smart meal planning, and distraction-free cooking.",
     start_url: "/",
     display: "standalone",
     background_color: "#110d0b",

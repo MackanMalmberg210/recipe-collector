@@ -139,11 +139,10 @@ export function upgradeToHighResImageUrl(imageUrl: string): string {
 function formatNutrientValue(amount?: number | null, unit?: string | null) {
    if (typeof amount !== "number" || !Number.isFinite(amount)) return undefined;
 
-   const roundedAmount = Number.isInteger(amount)
-      ? amount
-      : Number(amount.toFixed(1));
+   const roundedAmount = Math.round(amount);
+   const trimmedUnit = unit ? unit.trim() : "";
 
-   return `${roundedAmount}${unit ? ` ${unit}` : ""}`;
+   return `${roundedAmount}${trimmedUnit}`;
 }
 
 type SpoonacularNutrient = {

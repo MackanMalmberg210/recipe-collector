@@ -1,6 +1,16 @@
 import type { AppRecipe } from "./types";
 
 export const MEAL_PLANNER_KEY = "mealPlanner";
+export const MEAL_PLANNER_WEEK_KEY = "mealPlannerWeekKey";
+
+export function getISOWeekKey(d = new Date()): string {
+   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+   const dayNum = date.getUTCDay() || 7;
+   date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+   const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+   return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
 
 export const WEEK_DAYS = [
    "monday",
@@ -173,6 +183,16 @@ export function getStoredMealPlan(): MealPlan {
       return createEmptyMealPlan();
    }
 
+   const storedWeek = localStorage.getItem(MEAL_PLANNER_WEEK_KEY);
+   const currentWeek = getISOWeekKey();
+
+   // If the stored plan is from a previous week, start clean for the new week!
+   if (storedWeek && storedWeek !== currentWeek) {
+      localStorage.removeItem(MEAL_PLANNER_KEY);
+      localStorage.setItem(MEAL_PLANNER_WEEK_KEY, currentWeek);
+      return createEmptyMealPlan();
+   }
+
    const stored = localStorage.getItem(MEAL_PLANNER_KEY);
 
    if (!stored) {
@@ -195,6 +215,7 @@ export function saveMealPlan(mealPlan: MealPlan) {
    if (typeof window === "undefined") return;
 
    localStorage.setItem(MEAL_PLANNER_KEY, JSON.stringify(mealPlan));
+   localStorage.setItem(MEAL_PLANNER_WEEK_KEY, getISOWeekKey());
 
    // Background cloud sync to Supabase
    import("./sync/cloudSync").then(({ syncCloudMealPlan }) => {
@@ -220,6 +241,7 @@ export async function getStoredMealPlanWithCloud(): Promise<MealPlan> {
          }
          if (hasCloud && typeof window !== "undefined") {
             localStorage.setItem(MEAL_PLANNER_KEY, JSON.stringify(merged));
+            localStorage.setItem(MEAL_PLANNER_WEEK_KEY, getISOWeekKey());
          }
          return merged;
       }
@@ -231,6 +253,7 @@ export function clearStoredMealPlan() {
    if (typeof window === "undefined") return;
 
    localStorage.removeItem(MEAL_PLANNER_KEY);
+   localStorage.removeItem(MEAL_PLANNER_WEEK_KEY);
 
    // Background clear in Supabase
    import("./sync/cloudSync").then(({ syncCloudMealPlan }) => {

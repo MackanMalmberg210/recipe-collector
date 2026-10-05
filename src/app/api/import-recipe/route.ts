@@ -1,45 +1,11 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
-import { execFile } from "child_process";
-import { promisify } from "util";
 import type { ImportedRecipe, IngredientGroup, NutritionInfo, RecipeCategory, MealType } from "../../../lib/types";
 import { normalizeRecipe } from "../../../lib/recipeNormalizer";
 import { parseIngredientList } from "../../../lib/ingredientParser";
 import { sanitizeCulinaryText } from "../../../lib/culinaryTextSanitizer";
 import { validatePublicRecipeUrl } from "../../../lib/security/urlValidator";
 import { checkRateLimit, getClientIp } from "../../../lib/security/rateLimiter";
-
-const execFileAsync = promisify(execFile);
-
-async function fetchWithCurl(url: string): Promise<string | null> {
-  try {
-    const curlCmd = process.platform === "win32" ? "curl.exe" : "curl";
-    const { stdout } = await execFileAsync(
-      curlCmd,
-      [
-        "-s",
-        "-L",
-        "--compressed",
-        "--max-time",
-        "15",
-        "-A",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        "-H",
-        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "-H",
-        "Accept-Language: en-US,en;q=0.9",
-        url,
-      ],
-      { maxBuffer: 15 * 1024 * 1024 }
-    );
-    if (stdout && stdout.length > 500) {
-      return stdout;
-    }
-  } catch (err) {
-    console.warn("Resilient curl fetch fallback failed:", err);
-  }
-  return null;
-}
 
 type JsonLdNode = {
   "@type"?: string | string[];
@@ -844,13 +810,13 @@ async function callSingleGeminiModel(
   return JSON.parse(jsonText);
 }
 
-async function extractRecipeFromTextWithAi(
+async function extractRecipeFromTextWithAi(rawText: string, geminiKey: string, url = "", authorName = "", language = "English"): Promise<ImportedRecipe | null> {
   rawText: string,
   geminiKey: string,
   url = "",
   authorName = ""
 ): Promise<ImportedRecipe | null> {
-  const prompt = `Convert this raw recipe text into a clean standardized recipe with ingredients, amounts, and step-by-step instructions:\n\n${rawText}`;
+  const prompt = `Convert this raw recipe text into a clean standardized recipe with ingredients, amounts, and step-by-step instructions. IMPORTANT: Translate the output into ${language}.\\n\\n${rawText}`;
   
   // Parallel race: launch top fast models simultaneously. The first valid response wins and aborts the others!
   const candidateModels = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
@@ -1017,7 +983,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const aiRecipe = await extractRecipeFromTextWithAi(rawText, geminiKey, targetUrl, "");
+      const aiRecipe = await extractRecipeFromTextWithAi(rawText, geminiKey, targetUrl, "", language);
       if (!aiRecipe || !aiRecipe.ingredients || aiRecipe.ingredients.length === 0) {
         return NextResponse.json(
           { error: "Could not identify a recipe in the provided text. Please ensure it contains ingredients or cooking instructions." },
@@ -1058,7 +1024,7 @@ export async function POST(request: Request) {
           const author = oembedData.author_name || "";
 
           if (geminiKey && caption) {
-            const aiRecipe = await extractRecipeFromTextWithAi(caption, geminiKey, safeUrl, author);
+            const aiRecipe = await extractRecipeFromTextWithAi(caption, geminiKey, safeUrl, author, language);
             if (aiRecipe && aiRecipe.ingredients.length > 0) {
               const normalized = normalizeRecipe({
                 ...aiRecipe,
@@ -1116,17 +1082,33 @@ export async function POST(request: Request) {
 
         html = await response.text();
       } else {
-        console.warn(`Standard fetch returned HTTP ${response.status} (${response.statusText}). Trying resilient curl fallback...`);
+        console.warn(`Standard fetch returned HTTP ${response.status} (${response.statusText}).`);
       }
     } catch (fetchErr) {
-      console.warn("Standard fetch failed, attempting resilient curl fallback:", fetchErr);
+      console.warn("Standard fetch failed, attempting resilient fallback:", fetchErr);
     }
 
-    // 3. RESILIENT FALLBACK: If blocked by Cloudflare / anti-bot (e.g. 402/403 on Allrecipes, Dotdash Meredith)
+    // 3. RESILIENT FALLBACK: If blocked by Cloudflare / anti-bot (e.g. 402/403)
     if (!html || html.length < 500) {
-      const curlHtml = await fetchWithCurl(safeUrl);
-      if (curlHtml && curlHtml.length >= 500) {
-        html = curlHtml;
+      try {
+        const fallbackRes = await fetch(safeUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (fallbackRes.ok) {
+          const fallbackText = await fallbackRes.text();
+          if (fallbackText && fallbackText.length >= 500) {
+            html = fallbackText;
+          }
+        }
+      } catch (fallbackErr) {
+        console.warn("Resilient fetch fallback failed:", fallbackErr);
       }
     }
 
@@ -1142,7 +1124,7 @@ export async function POST(request: Request) {
             const rescuePrompt = `A user attempted to import a recipe from "${safeUrl}" (${hostname}), but the site blocked automated fetch requests.
 Based on the recipe title from the URL: "${slug}", reconstruct the full authentic recipe with complete ingredients with measurements, step-by-step instructions, prep and cook times, servings, and category.`;
 
-            const aiRecipe = await extractRecipeFromTextWithAi(rescuePrompt, geminiKey, safeUrl, hostname);
+            const aiRecipe = await extractRecipeFromTextWithAi(rescuePrompt, geminiKey, safeUrl, hostname, language);
             if (aiRecipe && aiRecipe.ingredients.length > 0) {
               if (!aiRecipe.image) {
                 aiRecipe.image = await fetchRecipeImageFallback(aiRecipe.title, safeUrl);
@@ -1183,12 +1165,7 @@ Based on the recipe title from the URL: "${slug}", reconstruct the full authenti
       const pageMeta = $("meta[name='description']").attr("content") || $("meta[property='og:description']").attr("content") || "";
       const bodySnippet = $("body").text().replace(/\s+/g, " ").slice(0, 4000);
 
-      const aiFallback = await extractRecipeFromTextWithAi(
-        `${pageTitle}\n${pageMeta}\n${bodySnippet}`,
-        geminiKey,
-        targetUrl,
-        ""
-      );
+      const aiFallback = await extractRecipeFromTextWithAi(`${pageTitle}\n${pageMeta}\n${bodySnippet}`, geminiKey, targetUrl, "", language);
 
       if (aiFallback && aiFallback.ingredients.length > 0) {
         imported = aiFallback;
@@ -1229,3 +1206,8 @@ Based on the recipe title from the URL: "${slug}", reconstruct the full authenti
     );
   }
 }
+
+
+
+
+

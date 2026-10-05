@@ -90,7 +90,12 @@ export default function TermsPage() {
             </h2>
             <p>
               If you have any questions about these Terms of Service, please reach out to us at{" "}
-              <span className="font-semibold text-amber-600 dark:text-amber-400">legal@recipecollector.app</span>.
+              <a
+                href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@recipecollector.app"}`}
+                className="font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                {process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@recipecollector.app"}
+              </a>.
             </p>
           </section>
 

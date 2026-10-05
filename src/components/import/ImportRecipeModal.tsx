@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { saveRecipeToCloudOrLocal } from "../../lib/recipes";
 import { parseIngredientList } from "../../lib/ingredientParser";
+import { getStoredUserSettings } from "../../lib/settings";
 import { capitalize } from "../../lib/format";
 
 type ImportRecipeModalProps = {
@@ -151,7 +152,7 @@ export default function ImportRecipeModal({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ url: targetUrl }),
+          body: JSON.stringify({ url: targetUrl, language: getStoredUserSettings().preferredLanguage }),
         });
 
         clearTimeout(t1);
@@ -208,7 +209,7 @@ export default function ImportRecipeModal({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ text: targetText }),
+          body: JSON.stringify({ text: targetText, language: getStoredUserSettings().preferredLanguage }),
         });
 
         clearTimeout(t1);
@@ -834,3 +835,6 @@ export default function ImportRecipeModal({
     </div>
   );
 }
+
+
+

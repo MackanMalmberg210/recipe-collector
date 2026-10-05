@@ -96,7 +96,12 @@ export default function PrivacyPage() {
             </h2>
             <p>
               For any data inquiry, contact our Data Protection Officer at{" "}
-              <span className="font-semibold text-amber-600 dark:text-amber-400">privacy@recipecollector.app</span>.
+              <a
+                href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "privacy@recipecollector.app"}`}
+                className="font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                {process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "privacy@recipecollector.app"}
+              </a>.
             </p>
           </section>
 

@@ -21,6 +21,8 @@ interface AuthContextType {
   userInitial: string;
   role: string;
   isAdmin: boolean;
+  subscriptionTier: "free" | "pro";
+  isPro: boolean;
   signOut: () => Promise<void>;
   signInWithPassword: (credentials: {
     email: string;
@@ -47,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<string>("user");
+  const [subscriptionTier, setSubscriptionTier] = useState<"free" | "pro">("free");
   const [isLoading, setIsLoading] = useState(true);
 
   const isAdmin = role === "admin";
@@ -57,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data } = await supabase
           .from("user_profiles")
-          .select("role")
+          .select("role, subscription_tier")
           .eq("user_id", userId)
           .maybeSingle();
         if (data?.role) {
@@ -65,8 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setRole("user");
         }
+        if (data?.subscription_tier === "pro") {
+          setSubscriptionTier("pro");
+        } else {
+          setSubscriptionTier("free");
+        }
       } catch {
         setRole("user");
+        setSubscriptionTier("free");
       }
     },
     [supabase]
@@ -147,6 +156,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
       setRole("user");
+
+      // Clean up local personal data so guest session starts genuinely fresh
+      if (typeof window !== "undefined") {
+        const personalKeys = [
+          "imported_recipes",
+          "user_recipes",
+          "saved_recipes",
+          "weekly_meal_plan",
+          "recipe_collector_grocery_items_v2",
+          "recipe_collector_pantry_items_v2",
+          "recipe_collector_grocery_history",
+          "recipe_ratings_v1",
+          "recipe_cook_photos_v1",
+        ];
+        personalKeys.forEach((k) => localStorage.removeItem(k));
+        sessionStorage.clear();
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("planner_updated"));
+        window.dispatchEvent(new CustomEvent("groceries_updated"));
+      }
     } catch (err) {
       console.warn("Sign out error:", err);
     }
@@ -264,6 +293,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userInitial,
       role,
       isAdmin,
+      subscriptionTier,
+      isPro: subscriptionTier === "pro",
       signOut,
       signInWithPassword,
       signUp,
@@ -281,6 +312,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userInitial,
       role,
       isAdmin,
+      subscriptionTier,
       signOut,
       signInWithPassword,
       signUp,

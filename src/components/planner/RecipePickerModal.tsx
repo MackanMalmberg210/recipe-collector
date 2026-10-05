@@ -621,7 +621,7 @@ function StandardRecipePickerModal({
                     key={preset.title}
                     type="button"
                     onClick={() => handleSelectPreset(preset)}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200/90 bg-white hover:border-amber-500 hover:shadow-md dark:border-white/10 dark:bg-[#1a1411] dark:hover:border-amber-400/50 dark:hover:bg-[#201915] text-left transition-all cursor-pointer active:scale-98"
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200/90 bg-white hover:border-amber-500 hover:shadow-md dark:border-white/10 dark:bg-[#1a1411] dark:hover:border-amber-500/50 dark:hover:bg-[#201915] text-left transition-all cursor-pointer active:scale-98"
                   >
                     <div className="relative h-24 sm:h-26 w-full overflow-hidden bg-stone-100 dark:bg-stone-900">
                       <img

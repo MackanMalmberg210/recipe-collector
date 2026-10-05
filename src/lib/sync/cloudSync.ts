@@ -248,15 +248,26 @@ export async function syncCloudPantry(items: PantryItem[]): Promise<boolean> {
 // 3. MEAL PLANNER CLOUD SYNC
 // -------------------------------------------------------------
 
+function getStartOfCurrentWeekISO(): string {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(now.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString();
+}
+
 export async function fetchCloudMealPlan(): Promise<MealPlan | null> {
   try {
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return null;
 
+    const currentWeekStart = getStartOfCurrentWeekISO();
     const { data, error } = await supabase
       .from("meal_plans")
-      .select("*");
+      .select("*")
+      .gte("created_at", currentWeekStart);
 
     if (error || !data) return null;
 

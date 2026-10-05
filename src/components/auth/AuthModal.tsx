@@ -172,7 +172,7 @@ export default function AuthModal({
       {/* Modal Card */}
       <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-4xl border border-white/12 bg-[#141210] p-6 shadow-[0_25px_70px_rgba(0,0,0,0.8)] transition-all duration-300 sm:p-8 my-auto">
         {/* Subtle top glow */}
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-amber-300 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-500/80 via-orange-400/40 to-transparent" />
 
         {/* Close button (X) */}
         <button
@@ -187,12 +187,12 @@ export default function AuthModal({
 
         {/* Header */}
         <div className="text-left">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-300">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
             <span>🍳</span>
             <span>Recipe Vault</span>
           </div>
 
-          <h2 className="mt-3 text-2xl font-black tracking-tight text-[#fff8ef]">
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">
             {mode === "login"
               ? "Sign In to Your Kitchen"
               : mode === "signup"
@@ -219,7 +219,7 @@ export default function AuthModal({
               }}
               className={`rounded-xl py-2 text-xs font-bold transition cursor-pointer ${
                 mode === "login"
-                  ? "bg-amber-500 text-stone-950 shadow-md"
+                  ? "bg-white text-black shadow-md"
                   : "text-stone-400 hover:text-white"
               }`}
             >
@@ -233,7 +233,7 @@ export default function AuthModal({
               }}
               className={`rounded-xl py-2 text-xs font-bold transition cursor-pointer ${
                 mode === "signup"
-                  ? "bg-amber-500 text-stone-950 shadow-md"
+                  ? "bg-white text-black shadow-md"
                   : "text-stone-400 hover:text-white"
               }`}
             >
@@ -308,7 +308,7 @@ export default function AuthModal({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. Marcus Karlsson"
-                className="mt-1 w-full rounded-2xl border border-white/10 bg-[#201813] py-2.5 px-4 text-sm text-stone-100 placeholder-stone-600 outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                className="mt-1 w-full rounded-2xl border border-white/10 bg-[#201813] py-2.5 px-4 text-sm text-stone-100 placeholder-stone-600 outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
               />
             </div>
           )}
@@ -323,7 +323,7 @@ export default function AuthModal({
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="you@example.com"
-              className="mt-1 w-full rounded-2xl border border-white/10 bg-[#201813] py-2.5 px-4 text-sm text-stone-100 placeholder-stone-600 outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+              className="mt-1 w-full rounded-2xl border border-white/10 bg-[#201813] py-2.5 px-4 text-sm text-stone-100 placeholder-stone-600 outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
           </div>
 
@@ -340,7 +340,7 @@ export default function AuthModal({
                       setMode("forgot_password");
                       setMessage(null);
                     }}
-                    className="text-[11px] text-amber-400 hover:underline cursor-pointer"
+                    className="text-[11px] text-stone-400 hover:text-white hover:underline cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -354,7 +354,7 @@ export default function AuthModal({
                   required
                   minLength={6}
                   placeholder="At least 6 characters"
-                  className="w-full rounded-2xl border border-white/10 bg-[#201813] py-2.5 pl-4 pr-10 text-sm text-stone-100 placeholder-stone-600 outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  className="w-full rounded-2xl border border-white/10 bg-[#201813] py-2.5 pl-4 pr-10 text-sm text-stone-100 placeholder-stone-600 outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 />
                 <button
                   type="button"
@@ -371,7 +371,7 @@ export default function AuthModal({
           <button
             type="submit"
             disabled={loading}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 py-3 text-xs sm:text-sm font-bold text-stone-950 shadow-md shadow-amber-400/20 transition hover:from-amber-300 hover:to-amber-200 disabled:opacity-50 cursor-pointer"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 hover:bg-orange-600 py-3 text-xs sm:text-sm font-semibold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
           >
             {loading
               ? "Processing..."
@@ -388,7 +388,7 @@ export default function AuthModal({
               <Link
                 href="/terms"
                 onClick={onClose}
-                className="font-semibold text-stone-300 underline hover:text-amber-400"
+                className="font-semibold text-stone-300 underline hover:text-white"
               >
                 Terms of Service
               </Link>{" "}
@@ -396,7 +396,7 @@ export default function AuthModal({
               <Link
                 href="/privacy"
                 onClick={onClose}
-                className="font-semibold text-stone-300 underline hover:text-amber-400"
+                className="font-semibold text-stone-300 underline hover:text-white"
               >
                 Privacy Policy
               </Link>
@@ -410,7 +410,7 @@ export default function AuthModal({
                 type="button"
                 onClick={handleSendMagicLink}
                 disabled={loading}
-                className="text-xs text-stone-400 hover:text-amber-300 underline cursor-pointer"
+                className="text-xs text-stone-400 hover:text-white underline cursor-pointer"
               >
                 Sign in with email link instead (no password needed)
               </button>

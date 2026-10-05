@@ -58,8 +58,8 @@ export default function StarRating({
               onClick={() => handleSelect(star)}
               className={`transition ${
                 filled
-                  ? "text-amber-300"
-                  : "text-stone-600 hover:text-amber-200/70"
+                  ? "text-orange-400"
+                  : "text-stone-600 hover:text-orange-300"
               }`}
             >
               {filled ? "★" : "☆"}
@@ -70,7 +70,7 @@ export default function StarRating({
         return (
           <span
             key={star}
-            className={filled ? "text-amber-300" : "text-stone-600"}
+            className={filled ? "text-orange-400" : "text-stone-600"}
             aria-hidden="true"
           >
             {filled ? "★" : "☆"}

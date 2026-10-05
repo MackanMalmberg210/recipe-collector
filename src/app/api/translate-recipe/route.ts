@@ -60,14 +60,42 @@ async function callSingleGeminiModel(
   return JSON.parse(jsonText);
 }
 
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
 export async function POST(req: Request) {
   try {
-    // Rate limit: max 10 recipe translations per minute per IP
     const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(`translate:${clientIp}`, 10, 60_000);
+    let userId: string | null = null;
+
+    const authHeader = req.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ") && SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        const token = authHeader.substring(7).trim();
+        const client = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { persistSession: false },
+        });
+        const { data } = await client.auth.getUser(token);
+        if (data?.user) {
+          userId = data.user.id;
+        }
+      } catch {}
+    }
+
+    const rateLimitKey = userId ? `translate:user:${userId}` : `translate:anon:${clientIp}`;
+    const limit = userId ? 20 : 5;
+    const windowMs = 5 * 60 * 1000;
+    const rateLimit = checkRateLimit(rateLimitKey, limit, windowMs);
+
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: `Too many translation requests. Please wait ${rateLimit.retryAfterSeconds} seconds.` },
+        {
+          error: userId
+            ? `Translation limit reached. Please wait ${rateLimit.retryAfterSeconds} seconds.`
+            : `Free trial translation limit reached. Please sign in or wait ${rateLimit.retryAfterSeconds} seconds.`,
+        },
         { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
       );
     }

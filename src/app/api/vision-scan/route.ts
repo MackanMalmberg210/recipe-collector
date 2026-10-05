@@ -72,23 +72,52 @@ async function callSingleVisionModel(
   return JSON.parse(cleanedJson);
 }
 
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
 export async function POST(req: Request) {
   try {
-    // Rate limit: max 15 vision scans per minute per IP
     const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(`vision:${clientIp}`, 15, 60_000);
+    let userId: string | null = null;
+
+    const authHeader = req.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ") && SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        const token = authHeader.substring(7).trim();
+        const client = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { persistSession: false },
+        });
+        const { data } = await client.auth.getUser(token);
+        if (data?.user) {
+          userId = data.user.id;
+        }
+      } catch {}
+    }
+
+    const rateLimitKey = userId ? `vision:user:${userId}` : `vision:anon:${clientIp}`;
+    const limit = userId ? 25 : 5;
+    const windowMs = 5 * 60 * 1000;
+    const rateLimit = checkRateLimit(rateLimitKey, limit, windowMs);
+
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: `Too many vision scan requests. Please wait ${rateLimit.retryAfterSeconds} seconds before trying again.` },
+        {
+          error: userId
+            ? `Vision scan limit reached. Please wait ${rateLimit.retryAfterSeconds} seconds before scanning again.`
+            : `Free trial scan limit reached. Please sign in or wait ${rateLimit.retryAfterSeconds} seconds before scanning again.`,
+        },
         { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
       );
     }
 
     const body = await req.json();
-    const { image, mode = "recipe", userNotes } = body as {
+    const { image, mode = "recipe", userNotes, language } = body as {
       image: string;
       mode?: ScanMode;
       userNotes?: string;
+      language?: string;
     };
 
     if (!image) {
@@ -136,6 +165,7 @@ export async function POST(req: Request) {
 
     let systemPrompt = "";
     let jsonSchemaPrompt = "";
+    const targetLanguage = language || "English";
 
     if (mode === "recipe") {
       systemPrompt = `You are an expert culinary OCR and vision assistant. Analyze this photo of a cookbook page, recipe card, printout, digital recipe screenshot, or handwritten recipe with utmost precision.
@@ -159,7 +189,8 @@ CRITICAL QUALITY & VALIDATION CHECKS:
      - Complete list of ingredients with amounts and units (e.g. "500g köttfärs", "2 msk olivolja")
      - Step-by-step instructions in logical order.
 ${userNotes ? `User instructions/notes: "${userNotes}"` : ""}
-Return ONLY a valid JSON object matching the requested schema.`;
+Return ONLY a valid JSON object matching the requested schema.
+IMPORTANT: Translate all output (title, description, ingredients, instructions, item names) into ${targetLanguage}, regardless of the original language of the text.`;
 
       jsonSchemaPrompt = `{
   "isValidRecipe": true,
@@ -187,7 +218,8 @@ CRITICAL QUALITY & VALIDATION CHECKS:
    - Set "rejectionReason": ""
    - Extract all grocery items written on the note (including any items written at the top, margins, or crossed out) and categorize each item into Produce, Dairy, Meat, Bakery, Beverages, Pantry, or Other.
 ${userNotes ? `User instructions/notes: "${userNotes}"` : ""}
-Return ONLY a valid JSON object matching the requested schema.`;
+Return ONLY a valid JSON object matching the requested schema.
+IMPORTANT: Translate all output (title, description, ingredients, instructions, item names) into ${targetLanguage}, regardless of the original language of the text.`;
 
       jsonSchemaPrompt = `{
   "isValidList": true,
@@ -214,7 +246,8 @@ CRITICAL QUALITY & VALIDATION CHECKS:
    - List the visible and likely ingredients.
    - Create a full "Reverse Recipe" so the user can easily cook this delicious meal at home from scratch, including realistic prep/cook time, servings, exact ingredient quantities, and step-by-step cooking instructions.
 ${userNotes ? `User dietary requests/tweaks: "${userNotes}"` : ""}
-Return ONLY a valid JSON object matching the requested schema.`;
+Return ONLY a valid JSON object matching the requested schema.
+IMPORTANT: Translate all output (title, description, ingredients, instructions, item names) into ${targetLanguage}, regardless of the original language of the text.`;
 
       jsonSchemaPrompt = `{
   "isEdibleFood": true,
@@ -424,3 +457,5 @@ Return ONLY a valid JSON object matching the requested schema.`;
     );
   }
 }
+
+

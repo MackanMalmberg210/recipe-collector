@@ -165,43 +165,46 @@ export default function Navbar() {
   return (
     <>
       {/* TOP DESKTOP & MOBILE HEADER */}
-      <nav className="print:hidden sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-2xs transition-colors duration-300 dark:border-[#2e2722] dark:bg-[#12100e]/95 px-4 sm:px-6 xl:px-10">
+      <nav className="print:hidden sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-2xs transition-colors duration-300 dark:border-white/[0.07] dark:bg-[#0c0a09]/90 px-4 sm:px-6 xl:px-10">
         <div className="relative mx-auto flex h-16 w-full max-w-7xl 2xl:max-w-[1820px] items-center justify-between gap-3">
           
           {/* LOGO & BRAND (LEFT) */}
           <div className="flex items-center gap-3 shrink-0">
             <Link
               href="/"
-              className="flex items-center gap-2.5 transition-opacity hover:opacity-90 cursor-pointer"
+              className="flex items-center gap-2.5 transition-opacity hover:opacity-90 cursor-pointer group"
+              aria-label="Culineer Home"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-gradient-to-br dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 shadow-sm">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V20H6v-6.13z" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-stone-950 shadow-sm transition-transform group-hover:scale-105">
+                <svg className="h-5 w-5 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
                   <line x1="6" y1="17" x2="18" y2="17" />
                 </svg>
               </div>
-              <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-950 dark:text-stone-100 whitespace-nowrap">
-                Recipe Collector
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[22px] font-bold text-slate-900 dark:text-stone-100 antialiased font-sans">
+                  Culineer
+                </span>
+              </div>
             </Link>
           </div>
 
-          {/* DESKTOP NAV LINKS (CENTERED SEGMENTED PILL DOCK - IN-FLOW FLEX TO PREVENT OVERLAPPING) */}
+          {/* DESKTOP NAV LINKS */}
           <div className="hidden lg:flex items-center justify-center flex-1 min-w-0 px-2">
-            <div className="flex items-center gap-0.5 xl:gap-1 bg-stone-200/70 dark:bg-[#141210] p-1 rounded-full border border-stone-300/80 dark:border-[#2e2722] shadow-2xs shrink-0">
+            <div className="flex items-center gap-6">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-1.5 xl:gap-2 rounded-full px-3.5 xl:px-4 py-1.5 text-xs xl:text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-xs xl:text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
                       isActive
-                        ? "bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_rgba(245,158,11,0.25)]"
-                        : "text-stone-600 hover:text-stone-950 hover:bg-white/80 hover:shadow-2xs dark:text-stone-400 dark:hover:text-[#fafaf9] dark:hover:bg-[#221c18]"
+                        ? "bg-stone-200/80 text-stone-900 shadow-sm font-bold dark:bg-white/10 dark:text-white"
+                        : "text-stone-600 hover:text-stone-950 hover:bg-white/60 dark:text-stone-400 dark:hover:text-stone-100 dark:hover:bg-white/5 font-semibold"
                     }`}
                   >
-                    <span className={isActive ? "text-stone-950" : "text-stone-400 dark:text-stone-500"}>{link.icon}</span>
+                    <span className={`flex items-center justify-center mt-[1px] ${isActive ? "text-amber-600 dark:text-amber-500" : "text-stone-400 dark:text-stone-500"}`}>{link.icon}</span>
                     <span>{link.label}</span>
                   </Link>
                 );
@@ -216,7 +219,7 @@ export default function Navbar() {
 
             {/* PRO NAV BADGE (Only for logged-in Pro users) */}
             {mounted && user && userSettings.subscriptionTier === "pro" && (
-              <span className="inline-flex items-center rounded-lg bg-amber-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-stone-950 shadow-xs">
+              <span className="inline-flex items-center rounded-lg bg-amber-500 text-stone-950 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs">
                 PRO
               </span>
             )}
@@ -226,13 +229,13 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsProModalOpen(true)}
-                className="hidden xl:inline-flex items-center gap-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-3.5 py-1.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                className="hidden xl:inline-flex items-center gap-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 px-3.5 py-1.5 text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap"
               >
-                <svg className="h-3.5 w-3.5 text-amber-400 dark:text-stone-950 fill-amber-400 dark:fill-stone-950" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5 fill-stone-950 text-stone-950" viewBox="0 0 24 24">
                   <path d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span>Upgrade</span>
-                <span className="rounded-md bg-white/20 dark:bg-stone-950/15 dark:text-stone-950 px-1.5 py-0.2 text-[10px] font-black tracking-wide uppercase">
+                <span className="rounded-md bg-stone-950/20 text-stone-950 px-1.5 py-0.2 text-[10px] font-bold tracking-wide uppercase">
                   PRO
                 </span>
               </button>
@@ -245,12 +248,12 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 rounded-full border border-slate-200/90 bg-white p-1 pr-3 hover:bg-slate-50 hover:border-slate-300 shadow-2xs transition cursor-pointer group dark:border-[#2e2722] dark:bg-[#1a1613] dark:hover:bg-[#221c17]"
+                    className="flex items-center gap-2 rounded-full border border-slate-200/90 bg-white p-1 pr-3 hover:bg-slate-50 hover:border-slate-300 shadow-2xs transition cursor-pointer group dark:border-white/[0.08] dark:bg-[#151311] dark:hover:bg-[#1c1a17]"
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-white font-bold text-xs dark:bg-amber-400 dark:text-slate-950 shadow-xs">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-white font-bold text-xs dark:bg-white/10 dark:text-white shadow-xs">
                       {userInitial}
                     </div>
-                    <span className="max-w-[110px] truncate text-xs font-bold text-slate-900 dark:text-stone-200 transition-colors group-hover:text-slate-950 dark:group-hover:text-amber-300">
+                    <span className="max-w-[110px] truncate text-xs font-semibold text-slate-900 dark:text-stone-200 transition-colors group-hover:text-slate-950 dark:group-hover:text-white">
                       {displayName}
                     </span>
                     <svg
@@ -301,7 +304,7 @@ export default function Navbar() {
                             </svg>
                             <span>Pro Status</span>
                           </span>
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 px-1.5 py-0.5 rounded-md">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-stone-950 bg-amber-500 px-2 py-0.5 rounded-full shadow-xs">
                             {userSettings.subscriptionTier === "pro" ? "Active" : "Upgrade"}
                           </span>
                         </button>
@@ -310,15 +313,15 @@ export default function Navbar() {
                           <Link
                             href="/admin"
                             onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 transition"
+                            className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:text-stone-300 dark:hover:bg-white/5 transition"
                           >
                             <span className="flex items-center gap-2.5">
-                              <svg className="h-4 w-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                               </svg>
                               <span>Admin Console</span>
                             </span>
-                            <span className="rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase">
+                            <span className="rounded-full bg-stone-100 text-stone-700 dark:bg-white/10 dark:text-stone-300 border border-stone-200 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                               Staff
                             </span>
                           </Link>
@@ -332,14 +335,12 @@ export default function Navbar() {
                             setIsDropdownOpen(false);
                             handleSignOut();
                           }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition text-left cursor-pointer"
                         >
-                          <span className="text-rose-600 dark:text-rose-400 font-bold">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                          </span>
-                          <span className="flex-1 truncate">Sign Out</span>
+                          <svg className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          <span>Sign Out</span>
                         </button>
                       </div>
                     </div>
@@ -349,10 +350,10 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center">
                   <Link
                     href="/login"
-                    className="inline-flex items-center gap-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold border border-zinc-900 shadow-sm transition-all duration-150 active:scale-95 cursor-pointer dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 px-5 py-2 text-xs sm:text-sm"
+                    className="inline-flex items-center gap-2 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer px-5 py-2 text-xs sm:text-sm"
                   >
                     <span>Sign In</span>
-                    <span className="text-white/70 dark:text-stone-950/70 font-black text-xs">→</span>
+                    <span className="font-bold text-xs">→</span>
                   </Link>
                 </div>
               )
@@ -397,11 +398,11 @@ export default function Navbar() {
               {/* Drawer Top / User info */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-stone-950 font-black text-sm shadow-md shadow-amber-500/25">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-white/10 dark:text-white font-bold text-sm shadow-xs">
                     {user ? (
                       userInitial
                     ) : (
-                      <svg className="h-5 w-5 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-5 w-5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     )}
@@ -427,7 +428,7 @@ export default function Navbar() {
 
               {/* Navigation Links */}
               <div className="space-y-1.5">
-                <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-stone-500 px-3 py-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-stone-500 px-3 py-1">
                   Menu Navigation
                 </p>
 
@@ -439,11 +440,11 @@ export default function Navbar() {
                       href={link.href}
                       className={`flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold transition ${
                         isActive
-                          ? "bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 font-black border border-amber-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_8px_rgba(245,158,11,0.2)]"
-                          : "text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-white/5"
+                          ? "bg-stone-200/80 text-stone-900 shadow-sm font-bold dark:bg-white/10 dark:text-white"
+                          : "text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-white/5 font-semibold"
                       }`}
                     >
-                      <span className={isActive ? "text-stone-950" : "text-stone-400 dark:text-stone-500"}>
+                      <span className={isActive ? "text-amber-600 dark:text-amber-500" : "text-stone-400 dark:text-stone-500"}>
                         {link.icon}
                       </span>
                       <span>{link.label}</span>
@@ -456,7 +457,7 @@ export default function Navbar() {
               <div className="pt-2 space-y-2 border-t border-slate-200 dark:border-white/10">
                 <Link
                   href="/settings"
-                  className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:text-stone-200 dark:hover:bg-white/5 transition"
+                  className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-stone-200 dark:hover:bg-white/5 transition"
                 >
                   <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -471,12 +472,12 @@ export default function Navbar() {
                     setIsMobileMenuOpen(false);
                     setIsProModalOpen(true);
                   }}
-                  className="flex w-full items-center justify-between rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-r dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 px-4 py-3 text-sm font-bold shadow-md cursor-pointer transition"
+                  className="flex w-full items-center justify-between rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 px-4 py-3 text-sm font-bold shadow-xs cursor-pointer transition"
                 >
                   <span className="flex items-center gap-2">
                     <span>Pro Membership</span>
                   </span>
-                  <span className="text-xs uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md font-black">
+                  <span className="text-xs uppercase tracking-wider bg-stone-950/20 text-stone-950 px-2 py-0.5 rounded-md font-bold">
                     {userSettings.subscriptionTier === "pro" ? "Active" : "Upgrade"}
                   </span>
                 </button>
@@ -485,15 +486,15 @@ export default function Navbar() {
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/30 px-3.5 py-3 text-sm font-bold text-amber-800 dark:text-amber-300 transition"
+                    className="flex items-center justify-between rounded-2xl bg-white/5 border border-white/10 px-3.5 py-3 text-sm font-semibold text-stone-200 transition"
                   >
                     <span className="flex items-center gap-2.5">
-                      <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                       </svg>
                       <span>Admin Console</span>
                     </span>
-                    <span className="rounded-md bg-amber-500/20 text-amber-900 dark:text-amber-200 px-2 py-0.5 text-[10px] font-black uppercase">
+                    <span className="rounded-md bg-white/10 text-stone-300 px-2 py-0.5 text-[10px] font-bold uppercase">
                       Staff
                     </span>
                   </Link>
@@ -520,10 +521,10 @@ export default function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 font-bold py-3 text-xs sm:text-sm border border-slate-900 dark:border-amber-600/50 shadow-md transition active:scale-95 cursor-pointer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold py-3 text-xs sm:text-sm shadow-xs transition active:scale-95 cursor-pointer"
                   >
                     <span>Sign In</span>
-                    <span className="text-white/70 dark:text-stone-950/70 font-black text-xs">→</span>
+                    <span className="font-bold text-xs">→</span>
                   </Link>
                 </div>
               )}
@@ -545,7 +546,7 @@ export default function Navbar() {
                 href={item.href}
                 className={`flex flex-col items-center py-1 px-3 rounded-2xl transition duration-150 cursor-pointer ${
                   isActive
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-extrabold"
+                    ? "bg-stone-100 text-amber-600 dark:bg-white/10 dark:text-amber-500 font-bold"
                     : "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
                 }`}
               >

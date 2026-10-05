@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
+import { formatMacroDisplay } from "../../lib/nutrition";
 
 type RecipeHeroProps = {
   recipe: AppRecipe;
@@ -195,21 +196,21 @@ export default function RecipeHero({
                     <div className="rounded-xl border border-stone-200/90 bg-white p-2 text-center dark:border-[#2e2722] dark:bg-[#1f1b18]">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-[#a8a29e]">Protein</span>
                       <span className="text-sm sm:text-base font-black text-stone-900 dark:text-[#fafaf9]">
-                        {n?.protein || "—"}
+                        {formatMacroDisplay(n?.protein)}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-stone-200/90 bg-white p-2 text-center dark:border-[#2e2722] dark:bg-[#1f1b18]">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-[#a8a29e]">Carbs</span>
                       <span className="text-sm sm:text-base font-black text-stone-900 dark:text-[#fafaf9]">
-                        {n?.carbohydrates || "—"}
+                        {formatMacroDisplay(n?.carbohydrates)}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-stone-200/90 bg-white p-2 text-center dark:border-[#2e2722] dark:bg-[#1f1b18]">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-[#a8a29e]">Fats</span>
                       <span className="text-sm sm:text-base font-black text-stone-900 dark:text-[#fafaf9]">
-                        {n?.fat || "—"}
+                        {formatMacroDisplay(n?.fat)}
                       </span>
                     </div>
                   </div>
@@ -248,7 +249,7 @@ export default function RecipeHero({
                 href={`/create?edit=${recipe.id}`}
                 aria-label="Edit recipe"
                 title="Edit this recipe"
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-600 hover:text-amber-600 hover:bg-stone-50 hover:border-amber-400/50 dark:border-[#2e2722] dark:bg-[#24201c] dark:text-[#d6d3d1] dark:hover:bg-[#2d2823] dark:hover:text-amber-400 transition cursor-pointer shadow-2xs active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-600 hover:text-amber-600 hover:bg-stone-50 hover:border-amber-500/50 dark:border-[#2e2722] dark:bg-[#24201c] dark:text-[#d6d3d1] dark:hover:bg-[#2d2823] dark:hover:text-amber-400 transition cursor-pointer shadow-2xs active:scale-95"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -261,7 +262,7 @@ export default function RecipeHero({
                   onClick={onOpenPrintModal}
                   aria-label="Print recipe"
                   title="Print recipe or export to PDF"
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-600 hover:text-amber-600 hover:bg-stone-50 hover:border-amber-400/50 dark:border-[#2e2722] dark:bg-[#24201c] dark:text-[#d6d3d1] dark:hover:bg-[#2d2823] dark:hover:text-amber-400 transition cursor-pointer shadow-2xs active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-600 hover:text-amber-600 hover:bg-stone-50 hover:border-amber-500/50 dark:border-[#2e2722] dark:bg-[#24201c] dark:text-[#d6d3d1] dark:hover:bg-[#2d2823] dark:hover:text-amber-400 transition cursor-pointer shadow-2xs active:scale-95"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -277,7 +278,7 @@ export default function RecipeHero({
                   onClick={onReportRecipe}
                   aria-label="Report recipe"
                   title="Report recipe"
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-400 hover:text-amber-600 hover:bg-stone-50 hover:border-amber-400/50 dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-stone-400 dark:hover:bg-[#25201c] dark:hover:text-amber-400 transition cursor-pointer shadow-2xs active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-400 hover:text-amber-600 hover:bg-stone-50 hover:border-amber-500/50 dark:border-[#2e2722] dark:bg-[#1f1b18] dark:text-stone-400 dark:hover:bg-[#25201c] dark:hover:text-amber-400 transition cursor-pointer shadow-2xs active:scale-95"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a1.5 1.5 0 0 0 1.142-1.455V4.75a1.5 1.5 0 0 0-1.854-1.455l-2.402.565a9 9 0 0 1-6.086-.71l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />

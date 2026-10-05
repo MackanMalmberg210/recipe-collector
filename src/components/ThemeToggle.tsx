@@ -29,7 +29,7 @@ export default function ThemeToggle() {
   };
 
   if (!mounted) {
-    return <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-white/5" />;
+    return <div className="h-9 w-9 rounded-full" />;
   }
 
   const isDark = theme === "dark";
@@ -37,16 +37,10 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200/90 bg-white text-slate-800 shadow-2xs transition-colors duration-300 hover:bg-slate-100 hover:border-slate-300 dark:border-white/12 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 cursor-pointer group"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100/80 dark:text-stone-400 dark:hover:text-stone-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group"
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
       aria-label="Toggle color theme"
     >
-      {/* AMBIENT GLOW */}
-      <span
-        className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${
-          isDark ? "bg-white/5 opacity-100" : "bg-slate-100 opacity-100"
-        }`}
-      />
 
       {/* THE SUN: RISES from below when light mode activates, SETS downward when dark mode activates */}
       <span

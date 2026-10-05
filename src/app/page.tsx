@@ -8,7 +8,7 @@ import HomeHero, { type TasteVibe } from "../components/home/HomeHero";
 import RecipeMatchesSection from "../components/home/RecipeMatchesSection";
 import ImportRecipeModal from "../components/import/ImportRecipeModal";
 import TodaysMenuBanner from "../components/home/TodaysMenuBanner";
-import CulinaryAiShowcaseBanner from "../components/home/CulinaryAiShowcaseBanner";
+
 import VisionScanModal from "../components/vision/VisionScanModal";
 import ChefProModal from "../components/subscription/ChefProModal";
 import { getFilteredRecipes } from "../lib/home";
@@ -131,32 +131,23 @@ export default function HomePage() {
           totalRecipes={allRecipes.length}
           filteredCount={filteredRecipes.length}
           onOpenImport={() => setIsImportModalOpen(true)}
+          onOpenScanCookbook={() => {
+            setVisionMode("recipe");
+            setIsVisionScanOpen(true);
+          }}
+          onOpenSnapPlate={() => {
+            setVisionMode("meal_analyzer");
+            setIsVisionScanOpen(true);
+          }}
         />
 
-        {/* 2. BENTO DASHBOARD HUB */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
-          {/* Main Feature: Today's Menu */}
-          <div className="lg:col-span-2">
-            <TodaysMenuBanner allRecipes={allRecipes} />
-          </div>
-          
-          {/* Side Features: Culinary AI / Scanner */}
-          <div className="lg:col-span-1">
-            <CulinaryAiShowcaseBanner
-              onOpenSnapPlate={() => {
-                setVisionMode("meal_analyzer");
-                setIsVisionScanOpen(true);
-              }}
-              onOpenScanCookbook={() => {
-                setVisionMode("recipe");
-                setIsVisionScanOpen(true);
-              }}
-            />
-          </div>
+        {/* 2. INSPIRATIONAL HERO SPOTLIGHT */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+          <TodaysMenuBanner allRecipes={allRecipes} />
         </div>
 
         {/* 3. RECIPE FLIGHT & MATCHES */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both pt-4">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both pt-4">
           <RecipeMatchesSection
             filteredRecipes={filteredRecipes}
             sortMode={sortMode}
@@ -226,3 +217,6 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+

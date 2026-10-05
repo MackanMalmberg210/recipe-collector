@@ -1,6 +1,7 @@
 "use client";
 
 import type { AppRecipe } from "../../lib/types";
+import { formatMacroDisplay } from "../../lib/nutrition";
 
 type RecipeNutritionPanelProps = {
   recipe: AppRecipe;
@@ -29,22 +30,22 @@ export default function RecipeNutritionPanel({
             <NutritionCard label="Calories" value={`${displayCalories} kcal`} highlight />
           )}
           {n?.protein && (
-            <NutritionCard label="Protein" value={n.protein} />
+            <NutritionCard label="Protein" value={formatMacroDisplay(n.protein)} />
           )}
           {n?.carbohydrates && (
-            <NutritionCard label="Total Carbs" value={n.carbohydrates} />
+            <NutritionCard label="Total Carbs" value={formatMacroDisplay(n.carbohydrates)} />
           )}
           {n?.fat && (
-            <NutritionCard label="Total Fat" value={n.fat} />
+            <NutritionCard label="Total Fat" value={formatMacroDisplay(n.fat)} />
           )}
           {n?.saturatedFat && (
-            <NutritionCard label="Saturated Fat" value={n.saturatedFat} />
+            <NutritionCard label="Saturated Fat" value={formatMacroDisplay(n.saturatedFat)} />
           )}
           {n?.fiber && (
-            <NutritionCard label="Dietary Fiber" value={n.fiber} />
+            <NutritionCard label="Dietary Fiber" value={formatMacroDisplay(n.fiber)} />
           )}
           {n?.sugar && (
-            <NutritionCard label="Sugars" value={n.sugar} />
+            <NutritionCard label="Sugars" value={formatMacroDisplay(n.sugar)} />
           )}
           {n?.sodium && (
             <NutritionCard label="Sodium" value={n.sodium} />

@@ -22,10 +22,10 @@ export default function Footer() {
             </div>
             <div>
               <span className="font-extrabold text-xl tracking-tight text-slate-950 dark:text-white block">
-                Recipe Collector
+                Culineer
               </span>
               <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-amber-400">
-                Smart Kitchen &amp; Recipe Studio
+                Your Culinary Co-pilot
               </span>
             </div>
           </Link>
@@ -193,7 +193,7 @@ export default function Footer() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-stone-500 pt-2 font-medium">
-            <p>© {new Date().getFullYear()} Recipe Collector. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Culineer. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-3">
               <Link href="/terms" className="hover:text-slate-950 dark:hover:text-stone-300 transition">
                 Terms of Service

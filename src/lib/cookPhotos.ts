@@ -314,3 +314,45 @@ export async function updateCookPhotoCaption(
   return true;
 }
 
+/**
+ * Upload a recipe cover photo to Supabase Storage.
+ * Compresses the image to WebP and uploads to 'recipe-media' bucket.
+ * Returns the public CDN URL.
+ */
+export async function uploadRecipeCoverImage(
+  file: File | Blob,
+  userId: string
+): Promise<string> {
+  const supabase = createClient();
+
+  const { blob, mimeType } = await compressImageToBlob(
+    file instanceof File ? file : (file as Blob),
+    1600,
+    1600,
+    0.85,
+    "image/webp"
+  );
+
+  const fileExt = mimeType === "image/webp" ? "webp" : "jpg";
+  const fileName = `cover_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+  const storagePath = `${userId}/covers/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(storagePath, blob, {
+      contentType: mimeType,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.warn("Storage upload failed, fallback required:", uploadError);
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
+  }
+
+  const { data: urlData } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(storagePath);
+
+  return urlData.publicUrl;
+}
+

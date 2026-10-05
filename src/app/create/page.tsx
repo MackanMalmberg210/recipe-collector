@@ -10,6 +10,7 @@ import { sanitizeCulinaryText, capitalizeFirstLetter } from "../../lib/culinaryT
 import { useToast } from "../../components/ui/ToastProvider";
 import { useAuth } from "../../contexts/AuthContext";
 import { compressImage } from "../../lib/imageCompressor";
+import { uploadRecipeCoverImage } from "../../lib/cookPhotos";
 import { detectRecipeLanguage } from "../../lib/languageDetector";
 import type { AppRecipe, MealType, RecipeCategory } from "../../lib/types";
 
@@ -46,7 +47,7 @@ function CreateRecipeForm() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
   const { success } = useToast();
-  const { user, isGuest, displayName } = useAuth();
+  const { user, session, isGuest, displayName } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [originalRecipe, setOriginalRecipe] = useState<AppRecipe | null>(null);
@@ -154,6 +155,8 @@ function CreateRecipeForm() {
     setTags((prev) => prev.filter((t) => t !== tagToRemove));
   };
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   const handleImageFile = async (file: File | null) => {
     setSaveMessage("");
     setError("");
@@ -164,9 +167,22 @@ function CreateRecipeForm() {
       return;
     }
 
+    setIsUploadingImage(true);
     try {
-      // Auto-compress mobile photos to lightweight, crisp image
-      const compressed = await compressImage(file, 1600, 1600, 0.85);
+      // 1. If user is authenticated, upload directly to Supabase Storage CDN
+      if (user?.id) {
+        try {
+          const cdnUrl = await uploadRecipeCoverImage(file, user.id);
+          setImage(cdnUrl);
+          setIsUploadingImage(false);
+          return;
+        } catch (uploadErr) {
+          console.warn("Supabase storage upload failed, falling back to local compression:", uploadErr);
+        }
+      }
+
+      // 2. Offline / Guest: compress with lightweight dimensions to stay well within localStorage quota
+      const compressed = await compressImage(file, 800, 800, 0.75);
       setImage(compressed);
     } catch {
       const reader = new FileReader();
@@ -176,6 +192,8 @@ function CreateRecipeForm() {
         }
       };
       reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -276,7 +294,10 @@ function CreateRecipeForm() {
     try {
       const res = await fetch("/api/translate-recipe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           title: title.trim(),
           ingredients: rawIngredients,
@@ -636,7 +657,14 @@ function CreateRecipeForm() {
                         onChange={(e) => handleImageFile(e.target.files?.[0] || null)}
                       />
 
-                      {image ? (
+                      {isUploadingImage ? (
+                        <div className="flex flex-col items-center gap-2 py-4">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                          <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                            Optimizing & uploading image to cloud...
+                          </p>
+                        </div>
+                      ) : image ? (
                         <div className="flex flex-col items-center gap-3">
                           <img
                             src={image}

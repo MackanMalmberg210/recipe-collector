@@ -65,10 +65,10 @@ Detta dokument samlar alla krav, kontroller och förbättringar som ska genomfö
 ---
 
 ## 🎨 4. Design & Temaharmonisering
-- [ ] **Harmonisera Mörkt Tema (Audiblez / Deep Slate Bento):**
-  - Uppgradera det mörka temat från dagens varma sten/brun (`#12100e`) till en modern, sval **Deep Slate / Obsidian**-palett (`#12161c` – `#181d24`) med mikrotunna borders och distinkta accenter, så att ljust och mörkt läge känns som två sidor av samma produkt.
+- [x] **Behåll & förfina det Varma Mörka Temat (Smoked Oak / Walnut / Amber):**
+  - **Beslut:** Deep Slate / Obsidian Bento testades och förkastades som för kallt och inte passande för en trevlig, aptitlig receptapp. Det varma mörka temat (`#12100e`, valnöt, bärnsten och varm linne) behålls och skyddas.
 - [ ] **Kontrast- och tillgänglighetsgranskning (WCAG AA):**
-  - Systematisk genomgång av alla modaler, badges, chips och knappar i både ljust och mörkt läge för optimal kontrast och läsbarhet.
+  - Systematisk genomgång av alla modaler, badges, chips och knappar i både ljust och mörkt läge för optimal kontrast och läsbarhet mot den varma mörka bakgrunden.
 - [x] **Enhetlig orange knappdesign i Mörkt Tema:**
   - Säkerställ att alla orangea knappar använder den korrekta, djupa bärnstensgradienten (`dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:text-stone-950 dark:border-amber-600/50`) istället för platt kanariegult.
 

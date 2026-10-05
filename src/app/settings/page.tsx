@@ -8,11 +8,13 @@ import { useToast } from "../../components/ui/ToastProvider";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import AuthModal from "../../components/auth/AuthModal";
 import ChefProModal from "../../components/subscription/ChefProModal";
+import ProSuccessModal from "../../components/subscription/ProSuccessModal";
 import {
   getStoredUserSettings,
   saveUserSettings,
   getAiScanUsage,
   toggleSubscriptionTier,
+  DEFAULT_USER_SETTINGS,
   type UserSettings,
   type DietaryPreference,
 } from "../../lib/settings";
@@ -166,11 +168,12 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const focusParam = searchParams.get("focus");
   const { success, error, info } = useToast();
-  const { user, signOut, updateUser } = useAuth();
+  const { user, session, signOut, updateUser } = useAuth();
 
   const [displayName, setDisplayName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [settings, setSettings] = useState<UserSettings>(getStoredUserSettings());
+  // Default to server-safe defaults during SSR to prevent hydration mismatch
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<"dark" | "light">("dark");
@@ -209,6 +212,77 @@ function SettingsContent() {
     setCurrentTheme(isLight ? "light" : "dark");
     setHasHydrated(true);
   }, []);
+
+  // Listen for storage changes from other tabs or actions
+  useEffect(() => {
+    const handleSync = () => {
+      setSettings(getStoredUserSettings());
+    };
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("user_settings_updated", handleSync);
+    return () => {
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("user_settings_updated", handleSync);
+    };
+  }, []);
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  // Check for Stripe Checkout redirect parameters (guarded to only fire once)
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (payment === "success") {
+      setIsSuccessModalOpen(true);
+      const current = getStoredUserSettings();
+      setSettings({ ...current, subscriptionTier: "pro" });
+      saveUserSettings({ ...current, subscriptionTier: "pro" });
+      
+      // Clean query params from URL immediately without router re-renders
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("payment");
+        url.searchParams.delete("session_id");
+        window.history.replaceState({}, "", url.pathname);
+      }
+    } else if (payment === "cancelled") {
+      info("Pro checkout cancelled. You can upgrade anytime!");
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("payment");
+        window.history.replaceState({}, "", url.pathname);
+      }
+    }
+  }, [searchParams, info]);
+
+  // Customer Portal loading state
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleOpenCustomerPortal = async () => {
+    if (!session?.access_token) {
+      setIsProModalOpen(true);
+      return;
+    }
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        // Fallback: If no stripe customer yet or portal failed, show ChefProModal
+        setIsProModalOpen(true);
+      }
+    } catch {
+      setIsProModalOpen(true);
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   // Smooth scroll down from top + glowing pulsating highlight animation
   useEffect(() => {
@@ -335,6 +409,10 @@ function SettingsContent() {
       if (user) {
         const response = await fetch("/api/user/delete-account", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
         });
         if (!response.ok) {
           const data = await response.json();
@@ -408,11 +486,11 @@ function SettingsContent() {
                   Account &amp; Profile
                 </span>
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider ${
-                  settings.subscriptionTier === "pro"
+                  hasHydrated && settings.subscriptionTier === "pro"
                     ? "bg-amber-500 text-stone-950 shadow-xs"
                     : "bg-[#f2ece0] text-[#3d362e] dark:bg-white/10 dark:text-stone-200"
                 }`}>
-                  {settings.subscriptionTier === "pro" ? "PRO Plan" : "Free Plan"}
+                  {hasHydrated && settings.subscriptionTier === "pro" ? "PRO Plan" : "Free Plan"}
                 </span>
               </div>
 
@@ -627,9 +705,9 @@ function SettingsContent() {
               <div className="relative">
                 <div className="flex items-center justify-between mb-3">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-1 text-xs font-bold text-amber-300 border border-amber-400/20">
-                    <span>{settings.subscriptionTier === "pro" ? "PRO Plan Active" : "Free Plan"}</span>
+                    <span>{hasHydrated && settings.subscriptionTier === "pro" ? "PRO Plan Active" : "Free Plan"}</span>
                   </div>
-                  {settings.subscriptionTier === "pro" && (
+                  {hasHydrated && settings.subscriptionTier === "pro" && (
                     <span className="rounded-full bg-amber-400 text-stone-950 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
                       PRO
                     </span>
@@ -640,7 +718,7 @@ function SettingsContent() {
                   Subscription &amp; Plan
                 </h3>
                 <p className="mt-1.5 text-xs text-stone-300 leading-relaxed">
-                  {settings.subscriptionTier === "pro"
+                  {hasHydrated && settings.subscriptionTier === "pro"
                     ? "You have full access to unlimited AI vision scans, nutritional macros, and an ad-free kitchen."
                     : "Enjoy free recipe collecting, or upgrade to Pro for unlimited AI scans and an ad-free experience."}
                 </p>
@@ -704,10 +782,14 @@ function SettingsContent() {
                   {settings.subscriptionTier === "pro" ? (
                     <button
                       type="button"
-                      onClick={() => setIsProModalOpen(true)}
-                      className="rounded-2xl border border-white/15 bg-white/10 hover:bg-white/15 px-4 py-2 text-xs font-bold text-white transition cursor-pointer"
+                      onClick={handleOpenCustomerPortal}
+                      disabled={portalLoading}
+                      className="rounded-2xl border border-white/15 bg-white/10 hover:bg-white/15 px-4 py-2 text-xs font-bold text-white transition cursor-pointer flex items-center gap-2"
                     >
-                      Manage Plan
+                      {portalLoading && (
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      )}
+                      <span>{portalLoading ? "Opening Portal..." : "Manage Billing & Plan"}</span>
                     </button>
                   ) : (
                     <button
@@ -1138,6 +1220,12 @@ function SettingsContent() {
         isOpen={isAuthModalOpen}
         initialMode={authInitialMode}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* PRO SUCCESS MODAL */}
+      <ProSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
       />
     </div>
   );

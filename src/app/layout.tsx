@@ -7,15 +7,17 @@ import { AuthProvider } from "../contexts/AuthContext";
 import FloatingGroceryDrawer from "../components/grocery/FloatingGroceryDrawer";
 import AuthCallbackListener from "../components/auth/AuthCallbackListener";
 import Footer from "../components/Footer";
+import ServiceWorkerRegister from "../components/pwa/ServiceWorkerRegister";
+import InstallAppBanner from "../components/pwa/InstallAppBanner";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s • Recipe Collector",
-    default: "Recipe Collector • Culinary Studio & Planner",
+    template: "%s • Culineer",
+    default: "Culineer • Your Culinary Co-pilot",
   },
-  description: "A distraction-free studio for recipes, smart meal planning, and everyday cooking.",
+  description: "Your everyday culinary co-pilot for saving recipes, smart meal planning, and distraction-free cooking.",
 };
 
 export default function RootLayout({
@@ -57,6 +59,8 @@ export default function RootLayout({
             <Footer />
             <FloatingGroceryDrawer />
             <AuthCallbackListener />
+            <ServiceWorkerRegister />
+            <InstallAppBanner />
           </ToastProvider>
         </AuthProvider>
         <Analytics />

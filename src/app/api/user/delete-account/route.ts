@@ -1,15 +1,47 @@
 import { NextResponse } from "next/server";
-import { createClient } from "../../../../lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "../../../../lib/supabase/server";
 
-export async function POST() {
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+export async function POST(req: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    let supabase;
+    let currentUser = null;
 
-    if (authError || !user) {
+    const authHeader = req.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.substring(7).trim();
+      if (token && SUPABASE_URL && SUPABASE_ANON_KEY) {
+        const clientWithToken = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+          auth: { persistSession: false },
+        });
+
+        const { data: { user }, error } = await clientWithToken.auth.getUser(token);
+        if (!error && user) {
+          currentUser = user;
+          supabase = clientWithToken;
+        }
+      }
+    }
+
+    // Fallback to cookie-based session if header was not present or didn't resolve
+    if (!currentUser || !supabase) {
+      const serverClient = await createServerClient();
+      const { data: { user }, error: authError } = await serverClient.auth.getUser();
+      if (!authError && user) {
+        currentUser = user;
+        supabase = serverClient;
+      }
+    }
+
+    if (!currentUser || !supabase) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

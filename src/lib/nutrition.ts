@@ -35,11 +35,38 @@ function parseNutritionAmount(value?: string) {
 }
 
 function formatAmount({ amount, unit }: ParsedAmount) {
-   const roundedAmount = Number.isInteger(amount)
-      ? amount
-      : Number(amount.toFixed(1));
+   const roundedAmount = Math.round(amount);
+   const trimmedUnit = unit ? unit.trim() : "";
+   return `${roundedAmount}${trimmedUnit}`;
+}
 
-   return `${roundedAmount}${unit ? ` ${unit}` : ""}`;
+export function formatMacroDisplay(value?: string | number | null): string {
+   if (value === undefined || value === null || value === "") return "—";
+   if (typeof value === "number") {
+      return `${Math.round(value)}g`;
+   }
+   const parsed = parseNutritionAmount(String(value));
+   if (parsed) {
+      const unit = parsed.unit?.trim() || "g";
+      return `${Math.round(parsed.amount)}${unit}`;
+   }
+   return String(value);
+}
+
+export function formatProteinLabel(value?: string | number | null): string | undefined {
+   if (value === undefined || value === null || value === "") return undefined;
+   if (typeof value === "number") {
+      return `${Math.round(value)}g protein`;
+   }
+   const str = String(value).trim();
+   const parsed = parseNutritionAmount(str);
+   if (parsed) {
+      return `${Math.round(parsed.amount)}g protein`;
+   }
+   if (/^rich$/i.test(str)) {
+      return "High Protein";
+   }
+   return str.toLowerCase().includes("protein") ? str : `${str} protein`;
 }
 
 function sumNutritionValues(values: Array<string | undefined>) {

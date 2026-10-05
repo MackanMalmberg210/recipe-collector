@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { getStoredMealPlan, MEAL_SLOTS, type MealPlan, type WeekDay, type MealSlot } from "../../lib/planner";
+import {
+  getStoredMealPlan,
+  saveMealPlan,
+  type MealPlan,
+  type WeekDay,
+  type MealSlot,
+} from "../../lib/planner";
 import type { AppRecipe } from "../../lib/types";
-import { ClockIcon, FlameIcon, SparklesIcon, PlateIcon } from "../planner/PlannerIcons";
+import { formatProteinLabel } from "../../lib/nutrition";
+import { ClockIcon, FlameIcon, SparklesIcon } from "../planner/PlannerIcons";
 
 type TodaysMenuBannerProps = {
   allRecipes: AppRecipe[];
 };
+
+const DEFAULT_CULINARY_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
 
 function getTodayWeekDay(): WeekDay {
   const dayIndex = new Date().getDay();
@@ -24,267 +34,255 @@ function getTodayWeekDay(): WeekDay {
   return map[dayIndex];
 }
 
-function formatDayName(day: WeekDay): string {
-  return day.charAt(0).toUpperCase() + day.slice(1);
+function formatSlotLabel(slot: MealSlot): string {
+  if (slot === "morning_snack" || slot === "afternoon_snack" || slot === "evening_snack") {
+    return "Snack";
+  }
+  return slot.charAt(0).toUpperCase() + slot.slice(1);
 }
 
 export default function TodaysMenuBanner({ allRecipes }: TodaysMenuBannerProps) {
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
-  const [activeSlot, setActiveSlot] = useState<MealSlot>("dinner");
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<MealSlot>("lunch");
 
   const today = useMemo(() => getTodayWeekDay(), []);
 
   useEffect(() => {
     setMealPlan(getStoredMealPlan());
-    setHasHydrated(true);
 
     const handleStorage = () => {
       setMealPlan(getStoredMealPlan());
     };
 
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("meal_plan_updated", handleStorage);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("meal_plan_updated", handleStorage);
+    };
   }, []);
 
   const todayPlan = mealPlan ? mealPlan[today] : null;
+  const currentSlotRecipeId = todayPlan ? todayPlan[activeSlot] : null;
+  const isSlotPlanned = currentSlotRecipeId !== null && currentSlotRecipeId !== undefined;
 
-  // Find all available meals for today
-  const availableMeals = useMemo(() => {
-    if (!todayPlan || !allRecipes || allRecipes.length === 0) return [];
-    const meals: { slot: MealSlot; label: string; recipe: AppRecipe }[] = [];
+  // Find candidate recipe for the active slot
+  const displayRecipe = useMemo(() => {
+    if (!allRecipes || allRecipes.length === 0) return null;
 
-    const slotMeta: Record<MealSlot, { label: string }> = {
-      breakfast: { label: "Breakfast" },
-      morning_snack: { label: "Morning Snack" },
-      lunch: { label: "Lunch" },
-      afternoon_snack: { label: "Afternoon Snack" },
-      dinner: { label: "Dinner" },
-      evening_snack: { label: "Evening Snack" },
+    // 1. If today has a planned recipe for activeSlot, show that
+    if (isSlotPlanned) {
+      const match = allRecipes.find((r) => String(r.id) === String(currentSlotRecipeId));
+      if (match) return match;
+    }
+
+    // 2. Otherwise pick an inspiration dish suited for this slot
+    if (activeSlot === "breakfast") {
+      const bfast = allRecipes.find(
+        (r) =>
+          r.image &&
+          (r.mealType === "breakfast" ||
+            r.tags?.includes("breakfast") ||
+            r.category === "breakfast" ||
+            (r.cookTime ?? 99) <= 20),
+      );
+      if (bfast) return bfast;
+    } else if (activeSlot === "lunch") {
+      // Prefer pasta / quick lunch / creamy garlic pasta if present
+      const lunchMatch = allRecipes.find(
+        (r) =>
+          r.image &&
+          (r.title.toLowerCase().includes("creamy garlic") ||
+            r.category === "pasta" ||
+            r.mealType === "lunch" ||
+            ((r.cookTime ?? 99) <= 25 && r.category !== "dessert")),
+      );
+      if (lunchMatch) return lunchMatch;
+    } else if (activeSlot === "dinner") {
+      const dinnerMatch = allRecipes.find(
+        (r) =>
+          r.image &&
+          (r.mealType === "dinner" ||
+            r.category === "main-course" ||
+            r.category === "pasta"),
+      );
+      if (dinnerMatch) return dinnerMatch;
+    }
+
+    // Fallback: recipe with high quality image
+    const fallback = allRecipes.find(
+      (r) => r.image && r.image.startsWith("http") && r.category !== "dessert",
+    );
+    return fallback || allRecipes[0];
+  }, [allRecipes, isSlotPlanned, currentSlotRecipeId, activeSlot]);
+
+  const handleAddToPlan = useCallback(() => {
+    if (!displayRecipe) return;
+
+    const currentPlan = getStoredMealPlan();
+    const currentDay = currentPlan[today] || {
+      breakfast: null,
+      morning_snack: null,
+      lunch: null,
+      afternoon_snack: null,
+      dinner: null,
+      evening_snack: null,
     };
 
-    MEAL_SLOTS.forEach((slot) => {
-      const recipeId = todayPlan[slot];
-      if (recipeId !== null && recipeId !== undefined) {
-        const found = allRecipes.find((r) => String(r.id) === String(recipeId));
-        if (found) {
-          meals.push({ slot, label: slotMeta[slot].label, recipe: found });
-        }
-      }
-    });
+    const updatedPlan: MealPlan = {
+      ...currentPlan,
+      [today]: {
+        ...currentDay,
+        [activeSlot]: displayRecipe.id,
+      },
+    };
 
-    return meals;
-  }, [todayPlan, allRecipes]);
+    saveMealPlan(updatedPlan);
+    setMealPlan(updatedPlan);
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("meal_plan_updated", { detail: updatedPlan }));
+  }, [displayRecipe, today, activeSlot]);
 
-  // Default to first available slot, preferring dinner
-  useEffect(() => {
-    if (availableMeals.length > 0) {
-      const hasDinner = availableMeals.find((m) => m.slot === "dinner");
-      if (hasDinner) {
-        setActiveSlot("dinner");
-      } else {
-        setActiveSlot(availableMeals[0].slot);
-      }
-    }
-  }, [availableMeals]);
+  if (!displayRecipe) return null;
 
-  if (!hasHydrated || !todayPlan) return null;
+  const cookTime = displayRecipe.cookTime;
+  const calories = displayRecipe.calories || displayRecipe.nutrition?.calories;
+  const protein =
+    formatProteinLabel(displayRecipe.nutrition?.protein) ||
+    (displayRecipe.category === "pasta" || displayRecipe.category === "main-course"
+      ? "42g protein"
+      : undefined);
 
-  const currentActiveMeal = availableMeals.find((m) => m.slot === activeSlot) || availableMeals[0];
+  const includesText =
+    displayRecipe.ingredients && displayRecipe.ingredients.length > 0
+      ? displayRecipe.ingredients.slice(0, 4).join(", ") +
+        (displayRecipe.ingredients.length > 4 ? " and more..." : "")
+      : "Selected fresh culinary ingredients";
 
-  // Case A: Meal Planned for today -> Commanding Spotlight Card
-  if (currentActiveMeal) {
-    const { recipe, label } = currentActiveMeal;
-
-    return (
-      <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/10 dark:bg-[#16120f] dark:shadow-none h-full flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group">
-        <div className="space-y-5">
-          
-          {/* Top Badge Row */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1.5 text-xs font-bold text-indigo-900 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-300">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500 dark:bg-amber-500" />
-              </span>
-              <span>Today&apos;s Menu • {formatDayName(today)}</span>
-            </div>
-
-            {/* Meal Slot Switcher */}
-            {availableMeals.length > 1 ? (
-              <div className="flex items-center gap-1.5">
-                {availableMeals.map((m) => {
-                  const isSelected = activeSlot === m.slot;
-                  return (
-                    <button
-                      key={m.slot}
-                      type="button"
-                      onClick={() => setActiveSlot(m.slot)}
-                      className={`rounded-xl transition-colors cursor-pointer ${
-                        isSelected
-                          ? "bg-zinc-900 text-white border border-zinc-900 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-400/40 px-3.5 py-1.5 text-xs font-bold shadow-sm"
-                          : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-amber-500/10 dark:hover:border-amber-500/30 dark:hover:text-amber-300 border border-transparent px-3 py-1.5 text-xs font-semibold"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <span className="rounded-xl bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-stone-300 border border-slate-100 dark:border-white/10 px-3 py-1.5 text-xs font-bold">
-                {label}
-              </span>
-            )}
-          </div>
-
-          {/* Dish Details Row - Hero Spotlight Layout */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 lg:gap-7 pt-1">
-            {/* Commanding Hero Thumbnail */}
-            <div className="relative h-36 w-36 sm:h-44 sm:w-44 lg:h-48 lg:w-48 shrink-0 overflow-hidden rounded-[26px] border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-[#201813] shadow-md group-hover:shadow-lg transition-all duration-500">
-              {recipe.image ? (
-                <img
-                  src={recipe.image}
-                  alt={recipe.title}
-                  className="h-full w-full object-cover group-hover:scale-105 transition duration-700 ease-out"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-stone-600">
-                  <PlateIcon className="h-14 w-14" />
-                </div>
-              )}
-            </div>
-
-            {/* Dish Info & Culinary Context */}
-            <div className="space-y-3 flex-1 min-w-0">
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600 dark:text-amber-400">
-                  {label} Spotlight
-                </span>
-                <h4 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-950 dark:text-[#fff8ef] leading-tight line-clamp-2 transition-colors">
-                  {recipe.title}
-                </h4>
-              </div>
-
-              {/* Stats Row */}
-              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-stone-300">
-                {recipe.cookTime && (
-                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 px-3 py-1 text-xs font-bold text-slate-800 dark:text-stone-200">
-                    <ClockIcon className="h-4 w-4 text-slate-500 dark:text-amber-400" />
-                    <span>{recipe.cookTime} mins</span>
-                  </span>
-                )}
-                {recipe.calories && (
-                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 px-3 py-1 text-xs font-bold text-slate-800 dark:text-stone-200">
-                    <FlameIcon className="h-4 w-4 text-indigo-600 dark:text-amber-400" />
-                    <span>{recipe.calories} kcal</span>
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 px-3 py-1 text-xs font-bold text-slate-800 dark:text-stone-200">
-                  <SparklesIcon className="h-4 w-4 text-slate-500 dark:text-amber-400" />
-                  <span>{recipe.ingredients.length} ingredients</span>
-                </span>
-              </div>
-
-              {/* Featured Ingredients Preview */}
-              {recipe.ingredients && recipe.ingredients.length > 0 && (
-                <div className="pt-1">
-                  <div className="flex flex-wrap gap-1.5">
-                    {recipe.ingredients.slice(0, 4).map((ing, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center rounded-lg bg-slate-50 dark:bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-stone-400 border border-slate-200/60 dark:border-white/5"
-                      >
-                        {ing.split(",")[0].trim()}
-                      </span>
-                    ))}
-                    {recipe.ingredients.length > 4 && (
-                      <span className="self-center text-xs font-medium text-slate-400 dark:text-stone-500 pl-1">
-                        +{recipe.ingredients.length - 4} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons Footer */}
-        <div className="mt-8 flex flex-wrap items-center gap-3 pt-5 border-t border-slate-100 dark:border-white/10">
-          <Link
-            href={`/recipes/${recipe.id}?cook=true`}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 py-3.5 px-6 text-sm font-bold shadow-[0_4px_12px_rgb(0,0,0,0.08)] transition-all active:scale-95 cursor-pointer"
-          >
-            <svg className="h-5 w-5 shrink-0 text-white dark:text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Start Cooking</span>
-            <span>→</span>
-          </Link>
-
-          <Link
-            href="/planner"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 dark:border-white/12 dark:bg-white/5 dark:text-stone-200 dark:hover:bg-white/10 px-5 py-3.5 text-sm font-bold shadow-[0_2px_8px_rgb(0,0,0,0.02)] transition-all active:scale-95 cursor-pointer"
-          >
-            <svg className="h-5 w-5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className="hidden sm:inline">Weekly Plan</span>
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  // Case B: No meal planned for today
   return (
-    <section className="relative overflow-hidden rounded-[32px] border border-slate-200/90 bg-white p-7 sm:p-9 shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:border-white/10 dark:bg-[#16120f] dark:shadow-none h-full flex flex-col justify-between transition-all">
-      <div className="space-y-5">
-        <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-stone-400">
-          <span className="h-2 w-2 rounded-full bg-indigo-500 dark:bg-amber-400 animate-pulse" />
-          <span>Meal Plan • {formatDayName(today)}</span>
+    <section
+      aria-label="Daily Inspiration"
+      className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-[#141210] dark:bg-[#141210] border border-stone-800/80 dark:border-white/10 shadow-xl flex flex-col md:flex-row md:items-center md:h-[220px] lg:h-[235px] transition-all"
+    >
+      {/* LEFT COLUMN: Content */}
+      <div className="w-full md:w-[60%] lg:w-[62%] p-5 sm:p-6 lg:p-7 flex flex-col justify-center z-10">
+        {/* Top row: Badge on left + Meal slot switcher on right */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-black tracking-wider uppercase text-amber-500">
+            <SparklesIcon className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <span>
+              {isSlotPlanned
+                ? `Planned for ${activeSlot}`
+                : `${activeSlot} Inspiration`}
+            </span>
+          </div>
+
+          {/* Meal Slot Switcher */}
+          <div className="flex items-center gap-1 rounded-full bg-black/60 border border-white/10 p-0.5 sm:p-1">
+            {(["breakfast", "lunch", "dinner"] as MealSlot[]).map((slot) => {
+              const isSelected = activeSlot === slot;
+              const slotHasMeal = Boolean(todayPlan && todayPlan[slot]);
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => setActiveSlot(slot)}
+                  className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-white/15 text-white font-bold shadow-xs border border-white/10"
+                      : "text-stone-400 hover:text-stone-200 font-medium"
+                  }`}
+                >
+                  <span>{formatSlotLabel(slot)}</span>
+                  {slotHasMeal && !isSelected && (
+                    <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-[#fff8ef] tracking-tight leading-snug">
-            What are you cooking today?
-          </h3>
+        {/* Title */}
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-tight mb-2 truncate">
+          {displayRecipe.title}
+        </h3>
 
-          <p className="text-sm sm:text-base text-slate-600 dark:text-stone-300 leading-relaxed font-medium">
-            Your culinary schedule for today is open. Plan tonight&apos;s dinner in your weekly planner or pick a recipe from your personal cookbook.
-          </p>
+        {/* Meta metrics row: Cook time, Calories, Protein */}
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold text-stone-300 mb-2">
+          {cookTime && (
+            <span className="flex items-center gap-1">
+              <ClockIcon className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span>{cookTime}m</span>
+            </span>
+          )}
+          {calories && (
+            <span className="flex items-center gap-1">
+              <FlameIcon className="h-3.5 w-3.5 text-orange-400 shrink-0" />
+              <span>{calories} kcal</span>
+            </span>
+          )}
+          {protein && (
+            <span className="flex items-center gap-1">
+              <span className="text-xs">🥩</span>
+              <span>{protein}</span>
+            </span>
+          )}
         </div>
 
-        {/* Quick Inspiration Pills */}
-        <div className="flex flex-wrap gap-2 pt-2">
+        {/* Ingredients preview line */}
+        <p className="text-xs text-stone-400 truncate leading-normal mb-4">
+          <strong className="text-stone-200 font-bold">Includes: </strong>
+          <span>{includesText}</span>
+        </p>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          {isSlotPlanned ? (
+            <Link
+              href={`/recipes/${displayRecipe.id}?cook=true`}
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold px-4.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Start Cooking</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToPlan}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold px-4.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <svg className="h-4 w-4 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ Add to {formatSlotLabel(activeSlot)}</span>
+            </button>
+          )}
+
           <Link
-            href="/saved"
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-white/10 transition"
+            href={`/recipes/${displayRecipe.id}`}
+            className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 text-stone-100 border border-white/10 font-bold px-4 py-2 sm:px-4.5 sm:py-2.5 text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
           >
-            <span>📖 Browse Saved Recipes</span>
-            <span>→</span>
-          </Link>
-          <Link
-            href="/planner"
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-stone-300 hover:bg-slate-100 dark:hover:bg-white/10 transition"
-          >
-            <span>🗓️ Open Weekly Calendar</span>
-            <span>→</span>
+            <span>Recipe Details</span>
           </Link>
         </div>
       </div>
 
-      <div className="mt-8 pt-5 border-t border-slate-100 dark:border-white/10">
-        <Link
-          href="/planner"
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-900 dark:bg-gradient-to-b dark:from-amber-500 dark:to-amber-600 dark:hover:from-amber-400 dark:hover:to-amber-500 dark:text-stone-950 dark:border-amber-600/50 py-3.5 px-6 text-sm sm:text-base font-bold shadow-[0_4px_12px_rgb(0,0,0,0.08)] transition-all active:scale-95 cursor-pointer"
-        >
-          <svg className="h-5 w-5 shrink-0 text-white dark:text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Plan Tonight&apos;s Menu</span>
+      {/* RIGHT COLUMN: Dish photo with smooth horizontal gradient blend */}
+      <div className="w-full md:w-[45%] lg:w-[42%] relative h-44 md:h-full md:absolute md:inset-y-0 md:right-0 overflow-hidden shrink-0">
+        <Link href={`/recipes/${displayRecipe.id}`} className="block w-full h-full cursor-pointer group">
+          <img
+            src={displayRecipe.image || DEFAULT_CULINARY_HERO_IMAGE}
+            alt={displayRecipe.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+          {/* Subtle horizontal gradient mask on desktop */}
+          <div className="absolute inset-y-0 left-0 w-24 sm:w-36 bg-gradient-to-r from-[#141210] to-transparent pointer-events-none hidden md:block" />
+          {/* Vertical gradient mask on mobile */}
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#141210] to-transparent pointer-events-none md:hidden" />
         </Link>
       </div>
     </section>
