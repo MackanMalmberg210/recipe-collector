@@ -133,28 +133,45 @@ export default function RecipeMatchesSection({
 
   // Curated Shelf collections
   const quickRecipes = useMemo(
-    () => sourceRecipes.filter((r) => r.cookTime !== undefined && r.cookTime <= 25),
+    () =>
+      sourceRecipes.filter(
+        (r) =>
+          r.cookTime !== undefined &&
+          r.cookTime <= 25 &&
+          r.mealType !== "breakfast" &&
+          r.mealType !== "snack" &&
+          r.category !== "breakfast" &&
+          r.category !== "snack",
+      ),
     [sourceRecipes],
   );
 
   const proteinRecipes = useMemo(() => {
-    const keywords = ["chicken", "beef", "salmon", "egg", "tuna", "pork", "steak", "turkey", "shrimp"];
-    return sourceRecipes.filter((r) =>
-      r.ingredients.some((ing) => keywords.some((kw) => ing.toLowerCase().includes(kw))),
+    const keywords = ["chicken", "beef", "salmon", "tuna", "pork", "steak", "turkey", "shrimp"];
+    return sourceRecipes.filter(
+      (r) =>
+        r.mealType !== "breakfast" &&
+        r.mealType !== "snack" &&
+        r.ingredients.some((ing) => keywords.some((kw) => ing.toLowerCase().includes(kw))),
     );
   }, [sourceRecipes]);
 
   const plantRecipes = useMemo(() => {
-    const meat = ["chicken", "beef", "pork", "bacon", "salmon", "shrimp", "steak", "tuna", "meat"];
+    const meat = ["chicken", "beef", "pork", "bacon", "salmon", "shrimp", "steak", "tuna", "meat", "prawns"];
     return sourceRecipes.filter(
-      (r) => !r.ingredients.some((ing) => meat.some((m) => ing.toLowerCase().includes(m))),
+      (r) =>
+        r.mealType !== "breakfast" &&
+        r.mealType !== "snack" &&
+        !r.ingredients.some((ing) => meat.some((m) => ing.toLowerCase().includes(m))),
     );
   }, [sourceRecipes]);
 
   const familyRecipes = useMemo(
     () =>
       sourceRecipes.filter(
-        (r) => (r.servings ?? 0) >= 4 || r.category === "main-course" || r.category === "pasta",
+        (r) =>
+          r.mealType !== "snack" &&
+          ((r.servings ?? 0) >= 4 || r.category === "main-course" || r.category === "pasta"),
       ),
     [sourceRecipes],
   );

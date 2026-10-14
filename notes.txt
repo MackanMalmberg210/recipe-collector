@@ -1,2 +1,56 @@
+Ideas for design and contents:
+
+AllRecipe
+  - A news-inspired recipe site that curates trending recipes from around the web.
+  - Different sections, such as "Trending Now," "Editor's Picks," and "Seasonal Favorites."
+  - User accounts for saving favorite recipes and creating shopping lists.
+  - Integration with social media for sharing recipes.
+  - Cluttered, magazine-style layout with lots of images and headlines.
+  - Monetization through ads and sponsored content.
+  - Search function without auto-suggestions - Not what we want. 
+
+
+Bigoven
+  - Quite outdated design.
+  - Focuses on a large database of recipes with user reviews and ratings.
+  - Categories such as "Low Carb", "Low Sodium", and "Diabetic Friendly."
+  - Meal planner with a calendar view of planned meals with Breakfast, Lunch and Dinner.
+  - Grocery list generator based on selected recipes.
+  - "Ideas" section for recipe inspiration based on ingredients or meal types. Also guides on how to do more complex cooking techniques (e.g., making sourdough bread).
+  - A really unique, "Use Up Leftovers" feature that suggests recipes based on 3 ingredients you have on hand.
+  
+
+================================================================
+TO DO BEFORE DEPLOYMENT RECIPE COLLECTOR:
+================================================================
+- Check videos for what to do before deployment.
+- Check github Security and Quality section (https://github.com/MackanMalmberg210/recipe-collector/security)
+- Enable Web analytics on Vercel
+- Check code for security vulnerabilities (npm audit, RLS policies, API rate limits)
+- Make tests for functions to understand edge cases etc. (pantry matching, unit conversion, planner)
+
+- Create an Admin View
+- Fully test Guest vs Logged in views and workflows (seamless migration)
+- Fully examine light vs dark mode and ensure sufficient contrasts.
+- [DECISION] Retain Warm Dark Theme: Keep Smoked Oak, Walnut, Espresso & Amber (#12100e). Deep Slate was tested and rejected as too cold for an appetizing, cozy recipe app.
+- Add more recipes
+- [DONE] Add option to add your own pictures to a recipe - How did your recipe turn out?
+- [DONE] Setup Supabase Storage Bucket for user uploaded photos & recipe cover photos (/create)
+- [DONE] Fix ESLint & pnpm overrides (clean 0 error lint)
+- [DONE] Fix GDPR Delete Account auth connection with Bearer tokens
+- [DONE] Database Schema & RLS migration file (supabase/migrations/20260914_initial_schema.sql)
+- [DONE] Tiered rate limiting & auth protection on AI endpoints (/api/vision-scan, /api/translate-recipe)
+- Setup Payment (Stripe / LemonSqueezy)
+- Setup Custom SMTP (Resend/Postmark) for Auth & password reset emails
+- SEO: Schema.org/Recipe JSON-LD, OpenGraph preview cards, sitemap.ts & robots.ts
+- Legal: GDPR Terms of Service, Privacy Policy & "Delete Account" option
+- Offline Supermarket Mode for /groceries
+- Print-friendly recipe view (@media print)
+- Friendly custom 404/500 error pages
+- Look into advertising on site/app
+- Look into other avenues of advertising
+- Native App version packaging (CapacitorJS / PWA)
+
+Notes on ratings:
 - Rate a recipe after trying it out. You can give it a rating from 1 to 5 stars, with 1 being the lowest and 5 being the highest. 
   Consider factors such as taste, ease of preparation, and overall satisfaction when rating the recipe.

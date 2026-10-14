@@ -19,6 +19,8 @@ import {
   type DietaryPreference,
 } from "../../lib/settings";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from "../../contexts/LanguageContext";
+import type { SupportedLocale } from "../../i18n";
 
 const DIETARY_OPTIONS: { id: DietaryPreference; label: string; desc: string }[] = [
   { id: "vegetarian", label: "Vegetarian", desc: "No meat or poultry" },
@@ -169,6 +171,7 @@ function SettingsContent() {
   const focusParam = searchParams.get("focus");
   const { success, error, info } = useToast();
   const { user, session, signOut, updateUser } = useAuth();
+  const { t, locale, setLocale, languages } = useTranslation();
 
   const [displayName, setDisplayName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
@@ -337,6 +340,15 @@ function SettingsContent() {
     saveUserSettings(updated);
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 1800);
+  };
+
+  const handleLanguageChange = (code: SupportedLocale) => {
+    setLocale(code);
+    updateSettings({ preferredLanguage: code });
+    const selected = languages.find((l) => l.code === code);
+    if (selected) {
+      success(`${selected.flag} ${selected.name}`);
+    }
   };
 
   const toggleDietaryPreference = (pref: DietaryPreference) => {
@@ -895,6 +907,57 @@ function SettingsContent() {
                   </div>
                   <span className="text-xs text-[#6e6356] dark:text-stone-400 mt-2 font-medium">Deep cast-iron and amber glow for relaxed evenings</span>
                 </button>
+              </div>
+            </section>
+
+            {/* APP LANGUAGE & LOCALIZATION */}
+            <section
+              id="language"
+              className={`rounded-3xl border border-[#e4ded2] bg-white p-6 sm:p-8 shadow-[0_4px_24px_rgba(40,30,20,0.04)] dark:border-white/10 dark:bg-[#16120f] dark:shadow-none space-y-6 ${getHighlightClass("language")}`}
+            >
+              <div className="border-b border-[#eee8dc] dark:border-white/8 pb-4">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  <h2 className="text-lg font-bold text-[#1c1815] dark:text-[#fff8ef]">
+                    {t("settings.appLanguage")}
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm font-medium text-[#5c534a] dark:text-stone-400 mt-0.5">
+                  {t("settings.appLanguageDesc")}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {languages.map((lang) => {
+                  const isSelected = locale === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`flex items-center justify-between rounded-2xl p-4 border text-left transition cursor-pointer ${
+                        isSelected
+                          ? "border-amber-600 bg-amber-50 text-[#1c1815] font-bold ring-2 ring-amber-500/20 dark:border-amber-400 dark:bg-amber-400/15 dark:text-amber-300"
+                          : "border-[#dcd5c7] bg-[#faf7f2] text-[#4a4239] hover:bg-[#f2ece0] dark:border-white/10 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/8"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl leading-none">{lang.flag}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-bold truncate">{lang.name}</span>
+                          <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium truncate">{lang.englishName}</span>
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-stone-950 text-xs font-black shrink-0">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </section>
 

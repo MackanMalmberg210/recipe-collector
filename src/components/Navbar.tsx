@@ -7,9 +7,11 @@ import ChefProModal from "./subscription/ChefProModal";
 import ThemeToggle from "./ThemeToggle";
 import { getStoredUserSettings, DEFAULT_USER_SETTINGS, type UserSettings } from "../lib/settings";
 import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from "../contexts/LanguageContext";
 
 export default function Navbar() {
   const { user, isLoading: loading, signOut, displayName, userInitial, isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -75,7 +77,7 @@ export default function Navbar() {
   const navLinks = [
     {
       href: "/",
-      label: "Explore",
+      label: t("nav.explore"),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <circle cx="12" cy="12" r="10" />
@@ -85,7 +87,7 @@ export default function Navbar() {
     },
     {
       href: "/saved",
-      label: "My Cookbook",
+      label: t("nav.saved"),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -94,7 +96,7 @@ export default function Navbar() {
     },
     {
       href: "/planner",
-      label: "Weekly Planner",
+      label: t("nav.planner"),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -103,7 +105,7 @@ export default function Navbar() {
     },
     {
       href: "/groceries",
-      label: "Groceries",
+      label: t("nav.groceries"),
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -115,7 +117,7 @@ export default function Navbar() {
   const bottomNavItems = [
     {
       href: "/",
-      label: "Explore",
+      label: t("nav.explore"),
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <circle cx="12" cy="12" r="10" />
@@ -125,7 +127,7 @@ export default function Navbar() {
     },
     {
       href: "/saved",
-      label: "My Cookbook",
+      label: t("nav.saved"),
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -134,7 +136,7 @@ export default function Navbar() {
     },
     {
       href: "/planner",
-      label: "Planner",
+      label: t("nav.planner"),
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -143,7 +145,7 @@ export default function Navbar() {
     },
     {
       href: "/groceries",
-      label: "Groceries",
+      label: t("nav.groceries"),
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -152,7 +154,7 @@ export default function Navbar() {
     },
     {
       href: "/settings",
-      label: "Settings",
+      label: t("nav.settings"),
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -287,7 +289,7 @@ export default function Navbar() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <span>Account & Settings</span>
+                          <span>{t("nav.settings")}</span>
                         </Link>
 
                         <button
@@ -319,7 +321,7 @@ export default function Navbar() {
                               <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                               </svg>
-                              <span>Admin Console</span>
+                              <span>{t("nav.admin")}</span>
                             </span>
                             <span className="rounded-full bg-stone-100 text-stone-700 dark:bg-white/10 dark:text-stone-300 border border-stone-200 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                               Staff
@@ -340,7 +342,7 @@ export default function Navbar() {
                           <svg className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                           </svg>
-                          <span>Sign Out</span>
+                          <span>{t("nav.signOut")}</span>
                         </button>
                       </div>
                     </div>
@@ -352,7 +354,7 @@ export default function Navbar() {
                     href="/login"
                     className="inline-flex items-center gap-2 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer px-5 py-2 text-xs sm:text-sm"
                   >
-                    <span>Sign In</span>
+                    <span>{t("nav.signIn")}</span>
                     <span className="font-bold text-xs">→</span>
                   </Link>
                 </div>
@@ -409,7 +411,7 @@ export default function Navbar() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900 dark:text-stone-100 truncate">
-                      {user ? displayName : "Guest"}
+                      {user ? displayName : t("nav.guest")}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-stone-400 truncate">
                       {user ? user.email : "Local session"}

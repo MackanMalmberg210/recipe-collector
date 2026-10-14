@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { AppRecipe } from "../../lib/types";
 import { capitalize } from "../../lib/format";
 import { getRecipeRating, type RecipeRating } from "../../lib/ratings";
+import RecipeImage from "../ui/RecipeImage";
 
 type CookbookGridCardProps = {
   recipe: AppRecipe;
@@ -69,7 +70,7 @@ export default function CookbookGridCard({
       <div className="group/media relative h-52 w-full overflow-hidden bg-slate-100 dark:bg-stone-950">
         <Link href={isTrashMode ? "#" : `/recipes/${recipe.id}`} className="block h-full w-full">
           {recipe.image ? (
-            <img
+            <RecipeImage
               src={recipe.image}
               alt={recipe.title}
               className="h-full w-full object-cover object-center block transition-opacity duration-200 group-hover/media:opacity-95"

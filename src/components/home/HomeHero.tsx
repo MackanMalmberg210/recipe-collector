@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from "../../contexts/LanguageContext";
 
 export type TasteVibe =
   | "all"
@@ -120,6 +121,7 @@ export default function HomeHero({
   onOpenSnapPlate,
 }: HomeHeroProps) {
   const { user, displayName } = useAuth();
+  const { t } = useTranslation();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Global / and Ctrl+K shortcut listener
@@ -159,6 +161,18 @@ export default function HomeHero({
     return "Good evening";
   };
 
+  const getVibeLabel = (id: TasteVibe) => {
+    switch (id) {
+      case "all": return t("home.vibeAll");
+      case "quick": return t("home.vibeQuick");
+      case "protein": return t("home.vibeProtein");
+      case "family": return t("home.vibeFamily");
+      case "vegetarian": return t("home.vibeVegetarian");
+      case "budget": return t("home.vibeBudget");
+      default: return id;
+    }
+  };
+
   const isUrl = isLikelyUrl(searchTerm);
 
   return (
@@ -185,7 +199,7 @@ export default function HomeHero({
             <svg className="h-4 w-4 text-stone-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            <span>New Recipe</span>
+            <span>{t("nav.create")}</span>
           </Link>
         </div>
       </div>
@@ -212,7 +226,7 @@ export default function HomeHero({
           type="text"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={`Search ${totalRecipes || 37} recipes, or paste any recipe link (TikTok, Instagram, NYT)...`}
+          placeholder={t("home.searchPlaceholder")}
           className="w-full bg-transparent py-2 px-1 text-sm font-medium text-slate-950 dark:text-stone-100 placeholder:text-slate-400 dark:placeholder:text-stone-500 focus:outline-none"
         />
 
@@ -287,7 +301,7 @@ export default function HomeHero({
               </svg>
             </div>
             <div className="flex flex-col flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-slate-900 dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">Import Link</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">{t("home.importRecipe")}</h4>
               <p className="text-[11px] sm:text-xs text-slate-500 dark:text-stone-400 mt-0.5 truncate">Clean recipe from any URL.</p>
             </div>
             <svg className="h-5 w-5 shrink-0 text-stone-300 dark:text-stone-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-amber-500 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -317,7 +331,7 @@ export default function HomeHero({
                 <span className={`flex items-center justify-center mt-[1px] ${isActive ? "text-stone-900" : "text-slate-400 group-hover:text-slate-600 dark:text-stone-400 dark:group-hover:text-stone-200 transition-colors"}`}>
                   {option.icon}
                 </span>
-                <span>{option.label}</span>
+                <span>{getVibeLabel(option.id)}</span>
               </button>
             );
           })}

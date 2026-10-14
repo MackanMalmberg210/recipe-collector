@@ -4,6 +4,7 @@ import { memo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getRecipeRating, type RecipeRating } from "../lib/ratings";
 import StarRating from "./StarRating";
+import RecipeImage from "./ui/RecipeImage";
 
 type RecipeCardProps = {
   id: number;
@@ -59,11 +60,10 @@ function RecipeCard({
     >
       {/* TALL CINEMATIC APPETIZING IMAGE CONTAINER */}
       <div className="relative h-60 sm:h-64 w-full overflow-hidden bg-slate-900 dark:bg-[#151311]">
-        <img
+        <RecipeImage
           src={image}
           alt={title}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
+          priority={priority}
           className="h-full w-full object-cover object-center block transform transition-transform duration-500 ease-out group-hover:scale-105 will-change-transform"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />

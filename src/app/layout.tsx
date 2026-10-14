@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import "./globals.css";
 import { ToastProvider } from "../components/ui/ToastProvider";
 import { AuthProvider } from "../contexts/AuthContext";
+import { LanguageProvider } from "../contexts/LanguageContext";
 import FloatingGroceryDrawer from "../components/grocery/FloatingGroceryDrawer";
 import AuthCallbackListener from "../components/auth/AuthCallbackListener";
 import Footer from "../components/Footer";
@@ -53,15 +54,17 @@ export default function RootLayout({
         className="font-sans antialiased bg-[#f8f6f1] text-[#1c1917] dark:bg-[#12100e] dark:text-[#fafaf9] min-h-screen pb-16 md:pb-0 selection:bg-amber-500/30 selection:text-amber-900 dark:selection:text-amber-200 flex flex-col justify-between"
       >
         <AuthProvider>
-          <ToastProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <FloatingGroceryDrawer />
-            <AuthCallbackListener />
-            <ServiceWorkerRegister />
-            <InstallAppBanner />
-          </ToastProvider>
+          <LanguageProvider>
+            <ToastProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <FloatingGroceryDrawer />
+              <AuthCallbackListener />
+              <ServiceWorkerRegister />
+              <InstallAppBanner />
+            </ToastProvider>
+          </LanguageProvider>
         </AuthProvider>
         <Analytics />
         <SpeedInsights />

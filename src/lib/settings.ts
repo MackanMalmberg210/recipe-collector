@@ -37,7 +37,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   strictDietaryFilter: false, // Default is OFF as requested
   autoScaleRecipes: true,
   autoAddLowPantryToList: true, // Auto-add low pantry staples to shopping list
-  preferredLanguage: "Swedish",
+  preferredLanguage: "en",
   subscriptionTier: "free",
   monthlyAiScansUsed: 0,
   monthlyAiScansResetDate: "",
